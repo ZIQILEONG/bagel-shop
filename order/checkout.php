@@ -58,7 +58,6 @@ if (is_post()) {
 
     // (4) Redirect to detail.php?id=XXX
     redirect("detail.php?id=$order_id");
-    temp('info', 'TODO');
 }
 
 redirect('cart.php');
