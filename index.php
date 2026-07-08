@@ -12,7 +12,7 @@ include '_head.php';
 ?>
 
 <table class="table">
-    <tr> 
+    <tr>
         <th>Email</th>
         <th>Password</th>
         <th>Role</th>
