@@ -4,11 +4,15 @@ include '../_base.php';
 // ----------------------------------------------------------------------------
 
 // (1) Authorization (member)
-// TODO
+auth('Member');
 
 if (is_post()) {
     // (2) Get shopping cart (reject if empty)
-    // TODO
+    $cart = get_cart();
+
+    if (empty($cart)) {
+        redirect('cart.php');
+    }
 
     // ------------------------------------------
     // DB transaction (insert order and items)
@@ -16,6 +20,7 @@ if (is_post()) {
 
     // (A) Begin transaction
     // TODO
+
 
     // (B) Insert order, keep order id
     // TODO
