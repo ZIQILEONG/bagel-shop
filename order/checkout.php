@@ -19,11 +19,12 @@ if (is_post()) {
     // ------------------------------------------
 
     // (A) Begin transaction
-    // TODO
-
+    $_db->beginTransaction();
 
     // (B) Insert order, keep order id
-    // TODO
+    $stm = $_db->prepare("INSERT INTO orders (datetime, count, total, status, user_id) VALUES (NOW(), 0, 0, 'Pending', ?)");
+    $stm->execute([$_user->id]);
+    $order_id = $_db->lastInsertId();
 
     // (C) Insert items
     // TODO
@@ -32,7 +33,7 @@ if (is_post()) {
     // TODO
 
     // (E) Commit transcation
-    // TODO
+    $_db->commit();  
 
     // ------------------------------------------
 
