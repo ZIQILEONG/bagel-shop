@@ -27,10 +27,26 @@ if (is_post()) {
     $order_id = $_db->lastInsertId();
 
     // (C) Insert items
-    // TODO
+    $count = 0;
+    $total = 0;
+
+    foreach ($cart as $product_id => $unit) {
+        $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
+        $stm->execute([$product_id]);
+        $product = $stm->fetch();
+
+        $subtotal = $product->price * $unit;
+
+        $stm = $_db->prepare("INSERT INTO order_item (order_id, product_id, price, unit, subtotal) VALUES (?, ?, ?, ?, ?)");
+        $stm->execute([$order_id, $product_id, $product->price, $unit, $subtotal]);
+
+        $count += $unit;        // $count = $count + $unit
+        $total += $subtotal;    // $total = $total + $subtotal
+    }
 
     // (D) Update order (count and total)
-    // TODO
+    $stm = $_db->prepare("UPDATE orders SET count = ?, total = ? WHERE id = ?");
+    $stm->execute([$count, $total, $order_id]);
 
     // (E) Commit transcation
     $_db->commit();  
@@ -38,10 +54,10 @@ if (is_post()) {
     // ------------------------------------------
 
     // (3) Clear shopping cart
-    // TODO
+    set_cart();
 
     // (4) Redirect to detail.php?id=XXX
-    // TODO
+    redirect("detail.php?id=$order_id");
     temp('info', 'TODO');
 }
 
