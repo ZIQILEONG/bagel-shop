@@ -11,7 +11,7 @@ $_title = 'User | Password';
 include '../_head.php';
 ?>
 
-<p>Removed for brevity</p>
+<p>...</p>
 
 <?php
 include '../_foot.php';
