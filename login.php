@@ -56,7 +56,6 @@ include '_head.php';
 
     <section>
         <button>Login</button>
-        <button type="reset">Reset</button>
     </section>
 </form>
 
