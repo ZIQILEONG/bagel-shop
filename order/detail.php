@@ -9,7 +9,7 @@ auth('Member');
 // (2) Return order (based on id) belong to the user
 $id = req('id');
 
-$stm = $_db->prepare("SELECT * FROM orders WHERE user_id = ? AND user_id = ?");
+$stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
 $stm->execute([$id, $_user->id]);
 $o = $stm->fetch();
 
