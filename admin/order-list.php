@@ -6,10 +6,8 @@ include '../_base.php';
 // (1) Authorization (admin)
 auth('Admin');
 
-// (2) Search keyword (order id, member name, or email)
-$keyword = req('keyword');
+// (2) return all orders, joined with user (name), newest first
 
-// (3) TODO: return all orders, joined with user (name, email), filtered by keyword if present, newest first
 
 // ----------------------------------------------------------------------------
 
