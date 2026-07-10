@@ -4,19 +4,23 @@ include '../_base.php';
 // ----------------------------------------------------------------------------
 
 // (1) Authorization (member)
-// TODO
+auth('Member');
 
 // (2) Return order (based on id) belong to the user
-// TODO
-$o = new stdClass(); // Remove the codes
-$o->id       = 'TODO';
-$o->datetime = 'TODO';
-$o->count    = 'TODO';
-$o->total    = 'TODO';
+$id = req('id');
+
+$stm = $_db->prepare("SELECT * FROM orders WHERE user_id = ? AND user_id = ?");
+$stm->execute([$id, $_user->id]);
+$o = $stm->fetch();
+
+if (!$o) {
+    redirect('history.php');
+}
 
 // (3) Return items (and products) belong to the order
-// TODO
-$arr = [];
+$stm = $_db->prepare("SELECT i.*, p.name, p.photo FROM order_item i JOIN product p ON i.product_id = p.id WHERE i.order_id = ?");
+$stm->execute([$o->id]);
+$arr = $stm-> fetchAll();
 
 // ----------------------------------------------------------------------------
 

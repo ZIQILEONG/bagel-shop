@@ -4,11 +4,13 @@ include '../_base.php';
 // ----------------------------------------------------------------------------
 
 // (1) Authorization (member)
-// TODO
+auth('Member');
 
 // (2) Return orders belong to the user (descending)
-// TODO
-$arr = [];
+// SELECT ... FROM ... WHERE ... ORDER BY ...
+$stm = $_db->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC");
+$stm->execute([$_user->id]);
+$arr = $stm->fetchAll();
 
 // ----------------------------------------------------------------------------
 
