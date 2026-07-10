@@ -21,10 +21,6 @@ include '../_head.php';
 <!-- (B) EXTRA: CSS -->
 <!-- TODO -->
 
-<p>
-    <button data-post="reset.php" data-confirm>Reset</button>
-</p>
-
 <p><?= count($arr) ?> record(s)</p>
 
 <table class="table">
