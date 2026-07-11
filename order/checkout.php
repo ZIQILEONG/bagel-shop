@@ -1,6 +1,6 @@
 <?php
-require 'vendor/autoload.php';
-require '../config.php';
+require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . '/../config.php';
 include '../_base.php';
 
 // ----------------------------------------------------------------------------
@@ -31,7 +31,7 @@ foreach ($cart as $product_id => $unit) {
 \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
 $session = \Stripe\Checkout\Session::create([
-    'payment_method_types' => ['card'],
+    'payment_method_types' => ['card', 'fpx'],
     'line_items' => [[
         'price_data' => [
             'currency' => 'myr',
