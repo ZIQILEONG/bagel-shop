@@ -25,20 +25,27 @@
         <?php endif ?>
     </header>
 
-    <nav>
+ <nav>
         <a href="/">Index</a>
-        <a href="/product/list.php">Product List</a>
-        <a href="/order/cart.php">
-            Shopping Cart
-            <?php
-                $cart = get_cart();
-                $count = count($cart);
-                if ($count) echo "($count)";
-            ?>
-        </a>
+        
+        <?php if ($_user?->role == 'Member'): ?>
+            <a href="/product/list.php">Product List</a>
+            <a href="/order/cart.php">
+                Shopping Cart
+                <?php
+                    $cart = get_cart();
+                    $count = count($cart);
+                    if ($count) echo "($count)";
+                ?>
+            </a>
+        <?php endif ?>
 
         <?php if ($_user?->role == 'Member'): ?>
             <a href="/order/history.php">Order History</a>
+        <?php endif ?>
+
+        <?php if ($_user?->role == 'Admin'): ?>
+            <a href="/admin/order-list.php">Manage Orders</a>
         <?php endif ?>
 
         <div></div>

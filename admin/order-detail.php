@@ -22,6 +22,8 @@ $stm = $_db->prepare("SELECT i.*, p.name, p.photo FROM order_item i JOIN product
 $stm->execute([$o->id]);
 $arr = $stm-> fetchAll();
 
+
+
 // ----------------------------------------------------------------------------
 
 $_title = 'Order | Detail (Admin)';
@@ -52,6 +54,21 @@ include '../_head.php';
 
 <p><?= count($arr) ?> item(s)</p>
 
+// Status Dropdown
+<?php
+$statuses = ['Pending' => 'Pending', 'Shipped' => 'Shipped', 'Completed' => 'Completed', 'Cancelled' => 'Cancelled'];
+$status = $o->status;
+?>
+
+<form method="post" class="form">
+    <label for="status">Update Status</label>
+    <?= html_select('status', $statuses, null) ?>
+    <?= err('status') ?>
+
+    <button>Update</button>
+</form>
+
+// Item Table
 <table class="table">
     <tr>
         <th>Product Id</th>
