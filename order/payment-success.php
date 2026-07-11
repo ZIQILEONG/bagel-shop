@@ -16,6 +16,10 @@ if ($session->payment_status !== 'paid') {
     redirect('payment-cancel.php');
 }
 
+// Ask Stripe for the payment method, paid by card or FPX
+$intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
+$method = strtoupper($intent->payment_method_types[0]);
+
 $cart = get_cart();
 
 if (empty($cart)) {
@@ -53,8 +57,8 @@ $stm = $_db->prepare("UPDATE orders SET count = ?, total = ? WHERE id = ?");
 $stm->execute([$count, $total, $order_id]);
 
 // (E) Insert payment record
-$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, 'Stripe', ?, 'Paid', ?, NOW())");
-$stm->execute([$order_id, $total, $session->payment_intent]);
+$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
+$stm->execute([$order_id, $method, $total, $session->payment_intent]);
 
 // (F) Commit
 $_db->commit();
