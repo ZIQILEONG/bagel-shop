@@ -17,7 +17,7 @@ if (is_post()) {
     // ------------------------------------------
     // DB transaction (insert order and items)
     // ------------------------------------------
-
+    
     // (A) Begin transaction
     $_db->beginTransaction();
 
