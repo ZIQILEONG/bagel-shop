@@ -91,10 +91,12 @@ include '../_head.php';
 <?php
 
 // Cancel Order
-<?php if ($o->status == 'Pending'): ?>
+if ($o->status == 'Pending'):
+?>
 <p>
     <button data-post="cancel.php?id=<?= $o->id ?>" data-confirm>Cancel Order</button>
 </p>
 <?php endif ?>
-
+<?php
 include '../_foot.php';
+?>
