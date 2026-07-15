@@ -36,8 +36,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         // 5. Create reset link
       $link = "http://localhost:8000/user/reset.php?token=" . $token;
+      $mail = new PHPMailer(true);
 
-        echo "Reset link: " . $link;
+        $mail->isSMTP();
+        $mail->Host = 'smtp.gmail.com';
+        $mail->SMTPAuth = true;
+        $mail->Username = 'yourgmail@gmail.com';
+        $mail->Password = 'YOUR_GMAIL_APP_PASSWORD';
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port = 587;
+
+        $mail->setFrom('yourgmail@gmail.com', 'Bagel Shop');
+        $mail->addAddress($email);
+        $mail->Subject = "Password Reset";
+        $mail->Body = "
+        Hello,
+
+        We received a request to reset your password.
+
+        Click the link below to reset it:
+
+        $link
+
+        This link expires in 30 minutes.
+
+        If you did not request this, please ignore this email.
+        ";
+
+        $mail->send();
+
+        
 
     } else {
         echo "Email not found";

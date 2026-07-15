@@ -12,7 +12,7 @@ if (!$token) {
 // Check token exists and not expired
 $stm = $_db->prepare(
     "SELECT * 
-     FROM password_reset_token 
+     FROM token 
      WHERE token = ? 
      AND expire > NOW()"
 );
@@ -34,20 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     // Update password in user table
     $stm = $_db->prepare(
-        "UPDATE user 
-         SET password = ?
-         WHERE id = ?"
-    );
+    "UPDATE user
+     SET password = SHA1(?)
+     WHERE id = ?"
+);
 
     $stm->execute([
-        password_hash($password, PASSWORD_DEFAULT),
+        $password,
         $reset->user_id
     ]);
 
 
     // Delete used token
     $stm = $_db->prepare(
-        "DELETE FROM password_reset_token
+        "DELETE FROM token
          WHERE token = ?"
     );
 
@@ -58,5 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 }
 
 ?>
+<form method="post">
+    New Password:
+    <input type="password" name="password" required>
+
+    <button type="submit">Reset Password</button>
+</form>
 
 
