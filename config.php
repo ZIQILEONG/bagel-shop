@@ -1,0 +1,3 @@
+<?php
+define('STRIPE_PUBLIC_KEY', 'pk_test_51TraeeK4RQPyfdtAWyF0XNT0co57KyoEhpUt7DU14bJIoLKrVTSWEQ8IdGQyXxSXnSIvXc4rDozHb0PIwLuTKmLI00H5RzfiQW');
+define('STRIPE_SECRET_KEY', 'sk_test_51TraeeK4RQPyfdtA6x1fVeZmgm80HVqPaEw4kbPpi4RJp72VvP5vFcsHpXjMxS593GramnS8dVbof3TwW3bckcTH00b0NM1zDi');
