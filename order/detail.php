@@ -94,4 +94,5 @@ include '../_head.php';
 </p>
 <?php endif ?>
 
+<?php
 include '../_foot.php';

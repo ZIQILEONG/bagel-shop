@@ -26,6 +26,12 @@ $arr = $stm->fetchAll();
 
 // (4) Handle status update
 if (is_post()) {
+    if (is_post()) {
+    if ($o->status == 'Cancelled') {
+        temp('info', 'This order has been cancelled and cannot be updated.');
+        redirect('order-detail.php?id=' . $o->id);
+    }
+
     $status = req('status');
 
     if ($status == '') {
@@ -34,6 +40,7 @@ if (is_post()) {
     else if (!array_key_exists($status, $statuses)) {
         $_err['status'] = 'Invalid value';
     }
+}
 
     if (!$_err) {
         $stm = $_db->prepare("UPDATE orders SET status = ? WHERE id = ?");
@@ -77,6 +84,7 @@ include '../_head.php';
 <!-- Status Dropdown -->
 <?php $status = $o->status; ?>
 
+<?php if ($o->status != 'Cancelled'): ?>
 <form method="post" class="form">
     <label for="status">Update Status</label>
     <?= html_select('status', $statuses, null) ?>
@@ -84,6 +92,9 @@ include '../_head.php';
 
     <button>Update</button>
 </form>
+<?php else: ?>
+<p><b>This order has been cancelled and can no longer be updated.</b></p>
+<?php endif ?>
 
 <!-- Item Table -->
 <table class="table">

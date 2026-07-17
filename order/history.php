@@ -29,6 +29,7 @@ include '../_head.php';
         <th>Datetime</th>
         <th>Count</th>
         <th>Total (RM)</th>
+        <th>Status</th>
         <th></th>
     </tr>
 
@@ -38,6 +39,7 @@ include '../_head.php';
         <td><?= $o->datetime ?></td>
         <td class="right"><?= $o->count ?></td>
         <td class="right"><?= $o->total ?></td>
+        <td><?= $o->status ?></td>
         <td>
             <button data-get="detail.php?id=<?= $o->id ?>">Detail</button>
             <!-- (A) EXTRA: Product photos -->
