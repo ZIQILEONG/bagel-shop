@@ -1,7 +1,7 @@
     </main>
 
     <footer>
-        Developed by <b>YAMI BAGEL SHOP</b> &middot;
+        Developed by <b>PULULU BAGEL SHOP</b> &middot;
         Copyrighted &copy; <?= date('Y') ?>
     </footer>
 </body>
