@@ -82,7 +82,7 @@ include '../_head.php';
         <button data-post="?btn=clear">Clear</button>
 
         <?php if ($_user?->role == 'Member'): ?>
-            <button data-post="checkout.php">Checkout</button>
+            <button data-get="checkout.php">Checkout</button>
         <?php else: ?>
             Please <a href="/login.php">login</a> as member to checkout
         <?php endif ?>

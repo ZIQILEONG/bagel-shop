@@ -13,7 +13,7 @@ if (empty($cart)) {
     redirect('cart.php');
 }
 
-// Calculate total (no database writes yet)
+// Loop through $cart, just calculate $total, no inserting to database yet
 $count = 0;
 $total = 0;
 
