@@ -88,5 +88,10 @@ include '../_head.php';
     <button data-get="history.php">History</button>
 </p>
 
-<?php
+<?php if ($o->status == 'Pending'): ?>
+<p>
+    <button data-post="cancel.php?id=<?= $o->id ?>" data-confirm>Cancel Order</button>
+</p>
+<?php endif ?>
+
 include '../_foot.php';
