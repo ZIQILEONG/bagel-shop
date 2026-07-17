@@ -26,8 +26,8 @@ $arr = $stm->fetchAll();
 
 // (4) Handle status update
 if (is_post()) {
-    if (is_post()) {
     if ($o->status == 'Cancelled') {
+        // only runs when someone actually submits the form (a POST request)
         temp('info', 'This order has been cancelled and cannot be updated.');
         redirect('order-detail.php?id=' . $o->id);
     }
@@ -40,7 +40,6 @@ if (is_post()) {
     else if (!array_key_exists($status, $statuses)) {
         $_err['status'] = 'Invalid value';
     }
-}
 
     if (!$_err) {
         $stm = $_db->prepare("UPDATE orders SET status = ? WHERE id = ?");
