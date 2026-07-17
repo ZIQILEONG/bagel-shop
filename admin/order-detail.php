@@ -69,7 +69,7 @@ include '../_head.php';
     <label>Datetime</label>
     <div><?= $o->datetime ?></div>
     <br>
-
+    
     <label>Count</label>
     <div><?= $o->count ?></div>
     <br>
