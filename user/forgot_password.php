@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $expire
         ]);
 
-        // 5. Create reset link
+        
       $link = "http://localhost:8000/user/reset.php?token=" . $token;
       $mail = new PHPMailer(true);
 
