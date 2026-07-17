@@ -18,7 +18,7 @@ $_title = 'Order | History';
 include '../_head.php';
 ?>
 
-<!-- (B) EXTRA: CSS -->
+<!-- (B) EXTRA: CSS -->  
 <!-- TODO -->
 
 <p><?= count($arr) ?> record(s)</p>
