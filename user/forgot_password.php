@@ -1,5 +1,12 @@
 <?php
 include '../_base.php';
+require_once '../PHPMailer-master/src/PHPMailer.php';
+require_once '../PHPMailer-master/src/SMTP.php';
+require_once '../PHPMailer-master/src/Exception.php';
+
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\SMTP;
+use PHPMailer\PHPMailer\Exception;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
@@ -41,12 +48,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'yourgmail@gmail.com';
-        $mail->Password = 'YOUR_GMAIL_APP_PASSWORD';
+        $mail->Username = 'pululubagelshop@gmail.com';
+        $mail->Password = 'jswhlnlntthwttvw';
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
-        $mail->setFrom('yourgmail@gmail.com', 'Bagel Shop');
+        $mail->setFrom('pululubagelshop@gmail.com', 'Bagel Shop');
         $mail->addAddress($email);
         $mail->Subject = "Password Reset";
         $mail->Body = "
