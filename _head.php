@@ -48,6 +48,10 @@
             <a href="/admin/order-list.php">Manage Orders</a>
         <?php endif ?>
 
+        <?php if ($_user?->role == 'Admin'): //tab is okay but page doesnt work yet ?>
+            <a href="/admin/member-listing.php">Manage Orders</a>
+        <?php endif ?>
+
         <div></div>
 
         <?php if ($_user): ?>
