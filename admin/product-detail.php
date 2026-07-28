@@ -16,7 +16,7 @@ if ($id) {
     $p = $stm->fetch();
 
     if (!$p) {
-        redirect('product-list.php');
+        redirect('product-listing.php');
     }
 }
 
@@ -27,7 +27,7 @@ if ($p && is_post() && req('btn') == 'delete') {
 
     if ($ok) {
         temp('info', 'Product deleted.');
-        redirect('product-list.php');
+        redirect('product-listing.php');
     }
 
     temp('info', 'Cannot delete this product: it is referenced by existing orders.');
@@ -144,7 +144,7 @@ include '../_head.php';
 <?php endif ?>
 
 <p>
-    <button data-get="product-list.php">Back to Listing</button>
+    <button data-get="product-listing.php">Back to Listing</button>
 </p>
 
 <?php

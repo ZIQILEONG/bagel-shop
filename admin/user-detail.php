@@ -18,7 +18,7 @@ if ($id) {
     $u = $stm->fetch();
 
     if (!$u) {
-        redirect('user-list.php');
+        redirect('user-listing.php');
     }
 }
 
@@ -29,7 +29,7 @@ if ($u && is_post() && req('btn') == 'delete') {
 
     if ($ok) {
         temp('info', 'Member deleted.');
-        redirect('user-list.php');
+        redirect('user-listing.php');
     }
 
     temp('info', 'Cannot delete this member: existing orders or tokens reference this account.');
@@ -173,7 +173,7 @@ include '../_head.php';
 <?php endif ?>
 
 <p>
-    <button data-get="user-list.php">Back to Listing</button>
+    <button data-get="user-listing.php">Back to Listing</button>
 </p>
 
 <?php
