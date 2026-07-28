@@ -1,3 +1,6 @@
 <?php
 define('STRIPE_PUBLIC_KEY', 'pk_test_51TraeeK4RQPyfdtAWyF0XNT0co57KyoEhpUt7DU14bJIoLKrVTSWEQ8IdGQyXxSXnSIvXc4rDozHb0PIwLuTKmLI00H5RzfiQW');
 define('STRIPE_SECRET_KEY', 'sk_test_51TraeeK4RQPyfdtAl3xXurzVWRTIM4fPfQR8NaOy1sFTylKpK8vKqhVF5bwEJdcSm59aYikTGbqZPBNHzsZ4n3X000RssrNiFr');
+
+define('SMTP_USERNAME', 'pululubagelshop@gmail.com');
+define('SMTP_PASSWORD', 'jswhlnlntthwttvw');
