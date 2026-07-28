@@ -46,10 +46,8 @@
 
         <?php if ($_user?->role == 'Admin'): ?>
             <a href="/admin/order-list.php">Manage Orders</a>
-        <?php endif ?>
-
-        <?php if ($_user?->role == 'Admin'): //tab is okay but page doesnt work yet ?>
-            <a href="/admin/member-listing.php">Manage Orders</a>
+            <a href="/admin/product-listing.php">Manage Products</a>
+            <a href="/admin/user-listing.php">Manage Members</a>
         <?php endif ?>
 
         <div></div>
