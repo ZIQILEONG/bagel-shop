@@ -3,12 +3,12 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+// Authorization (admin)
 auth('Admin');
 
 $roles = ['Admin' => 'Admin', 'Member' => 'Member'];
 
-// (2) Return member (based on id) - null means "create new"
+//Return member (based on id) - null means "create new"
 $id = req('id');
 
 $u = null;
@@ -22,7 +22,7 @@ if ($id) {
     }
 }
 
-// (3) Handle delete
+//  Handle delete
 if ($u && is_post() && req('btn') == 'delete') {
     $stm = $_db->prepare("DELETE FROM user WHERE id = ?");
     $ok  = $stm->execute([$u->id]);
@@ -36,7 +36,7 @@ if ($u && is_post() && req('btn') == 'delete') {
     redirect('user-detail.php?id=' . $u->id);
 }
 
-// (4) Handle create/update
+// Handle create/update
 if (is_post() && req('btn') != 'delete') {
     $name     = req('name');
     $email    = req('email');

@@ -3,10 +3,10 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+//Authorization (admin)
 auth('Admin');
 
-// (2) Return product (based on id) - null means "create new"
+// Return product (based on id) - null means "create new"
 $id = req('id');
 
 $p = null;
@@ -20,7 +20,7 @@ if ($id) {
     }
 }
 
-// (3) Handle delete
+// Handle delete
 if ($p && is_post() && req('btn') == 'delete') {
     $stm = $_db->prepare("DELETE FROM product WHERE id = ?");
     $ok  = $stm->execute([$p->id]);
@@ -34,7 +34,7 @@ if ($p && is_post() && req('btn') == 'delete') {
     redirect('product-detail.php?id=' . $p->id);
 }
 
-// (4) Handle create/update
+// Handle create/update
 if (is_post() && req('btn') != 'delete') {
     $name  = req('name');
     $price = req('price');

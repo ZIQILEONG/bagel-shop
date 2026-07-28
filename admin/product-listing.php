@@ -3,10 +3,10 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+// Authorization (admin)
 auth('Admin');
 
-// (2) Return all products
+// Return all products
 $stm = $_db->prepare("SELECT * FROM product ORDER BY id");
 $stm->execute([]);
 $arr = $stm->fetchAll();
