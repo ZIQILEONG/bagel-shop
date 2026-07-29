@@ -19,10 +19,28 @@
     <header >
         <div class="logo-container">
             <img src="/images/logo.jpeg" class="logo" alt="Pululu Bagel Logo">
-           
         </div>
-         <h1><a href="/">PULULU BAGEL</a></h1>
-
+        <h1><a href="/">PULULU BAGEL</a></h1>
+        <nav class="navbar">
+            <a href="#">
+                <span class="flip">
+                <span>Home</span>
+                <span>Home</span>
+                </span>
+            </a>
+            <a id="storyLink" href="index.php">
+                <span class="flip">
+                <span>Full Menu</span>
+                <span>Full Menu </span>
+                </span>
+            </a>
+            <a href="#">
+                <span class="flip">
+                <span>Order For Tomorrow</span>
+                <span>Order For Tomorrow</span>
+                </span>
+            </a>
+        </nav>
         <?php if ($_user): ?>
             <div>
                 <?= $_user->name ?><br>
@@ -30,10 +48,11 @@
             </div>
             <img src="/photos/<?= $_user->photo ?>">
         <?php endif ?>
+        
     </header>
 
-    <nav >
-        <?php if ($_user?->role == 'Member'): ?>
+   <nav >
+         <?php if ($_user?->role == 'Member'): ?>
             <a href="/product/list.php">Product List</a>
             <a href="/order/cart.php">
                 Shopping Cart
@@ -53,9 +72,7 @@
             <a href="/admin/order-list.php">Manage Orders</a>
             <a href="/admin/product-listing.php">Manage Products</a>
             <a href="/admin/user-listing.php">Manage Members</a>
-        <?php endif ?>
-
-        <div></div>
+        <?php endif ?> 
 
         <?php if ($_user): ?>
             <a href="/user/profile.php">Profile</a>
@@ -66,7 +83,7 @@
             <a href="/user/forgot_password.php">Forgot Password</a>
             <a href="/login.php">Login</a>
         <?php endif ?>
-    </nav>
+    </nav> 
+    
 
     <main>
-        <h1><?= $_title ?? 'Untitled' ?></h1>

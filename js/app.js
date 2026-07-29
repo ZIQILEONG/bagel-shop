@@ -74,3 +74,22 @@ $(() => {
     });
 
 });
+
+const text = document.querySelector(".hover-text");
+
+text.addEventListener("mousemove", (e) => {
+    const rect = text.getBoundingClientRect();
+
+    const x = e.clientX - rect.left - rect.width / 2;
+    const y = e.clientY - rect.top - rect.height / 2;
+
+    text.style.transform = `
+        translateY(-8px)
+        rotateX(${-y / 10}deg)
+        rotateY(${x / 10}deg)
+    `;
+});
+
+text.addEventListener("mouseleave", () => {
+    text.style.transform = "translateY(0)";
+});
