@@ -3,18 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= $_title ?? 'Untitled' ?></title>
+    <title><?= $_title ?? 'Pululu Bagel' ?></title>
     <link rel="shortcut icon" href="/images/favicon.png">
     <link rel="stylesheet" href="/css/app.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+   <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
     <script src="/js/app.js"></script>
 </head>
 <body>
     <!-- Flash message -->
     <div id="info"><?= temp('info') ?></div>
-
-    <header>
-        <h1><a href="/">Checkout and Order</a></h1>
+    <header class="top-bar">
+        <h1>Order now to get 10% off!</h1>
+    </header>
+    <header >
+        <div class="logo-container">
+            <img src="/images/logo.jpeg" class="logo" alt="Pululu Bagel Logo">
+           
+        </div>
+         <h1><a href="/">PULULU BAGEL</a></h1>
 
         <?php if ($_user): ?>
             <div>
@@ -25,9 +32,7 @@
         <?php endif ?>
     </header>
 
- <nav>
-        <a href="/">Index</a>
-        
+    <nav >
         <?php if ($_user?->role == 'Member'): ?>
             <a href="/product/list.php">Product List</a>
             <a href="/order/cart.php">

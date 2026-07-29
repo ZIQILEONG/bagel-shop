@@ -15,27 +15,44 @@ body {
     grid: auto auto 1fr auto / auto;
 }
 
-header, footer {
-    padding: 10px 50px;
-    background: #FFD6E8;
-}
-
-header { /* NEW */
+header {
     display: flex;
-    gap: 10px;
+    justify-content: center;
     align-items: center;
+    background: #fafadc;
+    padding: 10px 50px;
 }
 
 header h1 {
-    flex: 1; /* NEW */
+    font-family: "Lilita One", cursive;
+    font-size: 30px;
+    color: #b5192b;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 20px;
     margin: 0;
-    padding-left: 40px;
-    background: url(/images/favicon.png) no-repeat left / 36px;
 }
 
 header a {
-    color: #3E2723;
+    color: #b5192b;
     text-decoration: none;
+    
+}
+.top-bar {
+    height: 10px;
+    background: #FFD6E8;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.top-bar h1 {
+    font-family: "Dancing Script", cursive;
+    font-size: 12px;
+    color: #6B3E26;
+    padding: 8px 20px;
+    margin: 0;
+    font-weight: bold;
 }
 
 header div { /* NEW */
@@ -47,6 +64,21 @@ header img { /* NEW */
     height: 36px;
     border: 1px solid #333;
     border-radius: 5px;
+    margin-bottom: 10px; 
+}
+header img.logo{
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ffffff;
+    border-radius: 50px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom:35px;
+} 
+.logo-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 nav {
@@ -222,6 +254,7 @@ label.upload img {
 }
 footer {
     text-align: center;
+    background: #FFD6E8;
 }
 
 footer b {
