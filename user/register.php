@@ -1,6 +1,7 @@
 <?php
 include '../_base.php';
 
+//  KICK USER IF ALREADY LOGGED IN then show error - Chai
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
