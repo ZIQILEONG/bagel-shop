@@ -15,60 +15,71 @@ body {
     grid: auto auto 1fr auto / auto;
 }
 
-header, footer {
-    padding: 10px 50px;
-    background: #ccc;
-}
-
-header { /* NEW */
+header{
     display: flex;
-    gap: 10px;
+    flex-direction: column; 
     align-items: center;
+    background: #fafadc;
+    padding:10px 20px;
 }
 
 header h1 {
-    flex: 1; /* NEW */
+    font-family: "Lilita One", cursive;
+    font-size: 25px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 10px 20px;
     margin: 0;
-    padding-left: 40px;
-    background: url(/images/favicon.png) no-repeat left / 36px;
 }
 
 header a {
-    color: inherit;
+    color: #b5192b;
     text-decoration: none;
+    
 }
-
-header div { /* NEW */
-    text-align: right;
-}
-
-header img { /* NEW */
-    width: 36px;
-    height: 36px;
-    border: 1px solid #333;
-    border-radius: 5px;
-}
-
-nav {
-    padding: 0 50px;
-    background: #999;
+.top-bar {
+    height: 10px;
+    background: #FFD6E8;
     display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
-nav a {
-    padding: 5px 10px;
-    color: #fff;
-    background: #666;
-    text-decoration: none;
-    white-space: nowrap;
+.top-bar h1 {
+    font-family: "Dancing Script", cursive;
+    font-size: 10px;
+    color: #6B3E26;
+    padding: 8px 20px;
+    margin: 0;
+    font-weight: bold;
 }
 
-nav a:hover {
-    background: #333;
+header img.logo{
+    width: 50px;
+    height: 50px;
+    border: 1px solid #ffffff;
+    border-radius: 50px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom:35px;
+} 
+.logo-container{
+    display: flex;
+    align-items: center;
 }
 
-nav div { /* NEW */
-    flex: 1;
+.header-top{
+    display: flex;
+    align-items: center;   
+    gap: 15px;             
+}
+
+header img.logo{
+    width:50px;
+    height:50px;
+    border:1px solid #fff;
+    border-radius:50%;
+    margin-bottom:0;
 }
 
 main {
@@ -79,18 +90,45 @@ main h1 {
     margin-top: 0;
 }
 
-/* Pager */
-nav.pager {
-    padding: 0;
-    background: transparent;
+.navbar {
+  display: flex;
+  gap: 40px;
+  padding: 18px 32px;
 }
 
-nav.pager a {
-    outline: 1px solid #333;
+.navbar a {
+  position: relative;
+  display: inline-block;
+  overflow: hidden;     
+  height: 16px;         
+  text-decoration: none;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.5px;
 }
 
-nav.pager a.active {
-    background: #333;
+.navbar a .flip {
+  display: block;
+  transition: transform 0.3s ease;
+}
+
+.navbar a .flip span {
+  display: block;
+  height: 16px;
+  line-height: 16px;
+}
+
+.navbar a .flip span:first-child {
+  color: #b5192b;
+}
+
+.navbar a .flip span:last-child {
+  color: #6B3E26;
+}
+
+.navbar a:hover .flip {
+  transform: translateY(-16px);
 }
 
 /* Table ------------------------------------------------------------------- */
@@ -219,4 +257,12 @@ label.upload img {
     height: 200px;
     object-fit: cover;
     cursor: pointer;
+}
+footer {
+    text-align: center;
+    background: #FFD6E8;
+}
+
+footer b {
+    color: #3E2723;
 }

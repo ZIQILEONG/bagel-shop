@@ -8,9 +8,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = trim($_POST['name']);
     $email = trim($_POST['email']);
     $password = trim($_POST['password']);
+    $reenter_password=trim($_POST['reenter_password']);
 
-    if ($name == "" || $email == "" || $password == "") {
+    if ($name == "" || $email == "" || $password == "" || $reenter_password == "") {
         echo "Please fill in all fields.";
+    }
+    else if ($password != $reenter_password){
+        echo "Password do not match !";
     }
     else if (is_exists($email, 'user', 'email')) {
         echo "Email already exists.";
@@ -40,13 +44,16 @@ include '../_head.php';
     <?= err('name') ?>
 
     <label for="email">Email</label>
-        <?= html_text('email', 'maxlength="100"') ?>
-        <?= err('email') ?>
+    <?= html_text('email', 'maxlength="100"') ?>
+    <?= err('email') ?>
 
     <label for="password">Password</label>
     <?= html_password('password', 'maxlength="100"') ?>
     <?= err('password') ?>
 
+    <label for="reenter_password">Re-enter Password</lable>
+    <?= html_password('reenter_password', 'maxlength="100"') ?>
+    <?= err('password') ?>
     <section>
         <button>Register</button>
     </section>
