@@ -1,26 +1,107 @@
-/* Font -------------------------------------------------------------------- */
+/* Fonts -------------------------------------------------------------------- */
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-body, input, button, textarea, select {
-    font: 16px 'Roboto', sans-serif;
+/* Variables ------------------------------------------------------------- */
+
+:root {
+    --pink:       #FFD6E8;
+    --red:        #b5192b;
+    --red-dark:   #8a1220;
+    --brown:      #6B3E26;
+    --cream:      #FFF8F0;
+    --text:       #3E2723;
+    --text-muted: #8a7264;
+    --border:     #e6d3bf;
+    --white:      #ffffff;
+    --shadow:     0 2px 10px rgba(0, 0, 0, 0.08);
+    --radius:     10px;
 }
 
-/* Layout ------------------------------------------------------------------ */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+h1, h2, h3, h4 {
+    margin: 0 0 0.5em;
+    line-height: 1.25;
+}
+
+p {
+    margin: 0 0 1em;
+}
+
+/* Layout --------------------------------------------------------------- */
+
+body, input, button, textarea, select {
+    font: 16px 'Roboto', sans-serif;
+    color: var(--text);
+}
 
 body {
     margin: 0;
-    height: 100vh;
+    min-height: 100vh;
     display: grid;
     grid: auto auto 1fr auto / auto;
+    background: var(--cream);
+    line-height: 1.6;
 }
 
-header{
+main {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
+}
+
+main h1 {
+    font-family: 'Lilita One', cursive;
+    letter-spacing: 1px;
+    color: var(--red);
+}
+
+/* Header ----------------------------------------------------------------- */
+
+.top-bar {
+    height: auto;
+    background: var(--pink);
     display: flex;
-    flex-direction: column; 
+    justify-content: center;
     align-items: center;
-    background: #fafadc;
-    padding:10px 20px;
+    padding: 6px 20px;
+}
+
+.top-bar h1 {
+    font-family: "Dancing Script", cursive;
+    font-size: 13px;
+    color: var(--brown);
+    letter-spacing: 0.5px;
+    margin: 0;
+    font-weight: bold;
+}
+
+header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--white);
+    padding: 14px 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    z-index: 2;
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+header img.logo {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--pink);
+    border-radius: 50%;
+    object-fit: cover;
 }
 
 header h1 {
@@ -28,127 +109,141 @@ header h1 {
     font-size: 25px;
     letter-spacing: 2px;
     text-transform: uppercase;
-    padding: 10px 20px;
+    padding: 6px 0;
     margin: 0;
 }
 
 header a {
-    color: #b5192b;
+    color: var(--red);
     text-decoration: none;
-    
-}
-.top-bar {
-    height: 10px;
-    background: #FFD6E8;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
-.top-bar h1 {
-    font-family: "Dancing Script", cursive;
-    font-size: 10px;
-    color: #6B3E26;
-    padding: 8px 20px;
-    margin: 0;
-    font-weight: bold;
-}
-
-header img.logo{
-    width: 50px;
-    height: 50px;
-    border: 1px solid #ffffff;
-    border-radius: 50px;
-    align-items: center;
-    justify-content: center;
-    margin-bottom:35px;
-} 
-.logo-container{
-    display: flex;
-    align-items: center;
-}
-
-.header-top{
-    display: flex;
-    align-items: center;   
-    gap: 15px;             
-}
-
-header img.logo{
-    width:50px;
-    height:50px;
-    border:1px solid #fff;
-    border-radius:50%;
-    margin-bottom:0;
-}
-
-main {
-    padding: 20px 50px;
-}
-
-main h1 {
-    margin-top: 0;
-}
+/* Primary decorative nav (Home / Full Menu / Order for Tomorrow) --------- */
 
 .navbar {
-  display: flex;
-  gap: 40px;
-  padding: 18px 32px;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    padding: 12px 32px 4px;
 }
 
 .navbar a {
-  position: relative;
-  display: inline-block;
-  overflow: hidden;     
-  height: 16px;         
-  text-decoration: none;
-  font-weight: bold;
-  text-transform: uppercase;
-  font-size: 13px;
-  letter-spacing: 0.5px;
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    height: 16px;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
 }
 
 .navbar a .flip {
-  display: block;
-  transition: transform 0.3s ease;
+    display: block;
+    transition: transform 0.3s ease;
 }
 
 .navbar a .flip span {
-  display: block;
-  height: 16px;
-  line-height: 16px;
+    display: block;
+    height: 16px;
+    line-height: 16px;
 }
 
 .navbar a .flip span:first-child {
-  color: #b5192b;
+    color: var(--red);
 }
 
 .navbar a .flip span:last-child {
-  color: #6B3E26;
+    color: var(--brown);
 }
 
-.navbar a:hover .flip {
-  transform: translateY(-16px);
+.navbar a:hover .flip,
+.navbar a:focus-visible .flip {
+    transform: translateY(-16px);
 }
 
-/* Table ------------------------------------------------------------------- */
+/* Role-based nav bar (Product List / Cart / Manage Orders / Login etc.) -- */
+
+body > nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--brown);
+    padding: 10px 20px;
+}
+
+body > nav a {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+body > nav a:hover,
+body > nav a:focus-visible {
+    background: var(--white);
+    color: var(--brown);
+    border-color: var(--white);
+}
+
+/* Hero (index page) ------------------------------------------------------ */
+
+.hero {
+    text-align: center;
+    padding: 20px 0 8px;
+}
+
+.hero h1 {
+    font-family: 'Lilita One', cursive;
+    font-size: 48px;
+    color: var(--red);
+    letter-spacing: 1px;
+    display: inline-block;
+    transition: transform 0.15s ease-out;
+}
+
+.hero .tagline {
+    color: var(--text-muted);
+    font-size: 17px;
+    margin: 0;
+}
+
+/* Table -------------------------------------------------------------------- */
 
 .table {
+    width: 100%;
     border-collapse: collapse;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    overflow: hidden;
 }
 
 .table th, .table td {
-    border: 1px solid #333;
-    padding: 5px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
 }
 
 .table th {
-    color: #fff;
-    background: #666;
+    color: var(--white);
+    background: var(--red);
+    font-weight: bold;
 }
 
 .table tr:hover td {
-    background: #ccc;
+    background: var(--pink);
 }
 
 .table td:has(.popup) {
@@ -161,7 +256,9 @@ main h1 {
     left: 100%;
     translate: 5px -50%;
     z-index: 1;
-    border: 1px solid #333;
+    border: 1px solid var(--border);
+    background: var(--white);
+    box-shadow: var(--shadow);
     display: none;
 }
 
@@ -195,14 +292,14 @@ main h1 {
 
 #info {
     position: fixed;
-    color: #fff;
-    background: #666;
-    border: 1px solid #333;
-    border-radius: 5px;
+    color: var(--white);
+    background: var(--brown);
+    border-radius: 8px;
     padding: 10px 20px;
     left: 50%;
     translate: -50% 0;
     z-index: 999;
+    box-shadow: var(--shadow);
 
     top: -100px;
     opacity: 0;
@@ -214,9 +311,34 @@ main h1 {
 
 @keyframes fade {
       0% { top: -100px; opacity: 0; }
-     10% { top:  100px; opacity: 1; }
-     90% { top:  100px; opacity: 1; }
+     10% { top:  20px; opacity: 1; }
+     90% { top:  20px; opacity: 1; }
     100% { top: -100px; opacity: 0; }
+}
+
+/* Buttons ------------------------------------------------------------------ */
+
+button, .button {
+    display: inline-block;
+    font: inherit;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    color: var(--white);
+    background: var(--red);
+    border: none;
+    border-radius: 999px;
+    padding: 9px 22px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s, transform 0.15s;
+}
+
+button:hover, .button:hover,
+button:focus-visible, .button:focus-visible {
+    background: var(--red-dark);
+    transform: translateY(-1px);
 }
 
 /* Form -------------------------------------------------------------------- */
@@ -228,41 +350,221 @@ label > * {
 .form {
     display: grid;
     grid: auto / auto auto auto;
-    gap: 5px;
+    gap: 10px;
     place-content: start;
     place-items: center start;
+    background: var(--white);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
 .form > label:not(:has(*)) {
     place-self: stretch;
-    background: #ccc;
+    background: var(--pink);
+    color: var(--brown);
     font-weight: bold;
-    padding: 5px;
+    padding: 8px 10px;
+    border-radius: 6px;
 }
 
 .form > section {
     grid-column: 1 / -1;
 }
 
+.form input[type=text],
+.form input[type=email],
+.form input[type=password],
+.form input[type=number],
+.form input[type=search],
+.form textarea,
+.form select {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+    outline: 2px solid var(--red);
+    outline-offset: 1px;
+}
+
 .err {
-    color: red;
+    color: var(--red);
+    font-size: 13px;
 }
 
 /* Photo Upload ------------------------------------------------------------ */
 
 label.upload img {
     display: block;
-    border: 1px solid #333;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     width: 200px;
     height: 200px;
     object-fit: cover;
     cursor: pointer;
 }
+
+/* Carousel (index page) --------------------------------------------------- */
+
+.carousel-section {
+    margin: 28px 0 12px;
+}
+
+.carousel-stage {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    max-height: 70vh;
+    border-radius: var(--radius);
+    overflow: hidden;
+    background: var(--pink);
+    box-shadow: var(--shadow);
+}
+
+.carousel-slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+}
+
+.carousel-slide.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.carousel-slide img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carousel-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    width: 0%;
+    background: var(--red);
+    z-index: 5;
+}
+
+.carousel-description {
+    text-align: center;
+    margin-top: 18px;
+    transition: opacity 0.3s ease;
+}
+
+.carousel-description.fading {
+    opacity: 0;
+}
+
+.carousel-description h2 {
+    font-family: 'Lilita One', cursive;
+    font-size: 26px;
+    color: var(--red);
+    margin-bottom: 6px;
+}
+
+.carousel-description p {
+    color: var(--text-muted);
+    max-width: 560px;
+    margin: 0 auto 14px;
+}
+
+.carousel-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 8px;
+}
+
+.carousel-status {
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 14px;
+}
+
+.carousel-status.is-paused {
+    color: var(--red);
+    border-color: var(--red);
+}
+
+.carousel-dot {
+    width: 30px;
+    height: 30px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid var(--red);
+    background: var(--white);
+    color: var(--red);
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.carousel-dot.active {
+    background: var(--red);
+    color: var(--white);
+}
+
+/* Demo accounts (index page) ---------------------------------------------- */
+
+.demo-accounts {
+    margin-top: 40px;
+}
+
+.demo-accounts h2 {
+    font-family: 'Lilita One', cursive;
+    color: var(--brown);
+    font-size: 20px;
+}
+
+/* Footer -------------------------------------------------------------------- */
+
 footer {
     text-align: center;
-    background: #FFD6E8;
+    background: var(--pink);
+    color: var(--brown);
+    padding: 16px 20px;
 }
 
 footer b {
-    color: #3E2723;
+    color: var(--brown);
+}
+
+/* Responsive ---------------------------------------------------------------- */
+
+@media (max-width: 640px) {
+    main {
+        padding: 20px 16px 48px;
+    }
+
+    .hero h1 {
+        font-size: 34px;
+    }
+
+    .navbar {
+        gap: 20px;
+    }
+
+    body > nav a {
+        font-size: 11px;
+        padding: 6px 10px;
+    }
 }
