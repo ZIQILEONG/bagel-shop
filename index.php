@@ -18,18 +18,18 @@ include '_head.php';
 
 <section class="carousel-section">
     <div class="carousel-stage" id="carouselStage">
-        <div class="carousel-slide active" data-index="0"><img src="/products/sesame.jpg" alt="Sesame Bagel"></div>
-        <div class="carousel-slide"        data-index="1"><img src="/products/cinnamon.jpg" alt="Cinnamon Raisin Bagel"></div>
-        <div class="carousel-slide"        data-index="2"><img src="/products/everything.jpg" alt="Everything Bagel"></div>
-        <div class="carousel-slide"        data-index="3"><img src="/products/blueberry.jpg" alt="Blueberry Bagel"></div>
-        <div class="carousel-slide"        data-index="4"><img src="/products/creamcheese.jpg" alt="Cream Cheese Bagel"></div>
+        <div class="carousel-slide active" data-index="0"><img src="/photos/products/bagelA.png" alt="Sesame Bagel"></div>
+        <div class="carousel-slide"        data-index="1"><img src="/photos/products/bagelB.jpg" alt="Cinnamon Raisin Bagel"></div>
+        <div class="carousel-slide"        data-index="2"><img src="/photos/products/bagelC.jpg" alt="Everything Bagel"></div>
+        <div class="carousel-slide"        data-index="3"><img src="/photos/products/bagelD.jpg" alt="Blueberry Bagel"></div>
+        <div class="carousel-slide"        data-index="4"><img src="/photos/products/bagelE.jpg" alt="Cream Cheese Bagel"></div>
         <div class="carousel-progress" id="carouselProgress"></div>
     </div>
 
     <div class="carousel-description" id="carouselDescription">
         <h2 id="carouselTitle"></h2>
         <p id="carouselText"></p>
-        <a class="button" id="carouselLink" href="#">Order Now</a>
+        <a class="button" id="carouselLink" href="/product/list.php">Order Now</a>
     </div>
 
     <div class="carousel-controls">
