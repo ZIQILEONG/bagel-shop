@@ -22,13 +22,13 @@
         </div>
         <h1><a href="/">PULULU BAGEL</a></h1>
         <nav class="navbar">
-            <a href="#">
+            <a href="/index.php">
                 <span class="flip">
                 <span>Home</span>
                 <span>Home</span>
                 </span>
             </a>
-            <a id="storyLink" href="index.php">
+            <a id="storyLink" href="/product/list.php">
                 <span class="flip">
                 <span>Full Menu</span>
                 <span>Full Menu </span>
