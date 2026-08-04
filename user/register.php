@@ -21,13 +21,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
     else {
 
+        $hash = password_hash($password, PASSWORD_DEFAULT);
         $stm = $_db->prepare("
             INSERT INTO user (name, email, password)
-            VALUES (?, ?, SHA1(?))
+            VALUES (?, ?, ?)
         ");
 
-        $stm->execute([$name, $email, $password]);
-
+        $stm->execute([$name, $email, $hash]);
         echo "Register successful!";
     }
 }
