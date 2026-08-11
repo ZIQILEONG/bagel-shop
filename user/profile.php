@@ -1,3 +1,4 @@
+```php
 <?php
 
 include '../_base.php';
@@ -7,35 +8,32 @@ auth();
 $user = $_user;
 
 
+// =========================================================
+// UPDATE PROFILE
+// =========================================================
 
-// Update Profile
+if (is_post()) {
 
-if(is_post()){
-
-
-    $name = post('name');
-    $email = post('email');
+    $name     = post('name');
+    $email    = post('email');
     $phone_no = post('phone_no');
     $password = post('password');
 
+    // Keep old photo if no new photo is uploaded
     $photo = $user->photo;
 
 
+    // =====================================================
+    // UPLOAD PHOTO
+    // =====================================================
 
-    // ==========================
-    // Upload Photo
-    // ==========================
-
-    if(isset($_FILES['photo']) && $_FILES['photo']['error'] == 0){
-
+    if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
 
         $file = $_FILES['photo'];
-
 
         $ext = strtolower(
             pathinfo($file['name'], PATHINFO_EXTENSION)
         );
-
 
         $allowed = [
             'jpg',
@@ -44,48 +42,41 @@ if(is_post()){
             'gif'
         ];
 
+        if (in_array($ext, $allowed)) {
 
-
-        if(in_array($ext, $allowed)){
-
-
+            // Generate unique file name
             $photo = uniqid() . "." . $ext;
 
-
-            $image_path = __DIR__ . "/../image";
-
-
-if(!is_dir($image_path)){
-    mkdir($image_path, 0777, true);
-}
+            // IMPORTANT:
+            // Use "images" consistently
+            $image_path = __DIR__ . "/../images";
 
 
-move_uploaded_file(
-    $file['tmp_name'],
-    $image_path . "/$photo"
-);
+            // Create images folder if it does not exist
+            if (!is_dir($image_path)) {
+                mkdir($image_path, 0777, true);
+            }
 
 
+            // Move uploaded photo
+            move_uploaded_file(
+                $file['tmp_name'],
+                $image_path . "/" . $photo
+            );
         }
-
     }
 
 
+    // =====================================================
+    // UPDATE DATABASE
+    // =====================================================
 
-
-    // ==========================
-    // Update Database
-    // ==========================
-
-
-    if($password != ''){
-
+    if ($password != '') {
 
         $hash = password_hash(
             $password,
             PASSWORD_DEFAULT
         );
-
 
         $stm = $_db->prepare("
             UPDATE user
@@ -98,7 +89,6 @@ move_uploaded_file(
             WHERE id = ?
         ");
 
-
         $stm->execute([
             $name,
             $email,
@@ -108,11 +98,7 @@ move_uploaded_file(
             $user->id
         ]);
 
-
-    }
-
-    else{
-
+    } else {
 
         $stm = $_db->prepare("
             UPDATE user
@@ -124,7 +110,6 @@ move_uploaded_file(
             WHERE id = ?
         ");
 
-
         $stm->execute([
             $name,
             $email,
@@ -132,18 +117,12 @@ move_uploaded_file(
             $photo,
             $user->id
         ]);
-
-
     }
 
 
-
-
-    echo "Profile updated successfully!";
-
-
-
-    // Reload user data
+    // =====================================================
+    // RELOAD USER DATA
+    // =====================================================
 
     $stm = $_db->prepare("
         SELECT *
@@ -151,164 +130,140 @@ move_uploaded_file(
         WHERE id = ?
     ");
 
-
     $stm->execute([
         $user->id
     ]);
 
-
     $user = $stm->fetch();
 
 
+    echo "Profile updated successfully!";
 }
 
 
-
-
 $_title = 'User | Profile';
-
 
 include '../_head.php';
 
 ?>
 
 
+<!-- =====================================================
+     PROFILE FORM
+     ===================================================== -->
 
-<form method="post"
-      class="form profile-form"
-      enctype="multipart/form-data">
+<form
+    method="post"
+    class="form profile-form"
+    enctype="multipart/form-data"
+>
 
 
+    <!-- Photo -->
 
-<!-- Photo -->
+    <label>
+        Photo
+    </label>
 
-<label>
-Photo
-</label>
+    <div>
 
+        <img
+            src="../images/<?= encode($user->photo ?: 'default.png') ?>"
+            alt="Profile Photo"
+            width="140"
+            height="140"
+        >
 
-<div>
+        <br><br>
 
+        <input
+            type="file"
+            name="photo"
+            accept="image/jpeg,image/png,image/gif"
+        >
 
-<img
-src="../image/<?=encode($user->photo ?: 'default.png')?>"
-width="120"
-height="120"
-style="object-fit:cover;border-radius:50%;">
+    </div>
 
 
+    <!-- Name -->
 
-<br><br>
+    <label>
+        Name
+    </label>
 
+    <input
+        type="text"
+        name="name"
+        maxlength="50"
+        value="<?= encode($user->name) ?>"
+    >
 
-<input
-type="file"
-name="photo"
-accept="image/*">
 
+    <!-- Email -->
 
-</div>
+    <label>
+        Email
+    </label>
 
+    <input
+        type="email"
+        name="email"
+        maxlength="100"
+        value="<?= encode($user->email) ?>"
+    >
 
 
+    <!-- Phone -->
 
+    <label>
+        Phone Number
+    </label>
 
-<!-- Name -->
+    <input
+        type="text"
+        name="phone_no"
+        maxlength="20"
+        value="<?= encode($user->phone_no) ?>"
+    >
 
-<label>
-Name
-</label>
 
+    <!-- Role -->
 
-<input
-type="text"
-name="name"
-maxlength="50"
-value="<?=encode($user->name)?>">
+    <label>
+        Role
+    </label>
 
+    <p>
+        <?= encode($user->role) ?>
+    </p>
 
 
+    <!-- Password -->
 
+    <label>
+        New Password
+    </label>
 
-<!-- Email -->
+    <input
+        type="password"
+        name="password"
+        maxlength="100"
+        placeholder="Leave blank if no change"
+    >
 
-<label>
-Email
-</label>
 
+    <!-- Update Button -->
 
-<input
-type="email"
-name="email"
-maxlength="100"
-value="<?=encode($user->email)?>">
+    <section>
 
+        <button type="submit">
+            Update Profile
+        </button>
 
-
-
-
-<!-- Phone -->
-
-<label>
-Phone Number
-</label>
-
-
-<input
-type="text"
-name="phone_no"
-maxlength="20"
-value="<?=encode($user->phone_no)?>">
-
-
-
-
-
-<!-- Role -->
-
-<label>
-Role
-</label>
-
-
-<p>
-<?=encode($user->role)?>
-</p>
-
-
-
-
-
-<!-- Password -->
-
-<label>
-New Password
-</label>
-
-
-<input
-type="password"
-name="password"
-maxlength="100"
-placeholder="Leave blank if no change">
-
-
-
-
-
-<section>
-
-<button>
-Update Profile
-</button>
-
-
-</section>
-
+    </section>
 
 
 </form>
-
 
 
 <?php
@@ -316,3 +271,4 @@ Update Profile
 include '../_foot.php';
 
 ?>
+

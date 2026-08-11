@@ -408,3 +408,212 @@ label.upload img {
     object-fit: cover;
     cursor: pointer;
 }
+
+/* =========================================================
+   USER PROFILE
+   ========================================================= */
+
+.profile-form {
+    width: 100%;
+    max-width: 650px;
+    margin: 30px auto;
+
+    display: grid;
+    grid-template-columns: 140px 1fr;
+
+    gap: 18px 25px;
+
+    align-items: center;
+
+    background: var(--white);
+    padding: 30px 35px;
+
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+}
+
+
+/* -------------------------
+   Profile Labels
+   ------------------------- */
+
+.profile-form > label {
+    background: var(--pink);
+    color: var(--brown);
+
+    font-weight: bold;
+
+    padding: 10px 14px;
+
+    border-radius: 8px;
+
+    text-align: right;
+}
+
+
+/* -------------------------
+   Profile Inputs
+   ------------------------- */
+
+.profile-form input[type="text"],
+.profile-form input[type="email"],
+.profile-form input[type="password"] {
+    width: 100%;
+    max-width: 380px;
+
+    padding: 10px 12px;
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    background: var(--cream);
+
+    font: inherit;
+}
+
+
+/* -------------------------
+   Input Focus
+   ------------------------- */
+
+.profile-form input[type="text"]:focus,
+.profile-form input[type="email"]:focus,
+.profile-form input[type="password"]:focus {
+    outline: 2px solid var(--red);
+    outline-offset: 1px;
+}
+
+
+/* -------------------------
+   Role
+   ------------------------- */
+
+.profile-form > p {
+    margin: 0;
+
+    padding: 10px 12px;
+
+    background: var(--cream);
+
+    border: 1px solid var(--border);
+    border-radius: 8px;
+
+    font-weight: bold;
+}
+
+
+/* -------------------------
+   Photo Area
+   ------------------------- */
+
+.profile-form > div {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+
+/* -------------------------
+   Profile Picture
+   ------------------------- */
+
+.profile-form img {
+    width: 140px;
+    height: 140px;
+
+    object-fit: cover;
+
+    border-radius: 50%;
+
+    border: 4px solid var(--pink);
+
+    background: var(--cream);
+
+    box-shadow: var(--shadow);
+}
+
+
+/* -------------------------
+   Upload Input
+   ------------------------- */
+
+.profile-form input[type="file"] {
+    width: 100%;
+    max-width: 380px;
+
+    font: inherit;
+    color: var(--text);
+}
+
+
+/* -------------------------
+   Update Button Area
+   ------------------------- */
+
+.profile-form > section {
+    grid-column: 1 / -1;
+
+    display: flex;
+    justify-content: center;
+
+    margin-top: 10px;
+    padding-top: 20px;
+
+    border-top: 1px solid var(--border);
+}
+
+
+/* -------------------------
+   Update Button
+   ------------------------- */
+
+.profile-form button {
+    min-width: 180px;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 640px) {
+
+    .profile-form {
+        grid-template-columns: 1fr;
+
+        max-width: 100%;
+
+        padding: 25px 20px;
+    }
+
+
+    .profile-form > label {
+        text-align: left;
+
+        margin-bottom: -10px;
+    }
+
+
+    .profile-form > div {
+        align-items: center;
+    }
+
+
+    .profile-form input[type="text"],
+    .profile-form input[type="email"],
+    .profile-form input[type="password"],
+    .profile-form input[type="file"] {
+        max-width: 100%;
+    }
+
+
+    .profile-form > p {
+        width: 100%;
+    }
+
+
+    .profile-form > section {
+        margin-top: 5px;
+    }
+
+}
