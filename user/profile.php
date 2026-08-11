@@ -7,7 +7,7 @@ auth();
 $user = $_user;
 
 
-//BAGEL PULULU
+
 // Update Profile
 
 if(is_post()){
