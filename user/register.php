@@ -22,12 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     else {
 
         $hash = password_hash($password, PASSWORD_DEFAULT);
-        $stm = $_db->prepare("
-            INSERT INTO user (name, email, password)
-            VALUES (?, ?, ?)
-        ");
-
-        $stm->execute([$name, $email, $hash]);
+        $stm = $_db->prepare(" INSERT INTO user (name, email, password, role)
+            VALUES (?, ?, ?, ?)");
+        $stm->execute([$name, $email, $hash, 'user']);
         echo "Register successful!";
     }
 }
@@ -39,24 +36,27 @@ include '../_head.php';
 <h2>Register</h2>
 
 <form method="post" class="form">
-    <label for="name" required>Name</label>
-    <?= html_text('name', 'maxlength="50"') ?>
+
+    <label for="name">Name</label>
+    <?= html_text('name', 'maxlength="50" required') ?>
     <?= err('name') ?>
 
     <label for="email">Email</label>
-    <?= html_text('email', 'maxlength="100"') ?>
+    <?= html_text('email', 'maxlength="100" required') ?>
     <?= err('email') ?>
 
     <label for="password">Password</label>
-    <?= html_password('password', 'maxlength="100"') ?>
+    <?= html_password('password', 'maxlength="100" required') ?>
     <?= err('password') ?>
 
-    <label for="reenter_password">Re-enter Password</lable>
-    <?= html_password('reenter_password', 'maxlength="100"') ?>
+    <label for="reenter_password">Re-enter Password</label>
+    <?= html_password('reenter_password', 'maxlength="100" required') ?>
     <?= err('password') ?>
+
     <section>
         <button>Register</button>
     </section>
+
 </form>
 
 
