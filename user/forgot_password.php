@@ -88,6 +88,6 @@ include '../_head.php';
         Send Reset Link
     </button>
 
-
+</form>
 <?php
 include '../_foot.php';
