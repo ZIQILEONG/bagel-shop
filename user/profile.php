@@ -187,7 +187,7 @@ include '../_head.php';
 
 
     <div>
-        <!-- Add an ID to the img tag to make it easier for JS to access -->
+        <!-- 给img加上id，方便js获取 -->
         <img
             id="avatarImg"
             src="../images/<?= encode($user->photo ?: 'photo.jpg') ?>"
@@ -199,6 +199,7 @@ include '../_head.php';
 
         <br><br>
 
+        <!-- file input加上id -->
         <input
             id="photoInput"
             type="file"
@@ -306,7 +307,7 @@ include '../_head.php';
 
 </form>
 
-<!-- ✅ Added JS: Instant preview upon image selection -->
+<!-- ✅新增 JS：选择图片立刻预览 -->
 <script>
     const avatarImg = document.getElementById('avatarImg');
     const photoInput = document.getElementById('photoInput');
@@ -315,7 +316,7 @@ include '../_head.php';
         const file = this.files[0];
         if (!file) return;
 
-        // only show image , not store in database
+        // 本地即时预览图片，不需要传给后端
         const reader = new FileReader();
         reader.onload = function (e) {
             avatarImg.src = e.target.result;
