@@ -97,70 +97,58 @@ function is_email($value) {
 function root($path = '') {
     return "$_SERVER[DOCUMENT_ROOT]/$path";
 }
-
 // Return base url (host + port)
 function base($path = '') {
     return "http://$_SERVER[SERVER_NAME]:$_SERVER[SERVER_PORT]/$path";
 }
-
 // ============================================================================
 // HTML Helpers
 // ============================================================================
-
 // Placeholder for TODO
 function TODO() {
     echo '<span>TODO</span>';
 }
-
 // Encode HTML special characters
 function encode($value) {
     return htmlentities($value);
 }
-
 // Generate <input type='hidden'>
 function html_hidden($key, $attr = '') {
-    $value ??= encode($GLOBALS[$key] ?? '');
+    $value = encode($GLOBALS[$key] ?? '');
     echo "<input type='hidden' id='$key' name='$key' value='$value' $attr>";
 }
-
 // Generate <input type='text'>
 function html_text($key, $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     echo "<input type='text' id='$key' name='$key' value='$value' $attr>";
 }
-
 // Generate <input type='password'>
 function html_password($key, $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     echo "<input type='password' id='$key' name='$key' value='$value' $attr>";
 }
-
 // Generate <input type='number'>
 function html_number($key, $min = '', $max = '', $step = '', $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     echo "<input type='number' id='$key' name='$key' value='$value'
                  min='$min' max='$max' step='$step' $attr>";
 }
-
 // Generate <input type='search'>
 function html_search($key, $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     echo "<input type='search' id='$key' name='$key' value='$value' $attr>";
 }
-
 // Generate <textarea>
 function html_textarea($key, $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     echo "<textarea id='$key' name='$key' $attr>$value</textarea>";
 }
-
 // Generate SINGLE <input type='checkbox'>
 function html_checkbox($key, $label = '', $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
     $status = $value == 1 ? 'checked' : '';
     echo "<label><input type='checkbox' id='$key' name='$key' value='1' $status $attr>$label</label>";
 }
-
 // Generate <input type='radio'> list
 function html_radios($key, $items, $br = false) {
     $value = encode($GLOBALS[$key] ?? '');
@@ -174,7 +162,6 @@ function html_radios($key, $items, $br = false) {
     }
     echo '</div>';
 }
-
 // Generate <select>
 function html_select($key, $items, $default = '- Select One -', $attr = '') {
     $value = encode($GLOBALS[$key] ?? '');
@@ -188,34 +175,27 @@ function html_select($key, $items, $default = '- Select One -', $attr = '') {
     }
     echo '</select>';
 }
-
 // Generate <input type='file'>
 function html_file($key, $accept = '', $attr = '') {
     echo "<input type='file' id='$key' name='$key' accept='$accept' $attr>";
 }
-
 // Generate table headers <th>
 function table_headers($fields, $sort, $dir, $href = '') {
     foreach ($fields as $k => $v) {
         $d = 'asc'; // Default direction
         $c = '';    // Default class
-        
         if ($k == $sort) {
             $d = $dir == 'asc' ? 'desc' : 'asc';
             $c = $dir;
         }
-
         echo "<th><a href='?sort=$k&dir=$d&$href' class='$c'>$v</a></th>";
     }
 }
-
 // ============================================================================
 // Error Handlings
 // ============================================================================
-
 // Global error array
 $_err = [];
-
 // Generate <span class='err'>
 function err($key) {
     global $_err;
@@ -226,26 +206,21 @@ function err($key) {
         echo '<span></span>';
     }
 }
-
 // ============================================================================
 // Security
 // ============================================================================
-
 // Global user object
 $_user = $_SESSION['user'] ?? null;
-
 // Login user
 function login($user, $url = '/') {
     $_SESSION['user'] = $user;
     redirect($url);
 }
-
 // Logout user
 function logout($url = '/') {
     unset($_SESSION['user']);
     redirect($url);
 }
-
 // Authorization
 function auth(...$roles) {
     global $_user;
@@ -259,29 +234,22 @@ function auth(...$roles) {
             return; // OK
         }
     }
-    
     redirect('/login.php');
 }
-
-
 // ============================================================================
 // Shopping Cart
 // ============================================================================
-
 // Get shopping cart
 function get_cart() {
     return $_SESSION['cart'] ?? [];
 }
-
 // Set shopping cart
 function set_cart($cart = []) {
     $_SESSION['cart'] = $cart;
 }
-
 // Update shopping cart
 function update_cart($id, $unit) {
     $cart = get_cart();
-
     if ($unit >= 1 && $unit <= 10 && is_exists($id, 'product', 'id')) {
         $cart[$id] = $unit;
         ksort($cart);
@@ -289,19 +257,15 @@ function update_cart($id, $unit) {
     else {
         unset($cart[$id]);
     }
-
     set_cart($cart);
 }
-
 // ============================================================================
 // Database Setups and Functions
 // ============================================================================
-
 // Global PDO object
 $_db = new PDO('mysql:dbname=db_bagel', 'root', '', [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
 ]);
-
 // Is unique?
 function is_unique($value, $table, $field) {
     global $_db;
@@ -309,7 +273,6 @@ function is_unique($value, $table, $field) {
     $stm->execute([$value]);
     return $stm->fetchColumn() == 0;
 }
-
 // Is exists?
 function is_exists($value, $table, $field) {
     global $_db;
