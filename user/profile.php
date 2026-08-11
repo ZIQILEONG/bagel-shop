@@ -16,7 +16,6 @@ if (is_post()) {
     $name     = post('name');
     $email    = post('email');
     $phone_no = post('phone_no');
-    $password = post('password');
 
 
     // Keep old photo if user does not upload a new photo
@@ -77,59 +76,23 @@ if (is_post()) {
     // =====================================================
     // UPDATE DATABASE
     // =====================================================
+    $stm = $_db->prepare("
+        UPDATE user
+        SET
+            name = ?,
+            email = ?,
+            phone_no = ?,
+            photo = ?
+        WHERE id = ?
+    ");
 
-    if ($password != '') {
-
-        // Hash new password
-        $hash = password_hash(
-            $password,
-            PASSWORD_DEFAULT
-        );
-
-
-        $stm = $_db->prepare("
-            UPDATE user
-            SET
-                name = ?,
-                email = ?,
-                phone_no = ?,
-                password = ?,
-                photo = ?
-            WHERE id = ?
-        ");
-
-
-        $stm->execute([
-            $name,
-            $email,
-            $phone_no,
-            $hash,
-            $photo,
-            $user->id
-        ]);
-
-    }
-    else {
-
-        $stm = $_db->prepare("
-            UPDATE user
-            SET
-                name = ?,
-                email = ?,
-                phone_no = ?,
-                photo = ?
-            WHERE id = ?
-        ");
-
-
-        $stm->execute([
-            $name,
-            $email,
-            $phone_no,
-            $photo,
-            $user->id
-        ]);
-    }
+    $stm->execute([
+        $name,
+        $email,
+        $phone_no,
+        $photo,
+        $user->id
+    ]);
 
 
     // =====================================================
@@ -273,23 +236,6 @@ include '../_head.php';
     <p>
         <?= encode($user->role) ?>
     </p>
-
-
-    <!-- =================================================
-         NEW PASSWORD
-         ================================================= -->
-
-    <label>
-        New Password
-    </label>
-
-
-    <input
-        type="password"
-        name="password"
-        maxlength="100"
-        placeholder="Leave blank if no change"
-    >
 
 
     <!-- =================================================
