@@ -8,7 +8,7 @@ $user = $_user;
 
 
 
-// Update Profilekk
+// Update Profile
 
 if(is_post()){
 
