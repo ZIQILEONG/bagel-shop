@@ -218,6 +218,16 @@ function login($user, $url = '/') {
 }
 // Logout user
 function logout($url = '/') {
+    global $db;     // access global database connection variable --ziqi
+
+    // if user is logged in, save their cart to db first --ziqi
+    if (isset($_SESSION['user'])) {
+        $user_id = $_SESSION['user']->id; 
+        save_cart_to_db($user_id, $db);
+    }
+
+    // clear both cart and user for the session --ziqi
+    unset($_SESSION['cart']);
     unset($_SESSION['user']);
     redirect($url);
 }
