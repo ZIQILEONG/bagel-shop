@@ -1,129 +1,318 @@
 <?php
 
-require '_base.php';
+include '../_base.php';
+
+auth();
+
+$user = $_user;
 
 
-if(!isset($_SESSION['user'])){
 
-    header("location:login.php");
-    exit;
-
-}
-
-
-$user = $_SESSION['user'];
-
-
+// Update Profile
 
 if(is_post()){
 
 
-    $new_password = post('password');
+    $name = post('name');
+    $email = post('email');
+    $phone_no = post('phone_no');
+    $password = post('password');
+
+    $photo = $user->photo;
 
 
-    if($new_password!=""){
+
+    // ==========================
+    // Upload Photo
+    // ==========================
+
+    if(isset($_FILES['photo']) && $_FILES['photo']['error'] == 0){
 
 
-        $hash=password_hash(
-            $new_password,
+        $file = $_FILES['photo'];
+
+
+        $ext = strtolower(
+            pathinfo($file['name'], PATHINFO_EXTENSION)
+        );
+
+
+        $allowed = [
+            'jpg',
+            'jpeg',
+            'png',
+            'gif'
+        ];
+
+
+
+        if(in_array($ext, $allowed)){
+
+
+            $photo = uniqid() . "." . $ext;
+
+
+            $image_path = __DIR__ . "/../image";
+
+
+if(!is_dir($image_path)){
+    mkdir($image_path, 0777, true);
+}
+
+
+move_uploaded_file(
+    $file['tmp_name'],
+    $image_path . "/$photo"
+);
+
+
+        }
+
+    }
+
+
+
+
+    // ==========================
+    // Update Database
+    // ==========================
+
+
+    if($password != ''){
+
+
+        $hash = password_hash(
+            $password,
             PASSWORD_DEFAULT
         );
 
 
-        $stm=$_db->prepare("
-            UPDATE users
-            SET password=?
-            WHERE id=?
+        $stm = $_db->prepare("
+            UPDATE user
+            SET
+                name = ?,
+                email = ?,
+                phone_no = ?,
+                password = ?,
+                photo = ?
+            WHERE id = ?
         ");
 
 
         $stm->execute([
+            $name,
+            $email,
+            $phone_no,
             $hash,
+            $photo,
             $user->id
         ]);
 
 
+    }
 
-        echo "Password Updated";
+    else{
+
+
+        $stm = $_db->prepare("
+            UPDATE user
+            SET
+                name = ?,
+                email = ?,
+                phone_no = ?,
+                photo = ?
+            WHERE id = ?
+        ");
+
+
+        $stm->execute([
+            $name,
+            $email,
+            $phone_no,
+            $photo,
+            $user->id
+        ]);
 
 
     }
 
 
+
+
+    echo "Profile updated successfully!";
+
+
+
+    // Reload user data
+
+    $stm = $_db->prepare("
+        SELECT *
+        FROM user
+        WHERE id = ?
+    ");
+
+
+    $stm->execute([
+        $user->id
+    ]);
+
+
+    $user = $stm->fetch();
+
+
 }
 
+
+
+
+$_title = 'User | Profile';
+
+
+include '../_head.php';
 
 ?>
 
 
-<h2>
-Profile
-</h2>
 
-
-<img 
-src="images/<?= $user->photo ?>"
-width="100">
-
-
-<br>
-
-
-Name:
-
-<?= $user->name ?>
-
-
-<br>
-
-
-Email:
-
-<?= $user->email ?>
-
-
-<br>
-
-
-Phone:
-
-<?= $user->phone_no ?>
-
-
-<br>
-
-
-Role:
-
-<?= $user->role ?>
+<form method="post"
+      class="form profile-form"
+      enctype="multipart/form-data">
 
 
 
-<hr>
+<!-- Photo -->
+
+<label>
+Photo
+</label>
 
 
-<h3>
-Change Password
-</h3>
+<div>
+
+
+<img
+src="../image/<?=encode($user->photo ?: 'default.png')?>"
+width="120"
+height="120"
+style="object-fit:cover;border-radius:50%;">
 
 
 
-<form method="post">
+<br><br>
 
 
-New Password:
+<input
+type="file"
+name="photo"
+accept="image/*">
 
-<input 
+
+</div>
+
+
+
+
+
+<!-- Name -->
+
+<label>
+Name
+</label>
+
+
+<input
+type="text"
+name="name"
+maxlength="50"
+value="<?=encode($user->name)?>">
+
+
+
+
+
+<!-- Email -->
+
+<label>
+Email
+</label>
+
+
+<input
+type="email"
+name="email"
+maxlength="100"
+value="<?=encode($user->email)?>">
+
+
+
+
+
+<!-- Phone -->
+
+<label>
+Phone Number
+</label>
+
+
+<input
+type="text"
+name="phone_no"
+maxlength="20"
+value="<?=encode($user->phone_no)?>">
+
+
+
+
+
+<!-- Role -->
+
+<label>
+Role
+</label>
+
+
+<p>
+<?=encode($user->role)?>
+</p>
+
+
+
+
+
+<!-- Password -->
+
+<label>
+New Password
+</label>
+
+
+<input
 type="password"
-name="password">
+name="password"
+maxlength="100"
+placeholder="Leave blank if no change">
 
 
-<br>
 
+
+
+<section>
 
 <button>
-Update Password
+Update Profile
 </button>
 
 
+</section>
+
+
+
 </form>
+
+
+
+<?php
+
+include '../_foot.php';
+
+?>
