@@ -3,10 +3,10 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+//Authorization (admin)
 auth('Admin');
 
-// (2) Return product (based on id) - null means "create new"
+// Return product (based on id) - null means "create new"
 $id = req('id');
 
 $p = null;
@@ -16,25 +16,25 @@ if ($id) {
     $p = $stm->fetch();
 
     if (!$p) {
-        redirect('product-list.php');
+        redirect('product-listing.php');
     }
 }
 
-// (3) Handle delete
+// Handle delete
 if ($p && is_post() && req('btn') == 'delete') {
     $stm = $_db->prepare("DELETE FROM product WHERE id = ?");
     $ok  = $stm->execute([$p->id]);
 
     if ($ok) {
         temp('info', 'Product deleted.');
-        redirect('product-list.php');
+        redirect('product-listing.php');
     }
 
     temp('info', 'Cannot delete this product: it is referenced by existing orders.');
     redirect('product-detail.php?id=' . $p->id);
 }
 
-// (4) Handle create/update
+// Handle create/update
 if (is_post() && req('btn') != 'delete') {
     $name  = req('name');
     $price = req('price');
@@ -144,7 +144,7 @@ include '../_head.php';
 <?php endif ?>
 
 <p>
-    <button data-get="product-list.php">Back to Listing</button>
+    <button data-get="product-listing.php">Back to Listing</button>
 </p>
 
 <?php

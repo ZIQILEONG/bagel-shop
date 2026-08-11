@@ -3,6 +3,7 @@ include '../_base.php';
 require_once '../PHPMailer-master/src/PHPMailer.php';
 require_once '../PHPMailer-master/src/SMTP.php';
 require_once '../PHPMailer-master/src/Exception.php';
+require_once '../config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\SMTP;
@@ -12,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
      
     $email = $_POST['email'];
 
-    // 1. Check user email exists
     $stm = $_db->prepare(
         "SELECT * FROM user WHERE email = ?"
     );
@@ -22,13 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     if ($user) {
 
-        // 2. Generate reset token HERE
         $token = bin2hex(random_bytes(50));
+        $expire = date("Y-m-d H:i:s", strtotime("+5 minutes"));
 
-        // 3. Set expiry time (example: 1 hour)
-        $expire = date("Y-m-d H:i:s", strtotime("+30 minutes"));
-
-        // 4. Save token into password_reset_token table
         $stm = $_db->prepare(
             "INSERT INTO token
             (user_id, token, expire)
@@ -48,16 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'pululubagelshop@gmail.com';
-        $mail->Password = 'jswhlnlntthwttvw';
+        $mail->Username = SMTP_USERNAME;
+        $mail->Password = SMTP_PASSWORD;
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port = 587;
 
-        $mail->setFrom('pululubagelshop@gmail.com', 'Bagel Shop');
+        $mail->setFrom('pululubagelshop@gmail.com', 'Pululu Bagel');
         $mail->addAddress($email);
         $mail->Subject = "Password Reset";
         $mail->Body = "
-        Hello,
+        Dear $user->name,
 
         We received a request to reset your password.
 
@@ -65,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $link
 
-        This link expires in 30 minutes.
+        This link expires in 5 minutes.
 
         If you did not request this, please ignore this email.
         ";

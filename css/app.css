@@ -1,116 +1,249 @@
-/* Font -------------------------------------------------------------------- */
+/* Fonts -------------------------------------------------------------------- */
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
 
-body, input, button, textarea, select {
-    font: 16px 'Roboto', sans-serif;
+/* Variables ------------------------------------------------------------- */
+
+:root {
+    --pink:       #FFD6E8;
+    --red:        #b5192b;
+    --red-dark:   #8a1220;
+    --brown:      #6B3E26;
+    --cream:      #FFF8F0;
+    --text:       #3E2723;
+    --text-muted: #8a7264;
+    --border:     #e6d3bf;
+    --white:      #ffffff;
+    --shadow:     0 2px 10px rgba(0, 0, 0, 0.08);
+    --radius:     10px;
 }
 
-/* Layout ------------------------------------------------------------------ */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+h1, h2, h3, h4 {
+    margin: 0 0 0.5em;
+    line-height: 1.25;
+}
+
+p {
+    margin: 0 0 1em;
+}
+
+/* Layout --------------------------------------------------------------- */
+
+body, input, button, textarea, select {
+    font: 16px 'Roboto', sans-serif;
+    color: var(--text);
+}
 
 body {
     margin: 0;
-    height: 100vh;
+    min-height: 100vh;
     display: grid;
     grid: auto auto 1fr auto / auto;
-}
-
-header, footer {
-    padding: 10px 50px;
-    background: #ccc;
-}
-
-header { /* NEW */
-    display: flex;
-    gap: 10px;
-    align-items: center;
-}
-
-header h1 {
-    flex: 1; /* NEW */
-    margin: 0;
-    padding-left: 40px;
-    background: url(/images/favicon.png) no-repeat left / 36px;
-}
-
-header a {
-    color: inherit;
-    text-decoration: none;
-}
-
-header div { /* NEW */
-    text-align: right;
-}
-
-header img { /* NEW */
-    width: 36px;
-    height: 36px;
-    border: 1px solid #333;
-    border-radius: 5px;
-}
-
-nav {
-    padding: 0 50px;
-    background: #999;
-    display: flex;
-}
-
-nav a {
-    padding: 5px 10px;
-    color: #fff;
-    background: #666;
-    text-decoration: none;
-    white-space: nowrap;
-}
-
-nav a:hover {
-    background: #333;
-}
-
-nav div { /* NEW */
-    flex: 1;
+    background: var(--cream);
+    line-height: 1.6;
 }
 
 main {
-    padding: 20px 50px;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 64px;
 }
 
 main h1 {
-    margin-top: 0;
+    font-family: 'Lilita One', cursive;
+    letter-spacing: 1px;
+    color: var(--red);
 }
 
-/* Pager */
-nav.pager {
-    padding: 0;
-    background: transparent;
+/* Header ----------------------------------------------------------------- */
+
+.top-bar {
+    height: auto;
+    background: var(--pink);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 20px;
 }
 
-nav.pager a {
-    outline: 1px solid #333;
+.top-bar h1 {
+    font-family: "Dancing Script", cursive;
+    font-size: 13px;
+    color: var(--brown);
+    letter-spacing: 0.5px;
+    margin: 0;
+    font-weight: bold;
 }
 
-nav.pager a.active {
-    background: #333;
+header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--white);
+    padding: 14px 20px;
+    box-shadow: var(--shadow);
+    position: relative;
+    z-index: 2;
 }
 
-/* Table ------------------------------------------------------------------- */
+.logo-container {
+    display: flex;
+    align-items: center;
+}
+
+header img.logo {
+    width: 50px;
+    height: 50px;
+    border: 2px solid var(--pink);
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+header h1 {
+    font-family: "Lilita One", cursive;
+    font-size: 25px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 6px 0;
+    margin: 0;
+}
+
+header a {
+    color: var(--red);
+    text-decoration: none;
+}
+
+/* Primary decorative nav (Home / Full Menu / Order for Tomorrow) --------- */
+
+.navbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    padding: 12px 32px 4px;
+}
+
+.navbar a {
+    position: relative;
+    display: inline-block;
+    overflow: hidden;
+    height: 16px;
+    text-decoration: none;
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+}
+
+.navbar a .flip {
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.navbar a .flip span {
+    display: block;
+    height: 16px;
+    line-height: 16px;
+}
+
+.navbar a .flip span:first-child {
+    color: var(--red);
+}
+
+.navbar a .flip span:last-child {
+    color: var(--brown);
+}
+
+.navbar a:hover .flip,
+.navbar a:focus-visible .flip {
+    transform: translateY(-16px);
+}
+
+/* Role-based nav bar (Product List / Cart / Manage Orders / Login etc.) -- */
+
+body > nav {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: var(--brown);
+    padding: 10px 20px;
+}
+
+body > nav a {
+    color: var(--white);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    padding: 7px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+}
+
+body > nav a:hover,
+body > nav a:focus-visible {
+    background: var(--white);
+    color: var(--brown);
+    border-color: var(--white);
+}
+
+/* Hero (index page) ------------------------------------------------------ */
+
+.hero {
+    text-align: center;
+    padding: 20px 0 8px;
+}
+
+.hero h1 {
+    font-family: 'Lilita One', cursive;
+    font-size: 48px;
+    color: var(--red);
+    letter-spacing: 1px;
+    display: inline-block;
+    transition: transform 0.15s ease-out;
+}
+
+.hero .tagline {
+    color: var(--text-muted);
+    font-size: 17px;
+    margin: 0;
+}
+
+/* Table -------------------------------------------------------------------- */
 
 .table {
+    width: 100%;
     border-collapse: collapse;
+    background: var(--white);
+    box-shadow: var(--shadow);
+    border-radius: var(--radius);
+    overflow: hidden;
 }
 
 .table th, .table td {
-    border: 1px solid #333;
-    padding: 5px;
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    text-align: left;
 }
 
 .table th {
-    color: #fff;
-    background: #666;
+    color: var(--white);
+    background: var(--red);
+    font-weight: bold;
 }
 
 .table tr:hover td {
-    background: #ccc;
+    background: var(--pink);
 }
 
 .table td:has(.popup) {
@@ -123,7 +256,9 @@ nav.pager a.active {
     left: 100%;
     translate: 5px -50%;
     z-index: 1;
-    border: 1px solid #333;
+    border: 1px solid var(--border);
+    background: var(--white);
+    box-shadow: var(--shadow);
     display: none;
 }
 
@@ -157,14 +292,14 @@ nav.pager a.active {
 
 #info {
     position: fixed;
-    color: #fff;
-    background: #666;
-    border: 1px solid #333;
-    border-radius: 5px;
+    color: var(--white);
+    background: var(--brown);
+    border-radius: 8px;
     padding: 10px 20px;
     left: 50%;
     translate: -50% 0;
     z-index: 999;
+    box-shadow: var(--shadow);
 
     top: -100px;
     opacity: 0;
@@ -176,9 +311,34 @@ nav.pager a.active {
 
 @keyframes fade {
       0% { top: -100px; opacity: 0; }
-     10% { top:  100px; opacity: 1; }
-     90% { top:  100px; opacity: 1; }
+     10% { top:  20px; opacity: 1; }
+     90% { top:  20px; opacity: 1; }
     100% { top: -100px; opacity: 0; }
+}
+
+/* Buttons ------------------------------------------------------------------ */
+
+button, .button {
+    display: inline-block;
+    font: inherit;
+    font-weight: bold;
+    font-size: 14px;
+    letter-spacing: 0.3px;
+    color: var(--white);
+    background: var(--red);
+    border: none;
+    border-radius: 999px;
+    padding: 9px 22px;
+    cursor: pointer;
+    text-decoration: none;
+    text-align: center;
+    transition: background 0.2s, transform 0.15s;
+}
+
+button:hover, .button:hover,
+button:focus-visible, .button:focus-visible {
+    background: var(--red-dark);
+    transform: translateY(-1px);
 }
 
 /* Form -------------------------------------------------------------------- */
@@ -190,61 +350,61 @@ label > * {
 .form {
     display: grid;
     grid: auto / auto auto auto;
-    gap: 5px;
+    gap: 10px;
     place-content: start;
     place-items: center start;
+    background: var(--white);
+    padding: 24px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
 .form > label:not(:has(*)) {
     place-self: stretch;
-    background: #ccc;
+    background: var(--pink);
+    color: var(--brown);
     font-weight: bold;
-    padding: 5px;
+    padding: 8px 10px;
+    border-radius: 6px;
 }
 
 .form > section {
     grid-column: 1 / -1;
 }
 
+.form input[type=text],
+.form input[type=email],
+.form input[type=password],
+.form input[type=number],
+.form input[type=search],
+.form textarea,
+.form select {
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+}
+
+.form input:focus,
+.form textarea:focus,
+.form select:focus {
+    outline: 2px solid var(--red);
+    outline-offset: 1px;
+}
+
 .err {
-    color: red;
+    color: var(--red);
+    font-size: 13px;
 }
 
 /* Photo Upload ------------------------------------------------------------ */
 
 label.upload img {
     display: block;
-    border: 1px solid #333;
+    border: 1px solid var(--border);
+    border-radius: 8px;
     width: 200px;
     height: 200px;
     object-fit: cover;
     cursor: pointer;
-}
-
-/* User Profile ------------------------------------------------------------ */
-
-.profile-form {
-    display: grid;
-    grid-template-columns: 150px 300px;
-    gap: 10px;
-    align-items: center;
-}
-
-
-.profile-form > label {
-    background: #ccc;
-    font-weight: bold;
-    padding: 8px;
-}
-
-
-.profile-form input {
-    width: 280px;
-    padding: 5px;
-}
-
-
-.profile-form > section {
-    grid-column: 1 / -1;
-    margin-top: 10px;
 }

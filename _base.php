@@ -263,34 +263,6 @@ function auth(...$roles) {
     redirect('/login.php');
 }
 
-// ============================================================================
-// Email Functions
-// ============================================================================
-
-// Demo Accounts:
-// --------------
-// AACS3173@gmail.com           xxna ftdu plga hzxl
-// BAIT2173.email@gmail.com     ncom fsil wjzk ptre
-// liaw.casual@gmail.com        buvq yftx klma vezl
-// liawcv1@gmail.com            pztq znli gpjg tooe
-
-// Initialize and return mail object
-function get_mail() {
-    require_once 'lib/PHPMailer.php';
-    require_once 'lib/SMTP.php';
-
-    $m = new PHPMailer(true);
-    $m->isSMTP();
-    $m->SMTPAuth = true;
-    $m->Host = 'smtp.gmail.com';
-    $m->Port = 587;
-    $m->Username = 'AACS3173@gmail.com';
-    $m->Password = 'xxna ftdu plga hzxl';
-    $m->CharSet = 'utf-8';
-    $m->setFrom($m->Username, '😺 Admin');
-
-    return $m;
-}
 
 // ============================================================================
 // Shopping Cart

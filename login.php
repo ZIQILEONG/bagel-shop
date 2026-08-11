@@ -22,19 +22,21 @@ if (is_post()) {
 
     // Login user
     if (!$_err) {
-        $stm = $_db->prepare('
-            SELECT * FROM user
-            WHERE email = ? AND password = SHA1(?)
-        ');
-        $stm->execute([$email, $password]);
-        $u = $stm->fetch();
+        $stmt = $_db->prepare("
+            SELECT *
+            FROM user
+            WHERE email = ?
+        ");
 
-        if ($u) {
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user->password)) {
             temp('info', 'Login successfully');
-            login($u);
+            login($user);
         }
         else {
-            $_err['password'] = 'Not matched';
+            $_err['password'] = 'Password is incorrect, please try again!';
         }
     }
 }

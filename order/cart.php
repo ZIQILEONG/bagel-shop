@@ -2,7 +2,7 @@
 include '../_base.php';
 
 // ---------------------------------------------------------------------------
-
+// when add to cart, check for login. If not login, popout error prompting login. --Chai
 if (is_post()) {
     $btn = req('btn');
     if ($btn == 'clear') {

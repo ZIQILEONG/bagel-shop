@@ -1,4 +1,5 @@
-    </main>
+<link rel="stylesheet" href="app.css">
+</main>
 
     <footer>
         Developed by <b>PULULU BAGEL SHOP</b> &middot;
