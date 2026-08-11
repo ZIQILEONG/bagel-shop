@@ -570,46 +570,61 @@ footer b {
 }
 /* Profile Page ------------------------------------------------------------ */
 .profile-wrapper {
-    max-width: 540px;
+    max-width: 720px;
     margin: 40px auto;
+    background: var(--white);
+    padding: 32px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
 }
 
 .profile-form {
-    display: flex;
-    flex-direction: column;
-    gap: 18px;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    gap: 18px 20px;
+    align-items: center;
 }
 
-.profile-form .avatar-block {
-    text-align: center;
-    margin-bottom:10px;
-}
-
-.profile-form .avatar-block img {
-    border: 3px solid var(--pink);
-}
-
-.profile-form label {
-    font-weight: 700;
+/* 左侧粉色标签栏 */
+.profile-form .form-label {
+    background: var(--pink);
+    padding:14px 16px;
+    border-radius: var(--radius);
+    font-weight:700;
     color: var(--brown);
-    margin-bottom:6px;
-    display:block;
+    text-align: right;
+}
+
+/* 头像特殊处理：跨两栏，居中 */
+.profile-form .avatar-row {
+    grid-column: 1 / -1;
+    text-align: center;
+}
+.profile-form .avatar-row img {
+    border:3px solid var(--pink);
+    border-radius:50%;
+    object‑fit:cover;
 }
 
 .profile-form input[type="text"],
 .profile-form input[type="email"] {
     width:100%;
-}
-
-.profile-form .role-display {
-    padding:10px 14px;
-    background: var(--pink);
+    padding:12px 14px;
+    background: var(--cream);
+    border:1px solid var(--border);
     border-radius: var(--radius);
-    color: var(--brown);
-    font-weight:bold;
 }
 
-.profile-form .btn-wrap {
+.profile-form .role-box {
+    background: var(--cream);
+    padding:12px 14px;
+    border-radius: var(--radius);
+}
+
+/* 按钮横跨全部两列，靠左/居左 */
+.profile-form .btn-row {
+    grid-column:1 / -1;
     margin-top:12px;
-    text-align:center;
+    padding-top:12px;
+    border-top:1px solid var(--border);
 }
