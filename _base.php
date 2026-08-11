@@ -270,27 +270,23 @@ function update_cart($id, $unit) {
     set_cart($cart);
 }
 
-// Sync the current session cart to the database table --ziqi
+// Save session cart to DB table --ziqi
 function save_cart_to_db($user_id, $db) {
     if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+        // If session cart is empty, delete any items previously saved in DB --ziqi
+        $stmt = $db->prepare("DELETE FROM cart WHERE user_id = ?");
+        $stmt->execute([$user_id]);
         return;
     }
 
-    foreach ($_SESSION['cart'] as $product_id => $quantity) {
-        // check if this user already has this specific product in the database cart --ziqi
-        $stmt = $db->prepare("SELECT id FROM cart WHERE user_id = ? AND product_id = ?");
-        $stmt->execute([$user_id, $product_id]);
-        $exists = $stmt->fetch();
+    // Clear existing DB cart items for this user first to keep things simple and accurate --ziqi
+    $stmt = $db->prepare("DELETE FROM cart WHERE user_id = ?");
+    $stmt->execute([$user_id]);
 
-        if ($exists) {
-            // update quantity if it's already there --ziqi
-            $stmt = $db->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
-            $stmt->execute([$quantity, $user_id, $product_id]);
-        } else {
-            // insert a new item row --ziqi
-            $stmt = $db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
-            $stmt->execute([$user_id, $product_id, $quantity]);
-        }
+    // Insert all current items from session cart into DB
+    foreach ($_SESSION['cart'] as $product_id => $quantity) {
+        $stmt = $db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+        $stmt->execute([$user_id, $product_id, $quantity]);
     }
 }
 
