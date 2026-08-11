@@ -214,16 +214,17 @@ $_user = $_SESSION['user'] ?? null;
 // Login user
 function login($user, $url = '/') {
     $_SESSION['user'] = $user;
+    load_cart_fr_db($user->id); 
     redirect($url);
 }
 // Logout user
 function logout($url = '/') {
-    global $db;     // access global database connection variable --ziqi
+    global $_db;     // access global database connection variable --ziqi
 
     // if user is logged in, save their cart to db first --ziqi
     if (isset($_SESSION['user'])) {
         $user_id = $_SESSION['user']->id; 
-        save_cart_to_db($user_id, $db);
+        save_cart_to_db($user_id, $_db);
     }
 
     // clear both cart and user for the session --ziqi
@@ -271,37 +272,37 @@ function update_cart($id, $unit) {
 }
 
 // Save session cart to DB table --ziqi
-function save_cart_to_db($user_id, $db) {
+function save_cart_to_db($user_id, $_db) {
     if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
         // If session cart is empty, delete any items previously saved in DB --ziqi
-        $stmt = $db->prepare("DELETE FROM cart WHERE user_id = ?");
+        $stmt = $_db->prepare("DELETE FROM cart WHERE user_id = ?");
         $stmt->execute([$user_id]);
         return;
     }
 
     // Clear existing DB cart items for this user first to keep things simple and accurate --ziqi
-    $stmt = $db->prepare("DELETE FROM cart WHERE user_id = ?");
+    $stmt = $_db->prepare("DELETE FROM cart WHERE user_id = ?");
     $stmt->execute([$user_id]);
 
     // Insert all current items from session cart into DB
     foreach ($_SESSION['cart'] as $product_id => $quantity) {
-        $stmt = $db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+        $stmt = $_db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
         $stmt->execute([$user_id, $product_id, $quantity]);
     }
 }
 
 // Fetch the saved database items back into the session cart array (after logout & login) --ziqi
-function load_cart_fr_db($user_id, $db) {
-    $stmt = $db->prepare("SELECT product_id, quantity FROM cart WHERE user_id = ?");
+function load_cart_fr_db($user_id) {
+    global $_db;
+    $stmt = $_db->prepare("SELECT product_id, quantity FROM cart WHERE user_id = ?");
     $stmt->execute([$user_id]);
-    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $items = $stmt->fetchAll();
 
     $_SESSION['cart'] = []; // fresh reset for the logged-in user
     foreach ($items as $item) {
-        $_SESSION['cart'][$item['product_id']] = (int)$item['quantity'];
+        $_SESSION['cart'][$item->product_id] = (int)$item->quantity;
     }
 }
-
 
 // ============================================================================
 // Database Setups and Functions
