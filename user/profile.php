@@ -1,4 +1,3 @@
-```php
 <?php
 
 include '../_base.php';
@@ -19,7 +18,8 @@ if (is_post()) {
     $phone_no = post('phone_no');
     $password = post('password');
 
-    // Keep old photo if no new photo is uploaded
+
+    // Keep old photo if user does not upload a new photo
     $photo = $user->photo;
 
 
@@ -31,10 +31,13 @@ if (is_post()) {
 
         $file = $_FILES['photo'];
 
+        // Get file extension
         $ext = strtolower(
             pathinfo($file['name'], PATHINFO_EXTENSION)
         );
 
+
+        // Allowed image types
         $allowed = [
             'jpg',
             'jpeg',
@@ -42,13 +45,17 @@ if (is_post()) {
             'gif'
         ];
 
+
+        // Check file type
         if (in_array($ext, $allowed)) {
 
-            // Generate unique file name
+            // Create a unique file name
             $photo = uniqid() . "." . $ext;
 
+
             // IMPORTANT:
-            // Use "images" consistently
+            // Your photo folder is "images"
+            // NOT "image"
             $image_path = __DIR__ . "/../images";
 
 
@@ -58,7 +65,7 @@ if (is_post()) {
             }
 
 
-            // Move uploaded photo
+            // Save uploaded image
             move_uploaded_file(
                 $file['tmp_name'],
                 $image_path . "/" . $photo
@@ -73,10 +80,12 @@ if (is_post()) {
 
     if ($password != '') {
 
+        // Hash new password
         $hash = password_hash(
             $password,
             PASSWORD_DEFAULT
         );
+
 
         $stm = $_db->prepare("
             UPDATE user
@@ -89,6 +98,7 @@ if (is_post()) {
             WHERE id = ?
         ");
 
+
         $stm->execute([
             $name,
             $email,
@@ -98,7 +108,8 @@ if (is_post()) {
             $user->id
         ]);
 
-    } else {
+    }
+    else {
 
         $stm = $_db->prepare("
             UPDATE user
@@ -109,6 +120,7 @@ if (is_post()) {
                 photo = ?
             WHERE id = ?
         ");
+
 
         $stm->execute([
             $name,
@@ -130,9 +142,11 @@ if (is_post()) {
         WHERE id = ?
     ");
 
+
     $stm->execute([
         $user->id
     ]);
+
 
     $user = $stm->fetch();
 
@@ -140,6 +154,10 @@ if (is_post()) {
     echo "Profile updated successfully!";
 }
 
+
+// =========================================================
+// PAGE
+// =========================================================
 
 $_title = 'User | Profile';
 
@@ -149,7 +167,7 @@ include '../_head.php';
 
 
 <!-- =====================================================
-     PROFILE FORM
+     USER PROFILE FORM
      ===================================================== -->
 
 <form
@@ -159,24 +177,30 @@ include '../_head.php';
 >
 
 
-    <!-- Photo -->
+    <!-- =================================================
+         PHOTO
+         ================================================= -->
 
     <label>
         Photo
     </label>
 
-    <div>
 
+    <div>
+        <!-- Add an ID to the img tag to make it easier for JS to access -->
         <img
-            src="../images/<?= encode($user->photo ?: 'default.png') ?>"
-            alt="Profile Photo"
-            width="140"
-            height="140"
+            id="avatarImg"
+            src="../images/<?= encode($user->photo ?: 'photo.jpg') ?>"
+            width="150"
+            height="150"
+            style="object-fit: cover; border-radius: 60%;"
         >
+
 
         <br><br>
 
         <input
+            id="photoInput"
             type="file"
             name="photo"
             accept="image/jpeg,image/png,image/gif"
@@ -185,11 +209,14 @@ include '../_head.php';
     </div>
 
 
-    <!-- Name -->
+    <!-- =================================================
+         NAME
+         ================================================= -->
 
     <label>
         Name
     </label>
+
 
     <input
         type="text"
@@ -199,11 +226,14 @@ include '../_head.php';
     >
 
 
-    <!-- Email -->
+    <!-- =================================================
+         EMAIL
+         ================================================= -->
 
     <label>
         Email
     </label>
+
 
     <input
         type="email"
@@ -213,11 +243,14 @@ include '../_head.php';
     >
 
 
-    <!-- Phone -->
+    <!-- =================================================
+         PHONE NUMBER
+         ================================================= -->
 
     <label>
         Phone Number
     </label>
+
 
     <input
         type="text"
@@ -227,22 +260,28 @@ include '../_head.php';
     >
 
 
-    <!-- Role -->
+    <!-- =================================================
+         ROLE
+         ================================================= -->
 
     <label>
         Role
     </label>
+
 
     <p>
         <?= encode($user->role) ?>
     </p>
 
 
-    <!-- Password -->
+    <!-- =================================================
+         NEW PASSWORD
+         ================================================= -->
 
     <label>
         New Password
     </label>
+
 
     <input
         type="password"
@@ -252,7 +291,9 @@ include '../_head.php';
     >
 
 
-    <!-- Update Button -->
+    <!-- =================================================
+         UPDATE BUTTON
+         ================================================= -->
 
     <section>
 
@@ -265,10 +306,27 @@ include '../_head.php';
 
 </form>
 
+<!-- ✅ Added JS: Instant preview upon image selection -->
+<script>
+    const avatarImg = document.getElementById('avatarImg');
+    const photoInput = document.getElementById('photoInput');
+
+    photoInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (!file) return;
+
+        // only show image , not store in database
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            avatarImg.src = e.target.result;
+        }
+        reader.readAsDataURL(file);
+    })
+</script>
+
 
 <?php
 
 include '../_foot.php';
 
 ?>
-
