@@ -568,3 +568,48 @@ footer b {
         padding: 6px 10px;
     }
 }
+/* Profile Page ------------------------------------------------------------ */
+.profile-wrapper {
+    max-width: 540px;
+    margin: 40px auto;
+}
+
+.profile-form {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.profile-form .avatar-block {
+    text-align: center;
+    margin-bottom:10px;
+}
+
+.profile-form .avatar-block img {
+    border: 3px solid var(--pink);
+}
+
+.profile-form label {
+    font-weight: 700;
+    color: var(--brown);
+    margin-bottom:6px;
+    display:block;
+}
+
+.profile-form input[type="text"],
+.profile-form input[type="email"] {
+    width:100%;
+}
+
+.profile-form .role-display {
+    padding:10px 14px;
+    background: var(--pink);
+    border-radius: var(--radius);
+    color: var(--brown);
+    font-weight:bold;
+}
+
+.profile-form .btn-wrap {
+    margin-top:12px;
+    text-align:center;
+}
