@@ -66,12 +66,14 @@
 
         <?php if ($_user?->role == 'Member'): ?>
             <a href="/order/history.php">Order History</a>
+            <a href="/logout.php">Logout</a>
         <?php endif ?>
 
         <?php if ($_user?->role == 'Admin'): ?>
             <a href="/admin/order-list.php">Manage Orders</a>
             <a href="/admin/product-listing.php">Manage Products</a>
             <a href="/admin/user-listing.php">Manage Members</a>
+            <a href="/logout.php">Logout</a>
         <?php endif ?> 
 
     </nav> 
