@@ -259,6 +259,44 @@ function update_cart($id, $unit) {
     }
     set_cart($cart);
 }
+
+// Sync the current session cart to the database table --ziqi
+function save_cart_to_db($user_id, $db) {
+    if (!isset($_SESSION['cart']) || empty($_SESSION['cart'])) {
+        return;
+    }
+
+    foreach ($_SESSION['cart'] as $product_id => $quantity) {
+        // check if this user already has this specific product in the database cart --ziqi
+        $stmt = $db->prepare("SELECT id FROM cart WHERE user_id = ? AND product_id = ?");
+        $stmt->execute([$user_id, $product_id]);
+        $exists = $stmt->fetch();
+
+        if ($exists) {
+            // update quantity if it's already there --ziqi
+            $stmt = $db->prepare("UPDATE cart SET quantity = ? WHERE user_id = ? AND product_id = ?");
+            $stmt->execute([$quantity, $user_id, $product_id]);
+        } else {
+            // insert a new item row --ziqi
+            $stmt = $db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
+            $stmt->execute([$user_id, $product_id, $quantity]);
+        }
+    }
+}
+
+// Fetch the saved database items back into the session cart array (after logout & login) --ziqi
+function load_cart_fr_db($user_id, $db) {
+    $stmt = $db->prepare("SELECT product_id, quantity FROM cart WHERE user_id = ?");
+    $stmt->execute([$user_id]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $_SESSION['cart'] = []; // fresh reset for the logged-in user
+    foreach ($items as $item) {
+        $_SESSION['cart'][$item['product_id']] = (int)$item['quantity'];
+    }
+}
+
+
 // ============================================================================
 // Database Setups and Functions
 // ============================================================================
