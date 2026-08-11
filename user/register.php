@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $hash = password_hash($password, PASSWORD_DEFAULT);
         $stm = $_db->prepare(" INSERT INTO user (name, email, password, role)
             VALUES (?, ?, ?, ?)");
-        $stm->execute([$name, $email, $hash, 'user']);
+        $stm->execute([$name, $email, $hash, 'Member']);
         echo "Register successful!";
     }
 }
