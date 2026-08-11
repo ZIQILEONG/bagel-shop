@@ -10,7 +10,7 @@ use PHPMailer\PHPMailer\SMTP;
 use PHPMailer\PHPMailer\Exception;
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-
+     
     $email = $_POST['email'];
 
     $stm = $_db->prepare(
@@ -88,6 +88,6 @@ include '../_head.php';
         Send Reset Link
     </button>
 
-</form>
+
 <?php
 include '../_foot.php';
