@@ -84,7 +84,7 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    background: var(--white);
+    background: var(--cream);
     padding: 14px 20px;
     box-shadow: var(--shadow);
     position: relative;
@@ -628,3 +628,316 @@ footer b {
     padding-top:12px;
     border-top:1px solid var(--border);
 }
+
+/*register*/
+.register-container {
+    font-family: 'Lilita One', cursive;
+    width: 575px;
+    margin: 5px auto 0;
+    text-align: center;
+}
+
+.register-container h2 {
+    font-size: 40px;
+    font-weight: normal;
+    color: var(--red);
+    margin: 0 0 10px;
+}
+
+.register-subtitle {
+    font-size: 17px;
+    color: var(--brown);
+    margin-bottom: 40px;
+}
+
+.register-form {
+    width: 100%;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.input-group input {
+    font-family: 'Lilita One';
+    width: 100%;
+    height: 60px;
+    padding: 0 20px;
+    border: 1px solid var(--red);
+    border-radius: 5px;
+    background: var(--cream);
+    font-size: 15px;
+    color: var(--brown);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.input-group input:focus {
+    border: 2px solid var(--brown);
+}
+
+.input-group input::placeholder {
+    color: var(--brown);
+    opacity: 1;
+}
+
+.input-group label {
+    position: absolute;
+    left: 48px;
+    top: -8px;
+    background: var(--cream);
+    padding: 0 5px;
+    font-size: 12px;
+    color: var(--brown);
+    opacity: 0;
+}
+
+.input-group input:focus + label {
+    opacity: 1;
+}
+
+.register-form button {
+    width: 100%;
+    height: 60px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    background: var(--red);
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+
+
+.register-form button:hover {
+    background: var(--brown);
+    color: var(--cream);
+}
+
+.login-text {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--brown);
+}
+
+
+.login-text a {
+    color: var(--brown);
+    text-decoration: underline;
+}
+
+
+.login-text a:hover {
+    color: var(--brown);
+}
+
+
+/*Login */
+
+.login-container {
+    font-family: 'Lilita One', cursive;
+    width: 575px;
+    margin: 5px auto 0;
+    text-align: center;
+}
+
+.login-container h2 {
+    font-size: 40px;
+    font-weight: normal;
+    color: var(--red);
+    margin: 0 0 10px;
+}
+
+.login-subtitle {
+    font-size: 17px;
+    color: var(--brown);
+    margin-bottom: 40px;
+}
+
+.login-form {
+    width: 100%;
+}
+
+.login-form .input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.login-form .input-group input {
+    font-family: 'Lilita One';
+    width: 100%;
+    height: 60px;
+    padding: 0 20px;
+    border: 1px solid var(--red);
+    border-radius: 5px;
+    background: var(--cream);
+    font-size: 15px;
+    color: var(--brown);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.login-form .input-group input:focus {
+    border: 2px solid var(--brown);
+}
+
+.login-form .input-group input::placeholder {
+    color: var(--brown);
+    opacity: 1;
+}
+
+.login-form .input-group label {
+    position: absolute;
+    left: 48px;
+    top: -8px;
+    background: var(--cream);
+    padding: 0 5px;
+    font-size: 12px;
+    color: var(--brown);
+    opacity: 0;
+}
+
+.login-form .input-group input:focus + label {
+    opacity: 1;
+}
+
+.login-form button {
+    width: 100%;
+    height: 60px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    background: var(--red);
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+
+.login-form button:hover {
+    background: var(--brown);
+    color: var(--cream);
+}
+
+.register-text {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--brown);
+}
+
+.register-text a {
+    color: var(--brown);
+    text-decoration: underline;
+}
+
+.register-text a:hover {
+    color: var(--brown);
+}
+
+/* Forgot Password */
+
+.forgot-container {
+    font-family: 'Lilita One', cursive;
+    width: 575px;
+    margin: 5px auto 0;
+    text-align: center;
+}
+
+.forgot-container h2 {
+    font-size: 40px;
+    font-weight: normal;
+    color: var(--red);
+    margin: 0 0 10px;
+}
+
+.forgot-subtitle {
+    font-size: 17px;
+    color: var(--brown);
+    margin-bottom: 40px;
+}
+
+.forgot-form {
+    width: 100%;
+}
+
+.forgot-form .input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.forgot-form .input-group input {
+    font-family: 'Lilita One';
+    width: 100%;
+    height: 60px;
+    padding: 0 20px;
+    border: 1px solid var(--red);
+    border-radius: 5px;
+    background: var(--cream);
+    font-size: 15px;
+    color: var(--brown);
+    outline: none;
+    box-sizing: border-box;
+}
+
+.forgot-form .input-group input:focus {
+    border: 2px solid var(--brown);
+}
+
+.forgot-form .input-group input::placeholder {
+    color: var(--brown);
+    opacity: 1;
+}
+
+.forgot-form .input-group label {
+    position: absolute;
+    left: 48px;
+    top: -8px;
+    background: var(--cream);
+    padding: 0 5px;
+    font-size: 12px;
+    color: var(--brown);
+    opacity: 0;
+}
+
+.forgot-form .input-group input:focus + label {
+    opacity: 1;
+}
+
+.forgot-form button {
+    width: 100%;
+    height: 60px;
+    margin-top: 20px;
+    border: none;
+    border-radius: 5px;
+    background: var(--red);
+    color: var(--cream);
+    font-size: 14px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+}
+
+.forgot-form button:hover {
+    background: var(--brown);
+    color: var(--cream);
+}
+
+.back-login-text {
+    margin-top: 28px;
+    font-size: 16px;
+    color: var(--brown);
+}
+
+.back-login-text a {
+    color: var(--brown);
+    text-decoration: underline;
+}
+
+.back-login-text a:hover {
+    color: var(--red);
+}
+

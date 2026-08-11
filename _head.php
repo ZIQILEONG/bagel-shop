@@ -28,10 +28,10 @@
                 <span>Home</span>
                 </span>
             </a>
-            <a id="storyLink" href="/product/list.php">
+            <a id="storyLink" href="/user/register.php">
                 <span class="flip">
-                <span>Full Menu</span>
-                <span>Full Menu </span>
+                <span>Register</span>
+                <span>Register</span>
                 </span>
             </a>
             <a href="#">
@@ -74,15 +74,6 @@
             <a href="/admin/user-listing.php">Manage Members</a>
         <?php endif ?> 
 
-        <?php if ($_user): ?>
-            <a href="/user/profile.php">Profile</a>
-            <a href="/user/forgot_password.php">Password</a>
-            <a href="/logout.php">Logout</a>
-        <?php else: ?>
-            <a href="/user/register.php">Register</a>
-            <a href="/user/forgot_password.php">Forgot Password</a>
-            <a href="/login.php">Login</a>
-        <?php endif ?>
     </nav> 
     
 

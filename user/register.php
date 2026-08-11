@@ -33,31 +33,51 @@ $_title = 'User | Register';
 include '../_head.php';
 ?>
 
-<h2>Register</h2>
+<div class="register-container">
 
-<form method="post" class="form">
+    <h2>Register</h2>
 
-    <label for="name">Name</label>
-    <?= html_text('name', 'maxlength="50" required') ?>
-    <?= err('name') ?>
+    <p class="register-subtitle">
+        Please fill in the fields below:
+    </p>
 
-    <label for="email">Email</label>
-    <?= html_text('email', 'maxlength="100" required') ?>
-    <?= err('email') ?>
+    <form method="post" class="register-form">
 
-    <label for="password">Password</label>
-    <?= html_password('password', 'maxlength="100" required') ?>
-    <?= err('password') ?>
+        <div class="input-group">
+            <?= html_text('name', 'maxlength="50" required placeholder="Name"') ?>
+            <label for="name">Name</label>
+            <?= err('name') ?>
+        </div>
 
-    <label for="reenter_password">Re-enter Password</label>
-    <?= html_password('reenter_password', 'maxlength="100" required') ?>
-    <?= err('password') ?>
+        <div class="input-group">
+            <?= html_text('email', 'maxlength="100" required placeholder="E-mail"') ?>
+            <label for="email">E-mail</label>
+            <?= err('email') ?>
+        </div>
 
-    <section>
-        <button>Register</button>
-    </section>
+        <div class="input-group">
+            <?= html_password('password', 'maxlength="100" required placeholder="Password"') ?>
+            <label for="password">Password</label>
+            <?= err('password') ?>
+        </div>
 
-</form>
+        <div class="input-group">
+            <?= html_password('reenter_password', 'maxlength="100" required placeholder="Re-enter Password"') ?>
+            <label for="reenter_password">Re-enter Password</label>
+            <?= err('reenter_password') ?>
+        </div>
+
+        <button type="submit">CREATE ACCOUNT</button>
+
+    </form>
+
+    <p class="login-text">
+        Already have an account?
+        <a href="../login.php">Login</a><br>
+
+    </p>
+
+</div>
 
 
 <?php
