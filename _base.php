@@ -269,6 +269,8 @@ function update_cart($id, $unit) {
         unset($cart[$id]);
     }
     set_cart($cart);
+
+    // 
 }
 
 // Save session cart to DB table --ziqi
@@ -279,10 +281,6 @@ function save_cart_to_db($user_id, $_db) {
         $stmt->execute([$user_id]);
         return;
     }
-
-    // Clear existing DB cart items for this user first to keep things simple and accurate --ziqi
-    $stmt = $_db->prepare("DELETE FROM cart WHERE user_id = ?");
-    $stmt->execute([$user_id]);
 
     // Insert all current items from session cart into DB
     foreach ($_SESSION['cart'] as $product_id => $quantity) {
