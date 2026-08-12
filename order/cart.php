@@ -12,7 +12,7 @@ if (is_post()) {
 
     // handles delete selected items via checkbox array --ziqi
     if ($btn == 'delete_selected') {
-        $checked_items = $_POST['check_items'] ?? [];
+        $checked_items = $_POST['checked_items'] ?? [];
         foreach ($checked_items as $id) {
             update_cart($id, 0);    // sets quantity to 0 to remove item
         }

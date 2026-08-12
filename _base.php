@@ -274,8 +274,8 @@ function update_cart($id, $unit) {
     set_cart($cart);
 
     // If a user is logged in, sync it to the database immediately --ziqi
-    if ($user_id && $_db) {
-        save_cart_to_db($user_id, $_db);
+    if ($_user && $_db) {
+        save_cart_to_db($_user->id, $_db);
     }
 }
 
@@ -286,11 +286,11 @@ function save_cart_to_db($user_id, $_db) {
 
     $cart = $_SESSION['cart'] ?? [];
     // Insert all current items from session cart into DB
-    foreach (['cart'] as $product_id => $quantity) {
-        if (!is_exists($product_id, 'product', 'quantity')) {
+    foreach ($cart as $product_id => $quantity) {
+        if (!is_exists($product_id, 'product', 'id')) {
             continue;
         }
-        
+
         $stmt = $_db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
         $stmt->execute([$user_id, $product_id, $quantity]);
     }
