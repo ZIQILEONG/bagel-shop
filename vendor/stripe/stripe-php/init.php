@@ -1,6 +1,7 @@
 <?php
 
 require __DIR__ . '/lib/version_check.php';
+require_once __DIR__ . '/lib/agent_plugin_hint.php';
 
 require __DIR__ . '/lib/Util/ApiVersion.php';
 
@@ -67,6 +68,7 @@ require __DIR__ . '/lib/ApiOperations/Update.php';
 // Plumbing
 require __DIR__ . '/lib/ApiResponse.php';
 require __DIR__ . '/lib/RequestTelemetry.php';
+require __DIR__ . '/lib/TelemetryId.php';
 require __DIR__ . '/lib/StripeObject.php';
 require __DIR__ . '/lib/ApiRequestor.php';
 require __DIR__ . '/lib/ApiResource.php';
@@ -206,6 +208,7 @@ require __DIR__ . '/lib/FileLink.php';
 require __DIR__ . '/lib/FinancialConnections/Account.php';
 require __DIR__ . '/lib/FinancialConnections/AccountOwner.php';
 require __DIR__ . '/lib/FinancialConnections/AccountOwnership.php';
+require __DIR__ . '/lib/FinancialConnections/Authorization.php';
 require __DIR__ . '/lib/FinancialConnections/Session.php';
 require __DIR__ . '/lib/FinancialConnections/Transaction.php';
 require __DIR__ . '/lib/Forwarding/Request.php';

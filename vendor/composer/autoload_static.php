@@ -8,6 +8,7 @@ class ComposerStaticInit40aa654f2e66c20881ae0572fe987a10
 {
     public static $files = array (
         'd92f49fe138fde4e7a3ec6f988960524' => __DIR__ . '/..' . '/stripe/stripe-php/lib/version_check.php',
+        '951c10c1f5e4e67c2a939526e4e59b0f' => __DIR__ . '/..' . '/stripe/stripe-php/lib/agent_plugin_hint.php',
     );
 
     public static $prefixLengthsPsr4 = array (
