@@ -270,7 +270,10 @@ function update_cart($id, $unit) {
     }
     set_cart($cart);
 
-    // 
+    // If a user is logged in, sync it to the database immediately 
+    if ($user_id && $_db) {
+        save_cart_to_db($user_id, $_db);
+    }
 }
 
 // Save session cart to DB table --ziqi
