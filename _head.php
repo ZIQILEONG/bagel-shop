@@ -70,6 +70,7 @@
         <?php endif ?>
 
         <?php if ($_user?->role == 'Admin'): ?>
+            <a href="/admin/top-selling.php">Top 5 Selling</a>
             <a href="/admin/order-list.php">Manage Orders</a>
             <a href="/admin/product-listing.php">Manage Products</a>
             <a href="/admin/user-listing.php">Manage Members</a>

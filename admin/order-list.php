@@ -3,10 +3,10 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+// Authorization (admin)
 auth('Admin');
 
-// (2) return all orders, joined with user (name), newest first
+// return all orders, joined with user (name), newest first
 $stm = $_db->prepare("SELECT o.*, u.name FROM orders o JOIN user u ON o.user_id = u.id ORDER BY o.id DESC");
 $stm->execute([]);
 $arr = $stm-> fetchAll();
