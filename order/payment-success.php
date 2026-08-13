@@ -19,6 +19,9 @@ if ($session->payment_status !== 'paid') {
     redirect('payment-cancel.php');
 }
 
+$intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
+$method = strtoupper($intent->payment_method_types[0]);
+
 $cart = get_cart();
 
 if (empty($cart)) {
@@ -56,8 +59,8 @@ $stm = $_db->prepare("UPDATE orders SET count = ?, total = ? WHERE id = ?");
 $stm->execute([$count, $total, $order_id]);
 
 // Insert payment record
-$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, 'Stripe', ?, 'Paid', ?, NOW())");
-$stm->execute([$order_id, $total, $session->payment_intent]);
+$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
+$stm->execute([$order_id, $method, $total, $session->payment_intent]);
 
 // Transaction commit
 $_db->commit();
@@ -86,7 +89,7 @@ try {
     foreach ($cart as $product_id => $unit) {
         $stm = $_db->prepare("SELECT name, price FROM product WHERE id = ?");
         $stm->execute([$product_id]);
-        $irem = $stm->fetch();
+        $item = $stm->fetch();
         $body .= "- {$item->name} x$unit = RM " . number_format($item->price * $unit, 2) . "\n";
     }
 
