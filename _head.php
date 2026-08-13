@@ -58,7 +58,7 @@
                 Shopping Cart
                 <?php
                     $cart = get_cart();
-                    $count = count($cart);
+                    $count = array_sum($cart);
                     if ($count) echo "($count)";
                 ?>
             </a>
