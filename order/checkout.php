@@ -13,7 +13,7 @@ if (empty($cart)) {
     redirect('cart.php');
 }
 
-// Loop through $cart, just calculate $total, no inserting to database yet
+// total calculation
 $count = 0;
 $total = 0;
 
@@ -26,6 +26,15 @@ foreach ($cart as $product_id => $unit) {
 
     $count += $unit;
     $total += $subtotal;
+}
+
+// voucher
+$voucher = $_SESSION['voucher'] ?? null;
+$discount = 0;
+
+if ($voucher) {
+    $discount = round($total * $voucher['percent'] / 100, 2);
+    $total -= $discount;
 }
 
 \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
