@@ -6,11 +6,11 @@ auth('Admin');
 $stm = $_db->prepare("
     SELECT p.name, SUM(i.unit) AS total_sold
     FROM order_item i
-    JOIN product p ON i.product_id = p.id;
-    JOIN orders o ON i.order_id = o.id;
+    JOIN product p ON i.product_id = p.id
+    JOIN orders o ON i.order_id = o.id
     WHERE o.status != 'Cancelled'
     GROUP BY p.id
-    GROUP BY total_sold DESC
+    ORDER BY total_sold DESC
     LIMIT 5
 ");
 $stm->execute();
