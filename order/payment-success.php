@@ -54,9 +54,20 @@ foreach ($cart as $product_id => $unit) {
     $total += $subtotal;
 }
 
-// Update order totals
-$stm = $_db->prepare("UPDATE orders SET count = ?, total = ? WHERE id = ?");
-$stm->execute([$count, $total, $order_id]);
+// discount caculation (recalculate independently for security)
+$voucher = $_SESSION['voucher'] ?? null;
+$discount = 0;
+$voucher_code = null;
+
+if ($voucher) {
+    $discount = round($total * $voucher['percent'] / 100, 2);
+    $voucher_code = $voucher['code'];
+    $total -= $discount;
+}
+
+// update orders total
+$stm = $_db->prepare("UPDATE orders SET count = ?, total = ?, discount = ?, voucher_code = ? WHERE id = ?");
+$stm->execute([$count, $total, $discount, $voucher_code, $order_id]);
 
 // Insert payment record
 $stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
@@ -104,6 +115,7 @@ catch (Exception $e) {
 // ----------------------------------------------------------------------------
 
 set_cart();
+unset($_SESSION['voucher']);
 
 temp('info', 'Payment successful! Your order has been placed.');
 redirect("detail.php?id=$order_id");
