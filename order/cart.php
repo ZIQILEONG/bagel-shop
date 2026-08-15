@@ -167,6 +167,32 @@ $cart = get_cart();
     </table>
 </form>
 
+<!-- show discounted price -->
+<?php
+$voucher = $_SESSION['voucher'] ?? null;
+$discount = 0;
+
+if ($voucher) {
+    $discount = round($total * $voucher['percent'] / 100, 2);
+}
+
+$final_total = $total - $discount;
+?>
+
+<table class="table">
+    <?php if ($voucher): ?>
+    <tr>
+        <th>Discount (<?= $voucher['percent'] ?>% - <?= $voucher['code'] ?>)</th>
+        <td class="right">- RM <?= number_format($discount, 2) ?></td>
+    </tr>
+    <?php endif ?>
+    <tr>
+        <th>Total to Pay</th>
+        <td class="right"><b>RM <?= number_format($final_total, 2) ?></b></td>
+    </tr>
+</table>
+
+<!-- checkout button -->
 <p>
     <?php if ($cart): ?>
         <?php if ($_user?->role == 'Member'): ?>
@@ -177,6 +203,7 @@ $cart = get_cart();
     <?php endif ?>
 </p>
 
+<!-- voucher code -->
 <?php $voucher = $_SESSION['voucher'] ?? null; ?>
 
 <form method="post" class="form">
