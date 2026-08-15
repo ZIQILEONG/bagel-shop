@@ -213,23 +213,47 @@ function err($key) {
 $_user = $_SESSION['user'] ?? null;
 // Login user
 function login($user, $url = '/') {
+    global $_user;
+
     $_SESSION['user'] = $user;
-    load_cart_fr_db($user->id); 
+    $_user = $user;
+
+    load_cart_fr_db($user->id);
+
     redirect($url);
 }
 // Logout user
 function logout($url = '/') {
-    global $_db;     // access global database connection variable --ziqi
+    global $_db;
 
-    // if user is logged in, save their cart to db first --ziqi
+    // Save cart before logout
     if (isset($_SESSION['user'])) {
-        $user_id = $_SESSION['user']->id; 
+        $user_id = $_SESSION['user']->id;
         save_cart_to_db($user_id, $_db);
+
+        // Remove Remember Me token from database
+        $stmt = $_db->prepare("
+            UPDATE user
+            SET remember_token = NULL,
+                remember_expires = NULL
+            WHERE id = ?
+        ");
+
+        $stmt->execute([$user_id]);
     }
 
-    // clear both cart and user for the session --ziqi
+    // Delete Remember Me cookie
+    setcookie(
+        'remember_token',
+        '',
+        time() - 3600,
+        '/'
+    );
+
+    // Clear session
     unset($_SESSION['cart']);
     unset($_SESSION['user']);
+
     redirect($url);
 }
 // Authorization
@@ -337,3 +361,33 @@ function is_exists($value, $table, $field) {
 
 // Range 1-10
 $_units = array_combine(range(1, 10), range(1, 10));
+
+//auto login user if remember_token cookie is set and valid
+if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
+    $token = $_COOKIE['remember_token'];
+    $stmt = $_db->prepare("
+        SELECT *
+        FROM user
+        WHERE remember_token = ?
+        AND remember_expires > NOW()
+    ");
+
+    $stmt->execute([$token]);
+    $user = $stmt->fetch();
+    if ($user) {
+
+        // Restore login
+        login($user);
+
+    }
+    else {
+
+        // Invalid/expired token
+        setcookie(
+            'remember_token',
+            '',
+            time() - 3600,
+            '/'
+        );
+    }
+}

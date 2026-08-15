@@ -22,6 +22,7 @@ if (is_post()) {
 
     // Login user
     if (!$_err) {
+
         $stmt = $_db->prepare("
             SELECT *
             FROM user
@@ -32,6 +33,67 @@ if (is_post()) {
         $user = $stmt->fetch();
 
         if ($user && password_verify($password, $user->password)) {
+
+            // Remember Me
+            if (isset($_POST['remember'])) {
+
+                // Generate secure random token
+                $token = bin2hex(random_bytes(32));
+
+                // Token expires after 30 days
+                $expires = date(
+                    'Y-m-d H:i:s',
+                    time() + (30 * 24 * 60 * 60)
+                );
+
+                // Save token in database
+                $stmt = $_db->prepare("
+                    UPDATE user
+                    SET remember_token = ?,
+                        remember_expires = ?
+                    WHERE id = ?
+                ");
+
+                $stmt->execute([
+                    $token,
+                    $expires,
+                    $user->id
+                ]);
+
+                // Save token in browser cookie
+                setcookie(
+                    'remember_token',
+                    $token,
+                    [
+                        'expires' => time() + (30 * 24 * 60 * 60),
+                        'path' => '/',
+                        'httponly' => true,
+                        'secure' => isset($_SERVER['HTTPS']),
+                        'samesite' => 'Lax'
+                    ]
+                );
+            }
+            else {
+
+                // Remove old Remember Me cookie
+                setcookie(
+                    'remember_token',
+                    '',
+                    time() - 3600,
+                    '/'
+                );
+
+                // Remove old token from database
+                $stmt = $_db->prepare("
+                    UPDATE user
+                    SET remember_token = NULL,
+                        remember_expires = NULL
+                    WHERE id = ?
+                ");
+
+                $stmt->execute([$user->id]);
+            }
+
             temp('info', 'Login successfully');
             login($user);
         }
@@ -67,6 +129,11 @@ include '_head.php';
             <?= err('password') ?>
         </div>
 
+        <label>
+            <input type="checkbox" name="remember" value="1">
+            Remember me
+        </label>
+
         <button type="submit">LOGIN</button>
 
     </form>
@@ -82,4 +149,3 @@ include '_head.php';
 <?php
 include '_foot.php';
 ?>
-
