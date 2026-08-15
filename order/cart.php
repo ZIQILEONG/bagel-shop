@@ -10,12 +10,37 @@ if (is_post()) {
         redirect('?');
     }
 
-    // handles delete selected items via checkbox array --ziqi
+    // delete selected items via checkbox array --ziqi
     if ($btn == 'delete_selected') {
         $checked_items = $_POST['checked_items'] ?? [];
         foreach ($checked_items as $id) {
             update_cart($id, 0);    // sets quantity to 0 to remove item
         }
+        redirect('?');
+    }
+
+    // apply voucher
+    if ($btn == 'apply_voucher') {
+        $code = req('voucher_code');
+
+        $stm = $_db->prepare("SELECT * FROM voucher WHERE CODE = ?");
+        $stm->execute([$code]);
+        $v = $stm->fetch(); // v=voucher
+
+        // check exists, active, not expired
+        if ($v && $v->active == 1 && $v->expiry >= date('Y-m-d')) {
+            // valid
+            $_SESSION['voucher'] = [
+                'code' => $code,
+                'percent' => $v->percent
+            ];
+            temp('info', 'Voucher applied successfully!');
+        } 
+        else {// invalid, show error
+            unset($_SESSION['voucher']);
+            temp('info', 'Invalid or expired voucher code.');
+        }
+
         redirect('?');
     }
 
@@ -152,10 +177,21 @@ $cart = get_cart();
     <?php endif ?>
 </p>
 
+<?php $voucher = $_SESSION['voucher'] ?? null; ?>
+
+<form method="post" class="form">
+    <label>Voucher Code</label>
+    <input type="text" name="voucher_code" value="<?= $voucher['code'] ?? '' ?>">
+    <button name="btn" value="apply_voucher">Apply</button>
+    <?php if ($voucher): ?>
+        <p>✅ Voucher applied: <?= $voucher['percent'] ?>% off</p>
+    <?php endif ?>
+</form>
+
 <!-- Include jQuery script selectors to drive standard selection states -->
 <script>
 $(document).ready(function() {
-    // 1. Select All Checkbox behavior layout rule
+    // Select All Checkbox behavior layout rule
     $('#select-all').on('change', function() {
         $('.item-checkbox').prop('checked', this.checked);
     });
@@ -169,7 +205,7 @@ $(document).ready(function() {
         }
     });
 
-    // 2. Safely hijack the dropdown triggers inside the bulk layout form wrapper
+    // Safely hijack the dropdown triggers inside the bulk layout form wrapper
     $('.table select').on('change', function(e) {
         e.preventDefault();
         
