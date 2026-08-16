@@ -941,3 +941,135 @@ footer b {
     color: var(--red);
 }
 
+/* ============================================================================
+   app-extra.css
+   Additional styles for: stylized pagination, batch actions, live search,
+   and DataTables theme integration.
+   Loaded AFTER css/app.css (see _head.php) so it can build on the same
+   CSS variables (--red, --brown, --pink, --cream, --border, etc.)
+   ============================================================================ */
+
+/* Pager (lib/SimplePager.php output) ---------------------------------------- */
+.pager {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin: 24px 0;
+}
+
+.pager a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--white);
+    border: 1px solid var(--border);
+    color: var(--brown);
+    font-weight: bold;
+    font-size: 13px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s, transform 0.15s, box-shadow 0.2s;
+    box-shadow: var(--shadow);
+}
+
+.pager a:hover {
+    background: var(--pink);
+    color: var(--red);
+    transform: translateY(-1px);
+}
+
+.pager a.active {
+    background: var(--red);
+    border-color: var(--red);
+    color: var(--white);
+    cursor: default;
+}
+
+/* Live-search / AJAX listing containers -------------------------------------- */
+[data-ajax-container] {
+    transition: opacity 0.15s;
+}
+
+[data-ajax-container].is-loading {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.search-spinner {
+    display: none;
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-left: 8px;
+}
+
+.search-spinner.active {
+    display: inline-block;
+}
+
+/* Batch action panel (e.g. batch price increase) ----------------------------- */
+.batch-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    background: var(--white);
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    margin: 14px 0;
+}
+
+.batch-panel label {
+    font-weight: bold;
+    color: var(--brown);
+}
+
+.batch-panel input[type=number] {
+    width: 110px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--cream);
+    font: inherit;
+}
+
+/* DataTables theme integration ------------------------------------------------ */
+table.dataTable {
+    border-collapse: collapse !important;
+}
+
+.dataTables_wrapper {
+    margin-top: 10px;
+}
+
+.dataTables_wrapper .dataTables_filter input,
+.dataTables_wrapper .dataTables_length select {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 6px 8px;
+    background: var(--cream);
+    font: inherit;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    border-radius: 999px !important;
+    margin: 0 2px !important;
+    border: 1px solid var(--border) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current,
+.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--red) !important;
+    color: var(--white) !important;
+    border-color: var(--red) !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--pink) !important;
+    color: var(--red) !important;
+}

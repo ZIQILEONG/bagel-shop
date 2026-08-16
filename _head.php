@@ -6,8 +6,17 @@
     <title><?= $_title ?? 'Pululu Bagel' ?></title>
     <link rel="shortcut icon" href="/images/favicon.png">
     <link rel="stylesheet" href="/css/app.css">
+    <link rel="stylesheet" href="/css/app-extra.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-   <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Lilita+One&display=swap" rel="stylesheet">
+
+    <!-- SweetAlert2 (replaces native confirm() dialogs) -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- DataTables (admin listings: instant client-side search / sort / paging) -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">
+    <script src="https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js"></script>
+
     <script src="/js/app.js"></script>
 </head>
 <body>
