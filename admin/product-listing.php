@@ -14,6 +14,18 @@ if (is_post() && req('btn') == 'delete_selected') {
     redirect('product-listing.php');
 }
 
+if (is_post() && req('btn') == 'increase_price') {
+    $ids     = post('ids', []);
+    $percent = req('percent');
+    if (is_array($ids) && count($ids) > 0 && is_numeric($percent)) {
+        $in  = implode(',', array_fill(0, count($ids), '?'));
+        $stm = $_db->prepare("UPDATE product SET price = ROUND(price * (1 + ?/100), 2) WHERE id IN ($in)");
+        $stm->execute(array_merge([$percent], $ids));
+        temp('info', count($ids) . ' product(s) price increased by ' . $percent . '%.');
+    }
+    redirect('product-listing.php');
+}
+
 $search = get('search', '');
 $sort   = get('sort', 'id');
 $dir    = get('dir', 'asc') == 'desc' ? 'desc' : 'asc';
@@ -34,43 +46,44 @@ if ($search != '') {
 $query = "SELECT * FROM product $where ORDER BY $sort $dir";
 $pager = new SimplePager($query, $params, '10', $page);
 $arr   = $pager->result;
+if (get('ajax') == '1') {
+    include 'product-listing-results.php';
+    exit();
+}
 $_title = 'Product | Listing (Admin)';
 include '../_head.php';
 ?>
-<p><?= $pager->item_count ?> record(s)</p>
-<p>
-    <button data-get="product-detail.php">Create New Product</button>
-</p>
-<form method="get" class="form">
-    <?= html_search('search', 'placeholder="Search by name"') ?>
+<form method="get" class="form" id="searchForm">
+    <?= html_search('search', 'placeholder="Search by name" autocomplete="off"') ?>
     <?= html_hidden('sort') ?>
     <?= html_hidden('dir') ?>
     <button type="submit">Search</button>
 </form>
-<form method="post">
-<table class="table">
-    <tr>
-        <th></th>
-        <th>Photo</th>
-        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'price' => 'Price (RM)', 'stock' => 'Stock'], $sort, $dir, 'search=' . encode($search)) ?>
-        <th></th>
-    </tr>
-    <?php foreach ($arr as $p): ?>
-    <tr>
-        <td><input type="checkbox" name="ids[]" value="<?= $p->id ?>"></td>
-        <td><img src="/products/<?= $p->photo ?>" width="50" height="50"></td>
-        <td><?= $p->id ?></td>
-        <td><?= $p->name ?></td>
-        <td class="right"><?= $p->price ?></td>
-        <td class="right"><?= $p->stock ?></td>
-        <td>
-            <button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button>
-        </td>
-    </tr>
-    <?php endforeach ?>
-</table>
-<button name="btn" value="delete_selected" data-confirm="Delete selected products?">Delete Selected</button>
-</form>
-<?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>
+<div id="resultsWrap">
+<?php include 'product-listing-results.php'; ?>
+</div>
+<script>
+$(function () {
+    let timer = null;
+    function loadResults(page) {
+        $.get('product-listing.php', {
+            ajax: 1,
+            search: $('#search').val(),
+            sort: $('#sort').val(),
+            dir: $('#dir').val(),
+            page: page || 1
+        }, html => $('#resultsWrap').html(html));
+    }
+    $('#search').on('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(() => loadResults(1), 350); // debounce
+    });
+    $('#resultsWrap').on('click', '.pager a', function (e) {
+        e.preventDefault();
+        loadResults(new URL(this.href).searchParams.get('page'));
+    });
+    $('#searchForm').on('submit', e => { e.preventDefault(); loadResults(1); });
+});
+</script>
 <?php
 include '../_foot.php';

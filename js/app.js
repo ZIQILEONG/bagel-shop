@@ -15,14 +15,33 @@ $(() => {
     $('.err:first').prev().focus();
     $('.err:first').prev().find(':input:first').focus();
     
-    // Confirmation message
-    $('[data-confirm]').on('click', e => {
-        const text = e.target.dataset.confirm || 'Are you sure?';
-        if (!confirm(text)) {
-            e.preventDefault();
-            e.stopImmediatePropagation();
+// Confirmation message (SweetAlert2)
+$('[data-confirm]').on('click', function (e) {
+    const el = e.target;
+
+    if (el.dataset.confirmed) {
+        delete el.dataset.confirmed; // let the real click proceed
+        return;
+    }
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    Swal.fire({
+        title: 'Please Confirm',
+        text: el.dataset.confirm || 'Are you sure?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#b5192b',
+        cancelButtonColor: '#8a7264',
+        confirmButtonText: 'Yes, continue',
+    }).then(result => {
+        if (result.isConfirmed) {
+            el.dataset.confirmed = '1';
+            el.click(); // re-fires the click so data-get/data-post handlers run
         }
     });
+});
 
     // Initiate GET request
     $('[data-get]').on('click', e => {
