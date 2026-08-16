@@ -36,45 +36,45 @@ if ($search != '') {
 $query = "SELECT * FROM user $where ORDER BY $sort $dir";
 $pager = new SimplePager($query, $params, '10', $page);
 $arr   = $pager->result;
+if (get('ajax') == '1') {
+    include 'user-listing-results.php';
+    exit();
+}
 $_title = 'Member | Listing (Admin)';
 include '../_head.php';
 ?>
-<p><?= $pager->item_count ?> record(s)</p>
-<p>
-    <button data-get="user-detail.php">Create New Member</button>
-</p>
-<form method="get" class="form">
-    <?= html_search('search', 'placeholder="Search by name or email"') ?>
+<form method="get" class="form" id="searchForm">
+    <?= html_search('search', 'placeholder="Search by name or email" autocomplete="off"') ?>
     <?= html_hidden('sort') ?>
     <?= html_hidden('dir') ?>
     <button type="submit">Search</button>
 </form>
-<form method="post">
-<table class="table">
-    <tr>
-        <th></th>
-        <th>Photo</th>
-        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'email' => 'Email', 'role' => 'Role'], $sort, $dir, 'search=' . encode($search)) ?>
-        <th>Phone No</th>
-        <th></th>
-    </tr>
-    <?php foreach ($arr as $u): ?>
-    <tr>
-        <td><input type="checkbox" name="ids[]" value="<?= $u->id ?>" <?= $u->id == $_user->id ? 'disabled' : '' ?>></td>
-        <td><img src="/photos/<?= $u->photo ?>" width="50" height="50"></td>
-        <td><?= $u->id ?></td>
-        <td><?= $u->name ?></td>
-        <td><?= $u->email ?></td>
-        <td><?= $u->role ?></td>
-        <td><?= $u->phone_no ?></td>
-        <td>
-            <button data-get="user-detail.php?id=<?= $u->id ?>">Detail</button>
-        </td>
-    </tr>
-    <?php endforeach ?>
-</table>
-<button name="btn" value="delete_selected" data-confirm="Delete selected members?">Delete Selected</button>
-</form>
-<?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>
+<div id="resultsWrap">
+<?php include 'user-listing-results.php'; ?>
+</div>
+<script>
+$(function () {
+    let timer = null;
+    function loadResults(page) {
+        $.get('user-listing.php', {
+            ajax: 1,
+            search: $('#search').val(),
+            sort: $('#sort').val(),
+            dir: $('#dir').val(),
+            page: page || 1
+        }, html => $('#resultsWrap').html(html));
+    }
+    $('#search').on('input', function () {
+        clearTimeout(timer);
+        timer = setTimeout(() => loadResults(1), 350); // debounce
+    });
+    $('#resultsWrap').on('click', '.pager a', function (e) {
+        e.preventDefault();
+        loadResults(new URL(this.href).searchParams.get('page'));
+    });
+    $('#searchForm').on('submit', e => { e.preventDefault(); loadResults(1); });
+});
+</script>
+
 <?php
 include '../_foot.php';

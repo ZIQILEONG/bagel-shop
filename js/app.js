@@ -44,19 +44,17 @@ $('[data-confirm]').on('click', function (e) {
 });
 
     // Initiate GET request
-    $('[data-get]').on('click', e => {
+    $(document).on('click', '[data-get]', function (e) {
         e.preventDefault();
-        const url = e.target.dataset.get;
-        location = url || location;
+        location = this.dataset.get || location;
     });
 
     // Initiate POST request
-    $('[data-post]').on('click', e => {
+    $(document).on('click', '[data-post]', function (e) {
         e.preventDefault();
-        const url = e.target.dataset.post;
         const f = $('<form>').appendTo(document.body)[0];
         f.method = 'POST';
-        f.action = url || location;
+        f.action = this.dataset.post || location;
         f.submit();
     });
 
@@ -168,7 +166,7 @@ $(() => {
     $('.err:first').prev().find(':input:first').focus();
 
     // Confirmation message (SweetAlert2 replaces the native confirm() popup)
-    $('[data-confirm]').on('click', function (e) {
+$(document).on('click', '[data-confirm]', function (e) {
         e.preventDefault();
         e.stopImmediatePropagation();
 
