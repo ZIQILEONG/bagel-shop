@@ -50,6 +50,10 @@ foreach ($cart as $product_id => $unit) {
     $stm = $_db->prepare("INSERT INTO order_item (order_id, product_id, price, unit, subtotal) VALUES (?, ?, ?, ?, ?)");
     $stm->execute([$order_id, $product_id, $product->price, $unit, $subtotal]);
 
+    // reduce stock by the quantity purchased
+    $stm = $_db->prepare("UPDATE product SET stock = stock - ? WHERE id = ?");
+    $stm->execute([$unit, $product_id]);
+
     $count += $unit;
     $total += $subtotal;
 }
