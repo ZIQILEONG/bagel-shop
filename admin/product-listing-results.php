@@ -1,6 +1,7 @@
 <?php
 // Included by product-listing.php for both normal and AJAX renders.
-// Expects $pager, $arr, $search, $sort, $dir already set.
+// Expects $pager, $arr, $search, $sort, $dir to ve already set.
+$_low_stock_threshold = 11;
 ?>
 <p><?= $pager->item_count ?> record(s)</p>
 <form method="post">
@@ -12,13 +13,19 @@
         <th></th>
     </tr>
     <?php foreach ($arr as $p): ?>
-    <tr>
+    <?php $is_low_stock = $p->stock < $_low_stock_threshold; ?>
+    <tr<?= $is_low_stock ? " style='background:#ffe8e8'" : '' ?>>
         <td><input type="checkbox" name="ids[]" value="<?= $p->id ?>"></td>
         <td><img src="/products/<?= $p->photo ?>" width="50" height="50"></td>
         <td><?= $p->id ?></td>
         <td><?= $p->name ?></td>
         <td class="right"><?= $p->price ?></td>
-        <td class="right"><?= $p->stock ?></td>
+        <td class="right">
+            <?= $p->stock ?>
+            <?php if ($is_low_stock): ?>
+                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#b5192b;color:#fff;font-size:11px;font-weight:bold;">Low Stock</span>
+            <?php endif ?>
+        </td>
         <td><button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button></td>
     </tr>
     <?php endforeach ?>

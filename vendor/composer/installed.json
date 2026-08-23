@@ -87,17 +87,17 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v21.2.0",
-            "version_normalized": "21.2.0.0",
+            "version": "v20.3.1",
+            "version_normalized": "20.3.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "edf8118f0b96d69f06f372da9168d613d1aed072"
+                "reference": "bf2c6caf886a88e35f831a68f3b6a49ac85cb357"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/edf8118f0b96d69f06f372da9168d613d1aed072",
-                "reference": "edf8118f0b96d69f06f372da9168d613d1aed072",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/bf2c6caf886a88e35f831a68f3b6a49ac85cb357",
+                "reference": "bf2c6caf886a88e35f831a68f3b6a49ac85cb357",
                 "shasum": ""
             },
             "require": {
@@ -111,7 +111,7 @@
                 "phpstan/phpstan": "^1.2",
                 "phpunit/phpunit": "^8.0 || ^9.0"
             },
-            "time": "2026-08-10T22:11:35+00:00",
+            "time": "2026-07-09T17:57:50+00:00",
             "type": "library",
             "extra": {
                 "branch-alias": {
@@ -121,8 +121,7 @@
             "installation-source": "dist",
             "autoload": {
                 "files": [
-                    "lib/version_check.php",
-                    "lib/agent_plugin_hint.php"
+                    "lib/version_check.php"
                 ],
                 "psr-4": {
                     "Stripe\\": "lib/"
@@ -147,7 +146,7 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v21.2.0"
+                "source": "https://github.com/stripe/stripe-php/tree/v20.3.1"
             },
             "install-path": "../stripe/stripe-php"
         }

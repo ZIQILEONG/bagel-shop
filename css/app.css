@@ -603,7 +603,7 @@ footer b {
 .profile-form .avatar-row img {
     border:3px solid var(--pink);
     border-radius:50%;
-    object‑fit:cover;
+    object-fit:cover;
 }
 
 .profile-form input[type="text"],

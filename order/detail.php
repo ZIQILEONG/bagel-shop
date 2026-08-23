@@ -3,10 +3,10 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (member)
+// Authorization (member)
 auth('Member');
 
-// (2) Return order (based on id) belong to the user
+// Return order (based on id) belong to the user
 $id = req('id');
 
 $stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
@@ -17,7 +17,7 @@ if (!$o) {
     redirect('history.php');
 }
 
-// (3) Return items (and products) belong to the order
+// Return items (and products) belong to the order
 $stm = $_db->prepare("SELECT i.*, p.name, p.photo FROM order_item i JOIN product p ON i.product_id = p.id WHERE i.order_id = ?");
 $stm->execute([$o->id]);
 $arr = $stm-> fetchAll();
@@ -50,6 +50,10 @@ include '../_head.php';
 
     <label>Total</label>
     <div>RM <?= $o->total ?></div>
+    <br>
+
+    <label>Points Earned</label>
+    <div>+<?= $o->points_earned ?> points</div>
     <br>
 </form>
 

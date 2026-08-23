@@ -43,6 +43,12 @@
                 <span>Register</span>
                 </span>
             </a>
+                <a id="storyLink" href="login.php">
+                <span class="flip">
+                <span>Login</span>
+                <span>Login</span>
+                </span>
+            </a>
             <a href="#">
                 <span class="flip">
                 <span>Order For Tomorrow</span>
@@ -54,6 +60,9 @@
             <div>
                 <?= $_user->name ?><br>
                 <?= $_user->role ?>
+                <?php if ($_user->role == 'Member'): ?>
+                    <br>⭐ <?= $_user->points ?> points
+                <?php endif ?>
             </div>
             <img src="/photos/<?= $_user->photo ?>">
         <?php endif ?>
