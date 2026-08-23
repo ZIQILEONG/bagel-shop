@@ -73,6 +73,19 @@ if ($voucher) {
 $stm = $_db->prepare("UPDATE orders SET count = ?, total = ?, discount = ?, voucher_code = ? WHERE id = ?");
 $stm->execute([$count, $total, $discount, $voucher_code, $order_id]);
 
+// reward points
+$points_earned = floor($total);
+
+$stm = $_db->prepare("UPDATE orders SET points_earned = ? WHERE id = ?");
+$stm->execute([$points_earned, $order_id]);
+
+$stm = $_db->prepare("UPDATE user SET points = points + ? WHERE id = ?");
+$stm->execute([$points_earned, $_user->id]);
+
+// show up-to-date points immediately after a purchase
+$_user->points += $points_earned;
+$_SESSION['user'] = $_user;
+
 // Insert payment record
 $stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
 $stm->execute([$order_id, $method, $total, $session->payment_intent]);

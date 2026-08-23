@@ -60,6 +60,9 @@
             <div>
                 <?= $_user->name ?><br>
                 <?= $_user->role ?>
+                <?php if ($_user->role == 'Member'): ?>
+                    <br>⭐ <?= $_user->points ?> points
+                <?php endif ?>
             </div>
             <img src="/photos/<?= $_user->photo ?>">
         <?php endif ?>
