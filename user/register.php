@@ -1,59 +1,56 @@
 <?php
+
 include '../_base.php';
 include '../config.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+$name = '';
+$email = '';
 
-    $name = trim($_POST['name']);
-    $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
-    $reenter_password = trim($_POST['reenter_password']);
-    $captcha = $_POST['cf-turnstile-response'] ?? '';
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $name = trim($_POST['name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password_input = $_POST['password'] ?? '';
+    $reenter_password_input = $_POST['reenter_password'] ?? '';
+    $turnstile_token = $_POST['cf-turnstile-response'] ?? '';
 
-    if ($name == "" || $email == "" || $password == "" || $reenter_password == "") {
-        echo "Please fill in all fields.";
+    if ($name === '') {
+        $_err['name'] = 'Required';
     }
-    else if ($password != $reenter_password) {
-        echo "Password do not match!";
+
+    if ($email === '') {
+        $_err['email'] = 'Required';
     }
-    else if ($captcha == '') {
-        echo "Please complete the CAPTCHA.";
+    else if (!is_email($email)) {
+        $_err['email'] = 'Invalid email';
     }
-    else if (is_exists($email, 'user', 'email')) {
-        echo "Email already exists.";
+
+    if ($password_input === '') {
+        $_err['password'] = 'Required';
     }
-    else {
 
-        $data = [
-            'secret' => TURNSTILE_SECRET_KEY,
-            'response' => $captcha
-        ];
+    if ($reenter_password_input === '') {
+        $_err['reenter_password'] = 'Required';
+    }
+    else if ($password_input !== $reenter_password_input) {
+        $_err['reenter_password'] = 'Passwords do not match';
+    }
 
-        $ch = curl_init('https://challenges.cloudflare.com/turnstile/v0/siteverify');
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($data));
+    if (!$_err && is_exists($email, 'user', 'email')) {
+        $_err['email'] = 'Email already exists';
+    }
 
-        $response = curl_exec($ch);
-        curl_close($ch);
+    if (!$_err && !verify_turnstile($turnstile_token, 'register')) {
+        $_err['captcha'] = 'Please complete the Turnstile verification.';
+    }
 
-        $result = json_decode($response, true);
+    if (!$_err) {
+        begin_pending_auth('register', [
+            'name' => $name,
+            'email' => $email,
+            'password_hash' => password_hash($password_input, PASSWORD_DEFAULT),
+        ]);
 
-        if (!$result['success']) {
-            echo "CAPTCHA verification failed.";
-        }
-        else {
-            $hash = password_hash($password, PASSWORD_DEFAULT);
-
-            $stm = $_db->prepare(
-                "INSERT INTO user (name, email, password, role)
-                 VALUES (?, ?, ?, ?)"
-            );
-
-            $stm->execute([$name, $email, $hash, 'Member']);
-
-            echo "Register successful!";
-        }
+        redirect('../captcha/puzzle.php');
     }
 }
 
@@ -95,7 +92,11 @@ include '../_head.php';
             <?= err('reenter_password') ?>
         </div>
 
-        <div class="cf-turnstile" data-sitekey="<?= TURNSTILE_SITE_KEY ?>"></div>
+        <?php
+        $captcha_action = 'register';
+        $captcha_web_path = '../captcha';
+        include '../captcha/widget.php';
+        ?>
 
         <button type="submit">CREATE ACCOUNT</button>
 
@@ -103,13 +104,9 @@ include '../_head.php';
 
     <p class="login-text">
         Already have an account?
-        <a href="../login.php">Login</a><br>
+        <a href="../login.php">Login</a>
     </p>
 
 </div>
 
-<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
-
-<?php
-include '../_foot.php';
-?>
+<?php include '../_foot.php'; ?>
