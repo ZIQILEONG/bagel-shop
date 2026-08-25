@@ -551,7 +551,6 @@ function is_exists($value, $table, $field) {
 // Range 1-10
 $_units = array_combine(range(1, 10), range(1, 10));
 
-<<<<<<< HEAD
 // Rating options (1-5 stars)
 $_ratings = [
     1 => '★☆☆☆☆ (1)',
@@ -562,7 +561,6 @@ $_ratings = [
 ];
 
 //auto login user if remember_token cookie is set and valid
-=======
 // Verify a Cloudflare Turnstile token on the server.
 function verify_turnstile(string $token, string $expected_action = ''): bool {
     if ($token === '' || !function_exists('curl_init')) {
@@ -735,7 +733,6 @@ function clear_remember_cookie(): void {
 
 // A remembered user must pass visible Turnstile and then the separate puzzle
 // once per new browser session before the login is restored.
->>>>>>> 1c7681d7b432e81d51a29e18cd09c54f82af5d77
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
     $token_hash = hash('sha256', $_COOKIE['remember_token']);
 
