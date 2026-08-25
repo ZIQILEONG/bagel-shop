@@ -2,12 +2,13 @@
 require '../../config.php';
 require '../../_base.php';
 $id = $_GET['id'] ?? 0;
-$stmt = $_db->prepare("SELECT * FROM products WHERE id = ?");
+$stmt = $_db->prepare("SELECT * FROM products_crud WHERE id = ?");
 $stmt->execute([$id]);
 $item = $stmt->fetch();
 if(!$item){
     redirect("index.php");
 }
+
 
 $_title = "Edit Product";
 include '../../_head.php';
@@ -22,5 +23,6 @@ include '../../_head.php';
     <div>Replace Image: <input type="file" name="img"></div>
     <button type="submit">Update</button>
 </form>
+
 
 <?php include '../../_foot.php'; ?>

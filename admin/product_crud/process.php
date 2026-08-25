@@ -2,7 +2,9 @@
 require '../../config.php';
 require '../../_base.php';
 
+
 $action = $_POST['action'] ?? '';
+
 
 // Create new product
 if($action === 'create'){
@@ -14,9 +16,10 @@ if($action === 'create'){
         $imgName = time()."_".basename($_FILES['img']['name']);
         move_uploaded_file($_FILES['img']['tmp_name'], "../../photos/".$imgName);
     }
-    $s = $_db->prepare("INSERT INTO products(name,price,description,image,created_at) VALUES(?,?,?,?,NOW())");
+    $s = $_db->prepare("INSERT INTO products_crud(name,price,description,image,created_at) VALUES(?,?,?,?,NOW())");
     $s->execute([$name,$price,$desc,$imgName]);
 }
+
 
 // Update existing product
 if($action === 'update'){
@@ -30,12 +33,13 @@ if($action === 'update'){
         move_uploaded_file($_FILES['img']['tmp_name'], "../../photos/".$imgName);
     }
     if($imgName){
-        $s = $_db->prepare("UPDATE products SET name=?,price=?,description=?,image=? WHERE id=?");
+        $s = $_db->prepare("UPDATE products_crud SET name=?,price=?,description=?,image=? WHERE id=?");
         $s->execute([$name,$price,$desc,$imgName,$id]);
     }else{
-        $s = $_db->prepare("UPDATE products SET name=?,price=?,description=? WHERE id=?");
+        $s = $_db->prepare("UPDATE products_crud SET name=?,price=?,description=? WHERE id=?");
         $s->execute([$name,$price,$desc,$id]);
     }
 }
+
 
 redirect("index.php");
