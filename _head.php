@@ -43,7 +43,7 @@
                 <span>Register</span>
                 </span>
             </a>
-                <a id="storyLink" href="login.php">
+                <a id="storyLink" href="../login.php">
                 <span class="flip">
                 <span>Login</span>
                 <span>Login</span>
