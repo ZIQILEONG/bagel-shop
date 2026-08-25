@@ -8,6 +8,7 @@ auth('Admin');
 
 // return all orders, joined with user (name), newest first
 $stm = $_db->prepare("SELECT o.*, u.name, u.is_deleted FROM orders o JOIN user u ON o.user_id = u.id ORDER BY o.id DESC");
+$stm->execute([]);
 $arr = $stm-> fetchAll();
 
 // ----------------------------------------------------------------------------

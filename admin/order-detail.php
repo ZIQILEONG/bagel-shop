@@ -18,6 +18,7 @@ $statuses = [
 $id = req('id');
 
 $stm = $_db->prepare("SELECT o.*, u.name, u.email, u.is_deleted FROM orders o JOIN user u ON o.user_id = u.id WHERE o.id = ?");
+$stm->execute([$id]);
 $o = $stm->fetch();
 
 if (!$o) {
