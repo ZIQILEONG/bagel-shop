@@ -1,433 +1,214 @@
 <?php
 include '../_base.php';
-<<<<<<< HEAD
-auth('Admin'); // Ensure only Admin can access this page
 
-$id = req('id');
-$p = null;
-$photos = [];
-
-// 1. Fetch Product Data using PDO
-if ($id) {
-    $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
-    $stm->execute([$id]);
-    $p = $stm->fetch();
-
-    // 2. Fetch Additional Photos using PDO
-    if ($p) {
-        $stm = $_db->prepare("SELECT * FROM product_photo WHERE product_id = ? ORDER BY sort_order, id");
-        $stm->execute([$id]);
-        $photos = $stm->fetchAll();
-    } else {
-        redirect('product-listing.php');
-    }
+if (is_post()) {
+    $id   = req('id');
+    $unit = req('unit');
+    update_cart($id, $unit);
+    redirect();
 }
 
-// 3. Handle Delete Product
-if ($p && is_post() && req('btn') == 'delete') {
-    // Check for orders before deleting (Optional safety check)
-    $stm = $_db->prepare("SELECT COUNT(*) FROM order_item WHERE product_id = ?");
-    $stm->execute([$p->id]);
-    $count = $stm->fetchColumn();
+$id  = req('id');
+$stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
+$stm->execute([$id]);
+$p = $stm->fetch();
+if (!$p) redirect('list.php');
 
-    if ($count > 0) {
-        temp('error', 'Cannot delete: Product has existing orders.');
-    } else {
-        $stm = $_db->prepare("DELETE FROM product WHERE id = ?");
-        $stm->execute([$p->id]);
-        temp('info', 'Product deleted.');
-        redirect('product-listing.php');
-    }
-}
+// Fetch gallery photos (from product_photo table)
+$stm = $_db->prepare('SELECT photo FROM product_photo WHERE product_id = ? ORDER BY sort_order, id');
+$stm->execute([$id]);
+$gallery = $stm->fetchAll(PDO::FETCH_COLUMN);
 
-// 4. Handle Save (Create/Update Main Product)
-if (is_post() && req('btn') != 'delete' && req('btn') != 'batch' && req('btn') != 'upload_photos' && req('btn') != 'delete_photo') {
-    $name  = req('name');
-    $price = req('price');
-    $stock = req('stock');
-    $category_id = req('category_id');
-    $video_url = req('video_url');
-    
-    // Keep existing photo if not uploading new one
-    $photo = $p->photo ?? 'default.jpg';
+// Build slider list: main photo first, then gallery photos
+$slides = [];
+if ($p->photo) $slides[] = '/products/' . $p->photo;
+foreach ($gallery as $g) $slides[] = '/photos/products/' . $g;
+if (!$slides) $slides[] = '/products/default.jpg';
 
-    // Validation
-    if ($name == '') $_err['name'] = 'Required';
-    if ($price == '') $_err['price'] = 'Required';
-    elseif (!is_money($price) || $price < 0) $_err['price'] = 'Invalid value';
-    if ($stock == '') $_err['stock'] = 'Required';
-    elseif (!ctype_digit($stock)) $_err['stock'] = 'Invalid value';
+$cart = get_cart();
+$unit = $cart[$p->id] ?? 0;
 
-    // Handle Main Photo Upload
-    $f = get_file('photo');
-    if ($f && $f['error'] == 0) {
-        if (!getimagesize($f['tmp_name'])) {
-            $_err['photo'] = 'Invalid image file';
-        }
-    }
-
-    if (!$_err) {
-        if ($f && $f['error'] == 0) {
-            $dir = root('products');
-            if (!is_dir($dir)) mkdir($dir, 0755, true);
-            $photo = save_photo($f, $dir);
-        }
-
-        if ($p) {
-            // UPDATE
-            $stm = $_db->prepare("UPDATE product SET name = ?, price = ?, stock = ?, photo = ?, category_id = ?, video_url = ? WHERE id = ?");
-            $stm->execute([$name, $price, $stock, $photo, $category_id, $video_url, $p->id]);
-            temp('info', 'Product updated.');
-        } else {
-            // CREATE
-            $max   = $_db->query("SELECT MAX(id) FROM product")->fetchColumn();
-            $num   = $max ? ((int) substr($max, 1) + 1) : 1;
-            $newId = 'P' . str_pad($num, 3, '0', STR_PAD_LEFT);
-            
-            $stm = $_db->prepare("INSERT INTO product (id, name, price, photo, stock, category_id, video_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
-            $stm->execute([$newId, $name, $price, $photo, $stock, $category_id, $video_url]);
-            temp('info', 'Product created.');
-            redirect('product-detail.php?id=' . $newId);
-        }
-        redirect('product-detail.php?id=' . ($p ? $p->id : $newId));
-    }
-}
-
-// 5. Handle Multiple Photo Upload
-if (is_post() && req('btn') == 'upload_photos' && $p) {
-    $files = $_FILES['additional_photos'] ?? [];
-    $count = 0;
-
-    if ($files && is_array($files['tmp_name'])) {
-        $dir = root('photos/products');
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-
-        foreach ($files['tmp_name'] as $i => $tmp_name) {
-            if ($files['error'][$i] == 0) {
-                $ext = pathinfo($files['name'][$i], PATHINFO_EXTENSION);
-                $photo_name = uniqid() . '.' . strtolower($ext);
-                
-                // Move file
-                if (move_uploaded_file($tmp_name, "$dir/$photo_name")) {
-                    // Insert into DB using PDO
-                    $stm = $_db->prepare("INSERT INTO product_photo (product_id, photo, sort_order) VALUES (?, ?, ?)");
-                    $stm->execute([$p->id, $photo_name, $count + 1]);
-                    $count++;
-                }
-            }
-        }
-        temp('info', "$count photo(s) uploaded.");
-        redirect('product-detail.php?id=' . $p->id);
-    }
-}
-
-// 6. Handle Delete Single Photo
-if (is_post() && req('btn') == 'delete_photo' && $p) {
-    $photo_id = req('photo_id');
-    $photo_name = req('photo_name');
-
-    $stm = $_db->prepare("DELETE FROM product_photo WHERE id = ? AND product_id = ?");
-    $stm->execute([$photo_id, $p->id]);
-
-    $file_path = root("photos/products/$photo_name");
-    if (file_exists($file_path)) unlink($file_path);
-
-    temp('info', 'Photo deleted.');
-    redirect('product-detail.php?id=' . $p->id);
-}
-
-// Pre-fill form values
-$name        = $name        ?? $p->name        ?? '';
-$price       = $price       ?? $p->price       ?? '';
-$stock       = $stock       ?? $p->stock       ?? '';
-$category_id = $category_id ?? $p->category_id ?? '';
-$video_url   = $video_url   ?? $p->video_url   ?? '';
-
-// Get categories
-$categories = [];
-$stm = $_db->query("SELECT * FROM category ORDER BY name");
-$categories = $stm->fetchAll();
-
-$_title = $p ? 'Edit Product (Admin)' : 'Create Product (Admin)';
+$_title = 'Product | Detail';
 include '../_head.php';
 ?>
 
 <style>
-    .form { max-width: 800px; margin: 0 auto; }
-    .photo-grid {
+    .detail-layout {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 15px;
-        margin: 20px 0;
+        grid-template-columns: 260px 1fr;
+        gap: 30px;
+        align-items: start;
+        max-width: 900px;
+        margin: 0 auto;
     }
-    .photo-item {
+    .slider {
         position: relative;
-        border: 1px solid var(--border);
-        border-radius: 8px;
+        width: 260px;
+        height: 260px;
+        border-radius: 10px;
         overflow: hidden;
-        background: #fff;
+        border: 1px solid #eee;
+        background: #fafafa;
     }
-    .photo-item img {
-        width: 100%;
-        height: 150px;
+    .slider-track {
+        display: flex;
+        height: 100%;
+        transition: transform 0.3s ease;
+    }
+    .slider-track img {
+        width: 260px;
+        height: 260px;
         object-fit: cover;
-        display: block;
+        flex-shrink: 0;
     }
-    .delete-btn {
+    .slider-arrow {
         position: absolute;
-        top: 5px;
-        right: 5px;
-        background: rgba(220, 38, 38, 0.9);
-        color: white;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0,0,0,0.4);
+        color: #fff;
         border: none;
+        width: 32px;
+        height: 32px;
         border-radius: 50%;
-        width: 30px;
-        height: 30px;
         cursor: pointer;
-        font-size: 18px;
-        line-height: 1;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
-    .drop-zone {
-        border: 3px dashed var(--border);
-        border-radius: 8px;
-        padding: 30px;
-        text-align: center;
-        background: var(--cream);
+    .slider-arrow.prev { left: 8px; }
+    .slider-arrow.next { right: 8px; }
+    .slider-dots {
+        position: absolute;
+        bottom: 8px;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 6px;
+    }
+    .slider-dots span {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.6);
         cursor: pointer;
-        transition: all 0.3s;
     }
-    .drop-zone.dragover {
-        border-color: var(--red);
-        background: var(--pink);
-    }
-    .video-preview iframe {
-        width: 100%;
-        max-width: 560px;
-        aspect-ratio: 16/9;
+    .slider-dots span.active { background: #fff; }
+
+    .stock-banner {
+        background: #eaf2ff;
+        color: #1a5fd0;
+        padding: 12px 15px;
         border-radius: 8px;
-        margin-top: 10px;
+        font-size: 14px;
+        margin: 10px 0;
     }
+    .price-big { font-size: 20px; font-weight: bold; margin: 10px 0; }
+
+    .qty-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
+    .qty-btn {
+        width: 32px; height: 32px; border-radius: 50%;
+        border: 1px solid var(--red, #e07b39); background: #fff;
+        color: var(--red, #e07b39); font-size: 18px; cursor: pointer;
+    }
+    .qty-input {
+        width: 40px; text-align: center; border: 1px solid #ddd;
+        border-radius: 6px; padding: 6px 0;
+    }
+    .add-btn {
+        margin-top: 15px; width: 100%; padding: 14px;
+        background: var(--red, #e07b39); color: #fff; border: none;
+        border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
+    }
+    .add-btn:disabled { background: #ccc; cursor: not-allowed; }
 </style>
 
-<form method="post" enctype="multipart/form-data" class="form">
-    <?php if ($p): ?>
-    <label>ID</label>
-    <b><?= encode($p->id) ?></b>
-    <br><br>
-    <?php endif; ?>
-
-    <label for="name">Name</label>
-    <?= html_text('name', 'value="' . encode($name) . '" maxlength="100"') ?>
-    <?= err('name') ?>
-
-    <label for="price">Price (RM)</label>
-    <?= html_text('price', 'value="' . encode($price) . '" maxlength="10"') ?>
-    <?= err('price') ?>
-
-    <label for="stock">Stock</label>
-    <?= html_text('stock', 'value="' . encode($stock) . '" maxlength="10"') ?>
-    <?= err('stock') ?>
-
-    <label for="category_id">Category</label>
-    <?php 
-    $cat_opts = ['' => '- Select Category -'];
-    foreach($categories as $c) $cat_opts[$c->id] = $c->name;
-    ?>
-    <?= html_select('category_id', $cat_opts, $category_id) ?>
-
-    <label for="video_url">YouTube URL</label>
-    <?= html_text('video_url', 'value="' . encode($video_url) . '" placeholder="https://www.youtube.com/watch?v=..."') ?>
-    <?php if ($video_url): 
-        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video_url, $matches);
-        if (isset($matches[1])): ?>
-        <div class="video-preview">
-            <iframe src="https://www.youtube.com/embed/<?= $matches[1] ?>" frameborder="0" allowfullscreen></iframe>
+<div class="detail-layout">
+    <div>
+        <div class="slider" id="slider">
+            <div class="slider-track" id="sliderTrack">
+                <?php foreach ($slides as $src): ?>
+                    <img src="<?= encode($src) ?>" alt="<?= encode($p->name) ?>">
+                <?php endforeach; ?>
+            </div>
+            <?php if (count($slides) > 1): ?>
+                <button class="slider-arrow prev" onclick="moveSlide(-1)">‹</button>
+                <button class="slider-arrow next" onclick="moveSlide(1)">›</button>
+                <div class="slider-dots" id="sliderDots">
+                    <?php foreach ($slides as $i => $s): ?>
+                        <span data-i="<?= $i ?>" class="<?= $i === 0 ? 'active' : '' ?>" onclick="goToSlide(<?= $i ?>)"></span>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
         </div>
-    <?php endif; endif; ?>
-
-    <label>Main Photo</label>
-    <?php if ($p && $p->photo): ?>
-        <img src="/products/<?= $p->photo ?>" style="max-width: 200px; border: 1px solid #ddd; margin-bottom: 10px;">
-    <?php endif; ?>
-    <?= html_file('photo', 'accept="image/*"') ?>
-    <?= err('photo') ?>
-
-    <section style="margin-top: 20px;">
-        <button type="submit">Save Product</button>
-        <a href="product-listing.php" style="margin-left: 10px;">Cancel</a>
-    </section>
-</form>
-
-<?php if ($p): ?>
-<hr style="margin: 40px 0;">
-<h2>Additional Photos (Gallery)</h2>
-
-<!-- Upload Form -->
-<form method="post" enctype="multipart/form-data" id="photo-upload-form">
-    <div class="drop-zone" id="dropZone">
-        <p>📁 Drag & Drop photos here or click to select</p>
-        <input type="file" name="additional_photos[]" id="additionalPhotos" multiple accept="image/*" style="display: none;">
     </div>
-    <div id="preview-container" class="photo-grid"></div>
-    <section style="margin-top: 15px;">
-        <button type="submit" name="btn" value="upload_photos">Upload Selected Photos</button>
-    </section>
-</form>
 
-<!-- Existing Photos List -->
-<?php if ($photos): ?>
-<h3 style="margin-top: 30px;">Uploaded Gallery</h3>
-<div class="photo-grid">
-    <?php foreach ($photos as $photo): ?>
-    <div class="photo-item">
-        <img src="/photos/products/<?= $photo->photo ?>" alt="Gallery">
-        <form method="post" style="position: absolute; top: 5px; right: 5px;">
-            <?= html_hidden('photo_id', "value='$photo->id'") ?>
-            <?= html_hidden('photo_name', "value='$photo->photo'") ?>
-            <button type="submit" name="btn" value="delete_photo" class="delete-btn" onclick="return confirm('Delete this photo?')">×</button>
+    <div>
+        <h2><?= encode($p->name) ?></h2>
+
+        <?php if ($p->stock <= 0): ?>
+            <div class="stock-banner">ℹ️ Sorry, this item is currently unavailable</div>
+        <?php endif; ?>
+
+        <div class="price-big">RM<?= number_format($p->price, 2) ?></div>
+
+        <form method="post" id="detailForm">
+            <?= html_hidden('id') ?>
+            <input type="hidden" name="unit" id="unitField" value="<?= $unit ?: 1 ?>">
+
+            <div class="qty-row">
+                <button type="button" class="qty-btn" onclick="changeQty(-1)">−</button>
+                <input type="text" class="qty-input" id="qtyDisplay" value="<?= $unit ?: 1 ?>" readonly>
+                <button type="button" class="qty-btn" onclick="changeQty(1)">+</button>
+            </div>
+
+            <button type="submit" class="add-btn" <?= $p->stock <= 0 ? 'disabled' : '' ?>>
+                <?= $unit ? "In Cart ✅" : "Add RM" . number_format($p->price, 2) ?>
+            </button>
         </form>
     </div>
-    <?php endforeach; ?>
 </div>
-<?php endif; ?>
-<?php endif; ?>
 
-<?php if ($p): ?>
-<p style="margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px;">
-    <button data-post="product-detail.php?id=<?= $p->id ?>&btn=delete" data-confirm="Permanently delete this product?" style="background: var(--red);">Delete Product</button>
+<p style="max-width: 900px; margin: 20px auto 0;">
+    <button data-get="list.php">List</button>
 </p>
-<?php endif; ?>
 
 <script>
-$(document).ready(function() {
-    const dropZone = document.getElementById('dropZone');
-    const fileInput = document.getElementById('additionalPhotos');
-    const previewContainer = document.getElementById('preview-container');
-
-    if(dropZone) {
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, (e) => { e.preventDefault(); e.stopPropagation(); }, false);
-        });
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
-        });
-
-        dropZone.addEventListener('drop', (e) => {
-            const dt = e.dataTransfer;
-            handleFiles(dt.files);
-        }, false);
-
-        fileInput.addEventListener('change', function() {
-            handleFiles(this.files);
-        });
+    function changeQty(delta) {
+        const display = document.getElementById('qtyDisplay');
+        const field = document.getElementById('unitField');
+        let val = parseInt(display.value) + delta;
+        if (val < 1) val = 1;
+        if (val > <?= (int)$p->stock ?: 999 ?>) val = <?= (int)$p->stock ?: 999 ?>;
+        display.value = val;
+        field.value = val;
     }
 
-    function handleFiles(files) {
-        ([...files]).forEach(file => {
-            if (file.type.startsWith('image/')) previewFile(file);
-        });
+    const slides = document.querySelectorAll('#sliderTrack img');
+    const dots = document.querySelectorAll('#sliderDots span');
+    let current = 0;
+
+    function updateSlider() {
+        document.getElementById('sliderTrack').style.transform = `translateX(-${current * 260}px)`;
+        dots.forEach((d, i) => d.classList.toggle('active', i === current));
     }
 
-    function previewFile(file) {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onloadend = function() {
-            const div = document.createElement('div');
-            div.className = 'photo-item';
-            div.innerHTML = `<img src="${reader.result}" alt="Preview">`;
-            previewContainer.appendChild(div);
-        }
+    function moveSlide(dir) {
+        current = (current + dir + slides.length) % slides.length;
+        updateSlider();
     }
-});
+
+    function goToSlide(i) {
+        current = i;
+        updateSlider();
+    }
+
+    <?php if (count($slides) > 1): ?>
+    setInterval(() => moveSlide(1), 4000);
+    <?php endif; ?>
 </script>
-=======
 
-$id = req('id');
-$product = null;
-
-if ($id) {
-    $statement = $_db->prepare('SELECT * FROM product WHERE id = ?');
-    $statement->execute([$id]);
-    $product = $statement->fetch();
-}
-
-if (!$product) {
-    redirect('list.php');
-}
-
-$stock = max(0, (int) $product->stock);
-$cart = get_cart();
-$cart_unit = (int) ($cart[$product->id] ?? 0);
-$max_units = min(10, $stock);
-$is_sold_out = $stock === 0;
-
-$_title = (string) $product->name . ' | Pululu Bagel';
-$_body_class = 'pululu-product-page';
-include '../_head.php';
-?>
-
-<nav class="breadcrumb" aria-label="Breadcrumb">
-    <a href="<?= app_url('index.php') ?>">Home</a>
-    <span>›</span>
-    <a href="<?= app_url('product/list.php') ?>">Shop Bagels</a>
-    <span>›</span>
-    <span aria-current="page"><?= htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8') ?></span>
-</nav>
-
-<section class="product-detail-layout">
-    <div class="product-detail-image">
-        <img src="<?= app_url('products/' . rawurlencode($product->photo)) ?>" alt="<?= htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8') ?>">
-        <span>Freshly baked</span>
-    </div>
-
-    <div class="product-detail-copy">
-        <span class="section-eyebrow">Pululu bagel collection</span>
-        <h1><?= htmlspecialchars($product->name, ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="product-detail-price">RM <?= number_format((float) $product->price, 2) ?></p>
-
-        <div class="product-availability <?= $is_sold_out ? 'is-sold-out' : '' ?>">
-            <span></span>
-            <?= $is_sold_out ? 'Currently sold out' : $stock . ' available for ordering' ?>
-        </div>
-
-        <p class="product-detail-description">A warm, chewy Pululu bagel prepared in a small batch for a fresh and satisfying bite. Enjoy it on its own or with your favourite spread.</p>
-
-        <ul class="product-detail-points">
-            <li><span>✓</span> Baked in small batches</li>
-            <li><span>✓</span> Clear availability before checkout</li>
-            <li><span>✓</span> Member reward points available</li>
-        </ul>
-
-        <?php if ($_user?->role === 'Member'): ?>
-            <form method="post" action="<?= app_url('product/list.php') ?>" class="product-detail-form">
-                <input type="hidden" name="id" value="<?= htmlspecialchars((string) $product->id, ENT_QUOTES, 'UTF-8') ?>">
-                <label for="detailQuantity">Quantity</label>
-                <select id="detailQuantity" name="unit" <?= $is_sold_out ? 'disabled' : '' ?>>
-                    <?php if ($cart_unit > 0): ?><option value="0">Remove from cart</option><?php endif ?>
-                    <?php for ($quantity = 1; $quantity <= $max_units; $quantity++): ?>
-                        <option value="<?= $quantity ?>" <?= $cart_unit === $quantity ? 'selected' : '' ?>><?= $quantity ?></option>
-                    <?php endfor ?>
-                </select>
-                <button type="submit" <?= $is_sold_out ? 'disabled' : '' ?>><?= $cart_unit > 0 ? 'Update cart' : 'Add to cart' ?></button>
-            </form>
-        <?php elseif (!$_user): ?>
-            <div class="product-login-panel">
-                <p>Log in to add this bagel to your cart and earn reward points.</p>
-                <a class="button button-primary" href="<?= app_url('login.php') ?>">Log in to order</a>
-                <a class="button button-secondary" href="<?= app_url('user/register.php') ?>">Create account</a>
-            </div>
-        <?php endif ?>
-
-        <a class="back-to-shop" href="<?= app_url('product/list.php') ?>">← Back to all bagels</a>
-    </div>
-</section>
->>>>>>> 1c7681d7b432e81d51a29e18cd09c54f82af5d77
-
-<?php include '../_foot.php'; ?>
+<?php
+include '../_foot.php';
