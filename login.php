@@ -35,6 +35,9 @@ if (is_post()) {
         if (!$user || !password_verify($password_input, $user->password)) {
             $_err['password'] = 'Email or password is incorrect.';
         }
+        else if ((int)$user->email_verified !== 1) {
+            $_err['email'] = 'Please verify your email before logging in.';
+        }
     }
 
     if (!$_err && !verify_turnstile($turnstile_token, 'login')) {
