@@ -317,33 +317,115 @@ function auth(...$roles) {
 // ============================================================================
 // Shopping Cart
 // ============================================================================
+// Maximum total quantity allowed in cart
+define('CART_MAX_ITEMS', 100);
+
+// Reward point 
+// 1 point = RM0.01
+// 100 points = RM1.00
+define('REWARD_POINT_VALUE', 0.01);
+
+// Reward points can deduct maximum 50% of amount after voucher
+define('REWARD_MAX_PERCENT', 50);
+
 // Get shopping cart
 function get_cart() {
     return $_SESSION['cart'] ?? [];
 }
+
 // Set shopping cart
 function set_cart($cart = []) {
     $_SESSION['cart'] = $cart;
 }
+
+// Count the TOTAL quantity of items inside cart
+function cart_unit_count($cart = null) {
+    $cart ??= get_cart();
+    return array_sum(array_map('intval', $cart));
+}
+
+// Convert reward points into RM
+function reward_points_value($points) {
+    return round(
+        max(0, (int)$points) * REWARD_POINT_VALUE,
+        2
+    );
+}
+
+// Calculate maximum reward points that user can use
+function reward_points_limit($available_points, $amount_after_voucher) {
+    $available_points = max(0, (int)$available_points);
+    $amount_after_voucher = max(0, (float)$amount_after_voucher);
+
+    // Example:
+    // RM20 after voucher
+    // 50% maximum = RM10 can be deducted using points
+    $max_money = round(
+        $amount_after_voucher * (REWARD_MAX_PERCENT / 100),
+        2
+    );
+
+    $max_points_by_order = (int)floor(
+        ($max_money / REWARD_POINT_VALUE) + 0.000001
+    );
+
+    return min($available_points, $max_points_by_order);
+}
+
 // Update shopping cart
 // and save session cart to DB table --ziqi
 function update_cart($id, $unit) {
     global $_user, $_db;
 
+    $id = (int)$id;
+    $unit = (int)$unit;
+
     $cart = get_cart();
-    if ($unit >= 1 && $unit <= 10 && is_exists($id, 'product', 'id')) {
-        $cart[$id] = $unit;
-        ksort($cart);
-    }
-    else {
+
+    // If quantity becomes 0, remove product
+    if ($unit === 0) {
         unset($cart[$id]);
     }
+
+    // Product quantity must be between 1 - 10
+    else if (
+        $unit >= 1 &&
+        $unit <= 10 &&
+        is_exists($id, 'product', 'id')
+    ) {
+
+        // Create temporary cart first
+        $candidate = $cart;
+        $candidate[$id] = $unit;
+
+        // Check TOTAL quantity before saving
+        if (cart_unit_count($candidate) > CART_MAX_ITEMS) {
+            temp(
+                'info',
+                'Your cart can contain a maximum of ' .
+                CART_MAX_ITEMS .
+                ' items.'
+            );
+            return false;
+        }
+
+        // Quantity is valid
+        $cart = $candidate;
+        ksort($cart);
+    }
+
+    else {
+        return false;
+    }
+
+    // Save cart into session
     set_cart($cart);
 
-    // If a user is logged in, sync it to the database immediately --ziqi
+    // If user logged in, save cart into database
     if ($_user && $_db) {
         save_cart_to_db($_user->id, $_db);
     }
+    return true;
 }
 
 // clear user's rows first, then re-insert current cart --ziqi
@@ -357,7 +439,6 @@ function save_cart_to_db($user_id, $_db) {
         if (!is_exists($product_id, 'product', 'id')) {
             continue;
         }
-
         $stmt = $_db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
         $stmt->execute([$user_id, $product_id, $quantity]);
     }
