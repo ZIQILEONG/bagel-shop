@@ -98,6 +98,9 @@ include '_head.php';
 
     <p class="register-text">
         <a href="user/forgot_password.php">Forgot Password?</a><br>
+        <a href="user/resend_verification.php">
+        Resend Verification Email</a><br>
+        
         Don't have an account?
         <a href="user/register.php">Create Account</a>
     </p>
