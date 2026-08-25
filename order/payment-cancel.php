@@ -5,5 +5,7 @@ include '../_base.php';
 
 auth('Member');
 
-temp('info', 'Payment was cancelled. Your cart is still saved.');
-redirect('cart.php');
+$order_id = req('order_id');
+
+temp('info', 'Payment was not completed. Your order is saved as "Awaiting Payment" - you can view it in your order history.');
+redirect('history.php');

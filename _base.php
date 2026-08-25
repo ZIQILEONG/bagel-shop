@@ -152,6 +152,35 @@ function root($path = '') {
 function base($path = '') {
     return "http://$_SERVER[SERVER_NAME]:$_SERVER[SERVER_PORT]/$path";
 }
+
+// Return an application-relative URL.
+// Works when the project is served from / or from /bagel-shop.
+function app_url($path = '') {
+    static $app_path = null;
+
+    if ($app_path === null) {
+        $document_root = realpath($_SERVER['DOCUMENT_ROOT'] ?? '') ?: '';
+        $project_root = realpath(__DIR__) ?: __DIR__;
+
+        $document_root = str_replace('\\', '/', $document_root);
+        $project_root = str_replace('\\', '/', $project_root);
+
+        if ($document_root !== '' && strpos($project_root, $document_root) === 0) {
+            $app_path = substr($project_root, strlen($document_root));
+        }
+        else {
+            $app_path = '';
+        }
+
+        $app_path = '/' . trim($app_path, '/');
+
+        if ($app_path === '/') {
+            $app_path = '';
+        }
+    }
+
+    return $app_path . '/' . ltrim($path, '/');
+}
 // ============================================================================
 // HTML Helpers
 // ============================================================================
@@ -357,14 +386,25 @@ function err($key) {
 // ============================================================================
 // Global user object
 $_user = $_SESSION['user'] ?? null;
-// Login user
-function login($user, $url = '/') {
+
+// Store a user in the current session without redirecting.
+function set_logged_in_user($user): void {
     global $_user;
+
+    session_regenerate_id(true);
 
     $_SESSION['user'] = $user;
     $_user = $user;
 
+    unset($_SESSION['remember_pending_user_id']);
+    unset($_SESSION['pending_auth']);
+
     load_cart_fr_db($user->id);
+}
+
+// Login user
+function login($user, $url = '/') {
+    set_logged_in_user($user);
 
     redirect($url);
 }
@@ -399,6 +439,9 @@ function logout($url = '/') {
     // Clear session
     unset($_SESSION['cart']);
     unset($_SESSION['user']);
+    unset($_SESSION['remember_pending_user_id']);
+    unset($_SESSION['pending_auth']);
+    unset($_SESSION['captcha_nonces']);
 
     redirect($url);
 }
@@ -415,7 +458,7 @@ function auth(...$roles) {
             return; // OK
         }
     }
-    redirect('/login.php');
+    redirect(app_url('login.php'));
 }
 // ============================================================================
 // Shopping Cart
@@ -508,6 +551,7 @@ function is_exists($value, $table, $field) {
 // Range 1-10
 $_units = array_combine(range(1, 10), range(1, 10));
 
+<<<<<<< HEAD
 // Rating options (1-5 stars)
 $_ratings = [
     1 => '★☆☆☆☆ (1)',
@@ -518,8 +562,183 @@ $_ratings = [
 ];
 
 //auto login user if remember_token cookie is set and valid
+=======
+// Verify a Cloudflare Turnstile token on the server.
+function verify_turnstile(string $token, string $expected_action = ''): bool {
+    if ($token === '' || !function_exists('curl_init')) {
+        return false;
+    }
+
+    $data = [
+        'secret'   => TURNSTILE_SECRET_KEY,
+        'response' => $token,
+        'remoteip' => $_SERVER['REMOTE_ADDR'] ?? ''
+    ];
+
+    $ch = curl_init(
+        'https://challenges.cloudflare.com/turnstile/v0/siteverify'
+    );
+
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => http_build_query($data),
+        CURLOPT_TIMEOUT        => 10
+    ]);
+
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+
+    if ($response === false || $httpCode !== 200) {
+        return false;
+    }
+
+    $result = json_decode($response, true);
+
+    if (!is_array($result) || empty($result['success'])) {
+        return false;
+    }
+
+    if ($expected_action !== '' && ($result['action'] ?? '') !== $expected_action) {
+        return false;
+    }
+
+    return true;
+}
+
+// Create a short-lived nonce for one CAPTCHA widget.
+function new_captcha_nonce(string $action): string {
+    $_SESSION['captcha_nonces'] ??= [];
+
+    foreach ($_SESSION['captcha_nonces'] as $key => $item) {
+        if (($item['expires'] ?? 0) < time()) {
+            unset($_SESSION['captcha_nonces'][$key]);
+        }
+    }
+
+    $nonce = bin2hex(random_bytes(24));
+
+    $_SESSION['captcha_nonces'][hash('sha256', $nonce)] = [
+        'action' => $action,
+        'expires' => time() + 600,
+        'attempts' => 0,
+    ];
+
+    return $nonce;
+}
+
+// Check the widget nonce and limit repeated verification attempts.
+function validate_captcha_nonce(string $nonce, string $action): bool {
+    $key = hash('sha256', $nonce);
+    $item = $_SESSION['captcha_nonces'][$key] ?? null;
+
+    if (!$item ||
+        ($item['expires'] ?? 0) < time() ||
+        ($item['action'] ?? '') !== $action ||
+        ($item['attempts'] ?? 0) >= 5) {
+
+        unset($_SESSION['captcha_nonces'][$key]);
+        return false;
+    }
+
+    $_SESSION['captcha_nonces'][$key]['attempts']++;
+    return true;
+}
+
+// Save validated login/register information while the separate puzzle page
+// is being completed. Plain-text passwords are never stored here.
+function begin_pending_auth(string $action, array $data): void {
+    $_SESSION['pending_auth'] = [
+        'action' => $action,
+        'data' => $data,
+        'expires' => time() + 300,
+    ];
+}
+
+// Return the pending action when it is still valid.
+function get_pending_auth(string $expected_action = ''): ?array {
+    $pending = $_SESSION['pending_auth'] ?? null;
+
+    if (!$pending || ($pending['expires'] ?? 0) < time()) {
+        unset($_SESSION['pending_auth']);
+        return null;
+    }
+
+    if ($expected_action !== '' &&
+        ($pending['action'] ?? '') !== $expected_action) {
+
+        return null;
+    }
+
+    return $pending;
+}
+
+function clear_pending_auth(): void {
+    unset($_SESSION['pending_auth']);
+}
+
+// Basic server check of the slider movement data.
+// Turnstile remains the authoritative anti-bot protection.
+function verify_slider_data($trail, $position, $target): bool {
+    if (!is_array($trail) || count($trail) < 2 || count($trail) > 500) {
+        return false;
+    }
+
+    if (!is_numeric($position) || !is_numeric($target)) {
+        return false;
+    }
+
+    if (abs((float)$position - (float)$target) > 6) {
+        return false;
+    }
+
+    $values = [];
+
+    foreach ($trail as $value) {
+        if (!is_numeric($value) || abs((float)$value) > 200) {
+            return false;
+        }
+
+        $values[] = (float)$value;
+    }
+
+    $average = array_sum($values) / count($values);
+    $variance = 0.0;
+
+    foreach ($values as $value) {
+        $variance += ($value - $average) ** 2;
+    }
+
+    $variance /= count($values);
+
+    return $variance > 0;
+}
+
+// Delete an invalid or expired remember-me cookie.
+function clear_remember_cookie(): void {
+    setcookie(
+        'remember_token',
+        '',
+        [
+            'expires' => time() - 3600,
+            'path' => '/',
+            'httponly' => true,
+            'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+            'samesite' => 'Lax',
+        ]
+    );
+
+    unset($_SESSION['remember_pending_user_id']);
+}
+
+// A remembered user must pass visible Turnstile and then the separate puzzle
+// once per new browser session before the login is restored.
+>>>>>>> 1c7681d7b432e81d51a29e18cd09c54f82af5d77
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
-    $token = $_COOKIE['remember_token'];
+    $token_hash = hash('sha256', $_COOKIE['remember_token']);
+
     $stmt = $_db->prepare("
         SELECT *
         FROM user
@@ -527,22 +746,24 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
         AND remember_expires > NOW()
     ");
 
-    $stmt->execute([$token]);
-    $user = $stmt->fetch();
-    if ($user) {
+    $stmt->execute([$token_hash]);
+    $remembered_user = $stmt->fetch();
 
-        // Restore login
-        login($user);
+    if ($remembered_user) {
+        $_SESSION['remember_pending_user_id'] = $remembered_user->id;
 
+        $current_script = basename($_SERVER['SCRIPT_NAME'] ?? '');
+        $allowed_scripts = [
+            'remember_verify.php',
+            'puzzle.php',
+            'slider_verify.php',
+        ];
+
+        if (!in_array($current_script, $allowed_scripts, true)) {
+            redirect(app_url('user/remember_verify.php'));
+        }
     }
     else {
-
-        // Invalid/expired token
-        setcookie(
-            'remember_token',
-            '',
-            time() - 3600,
-            '/'
-        );
+        clear_remember_cookie();
     }
 }
