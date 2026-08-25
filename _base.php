@@ -370,6 +370,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
         FROM user
         WHERE remember_token = ?
         AND remember_expires > NOW()
+        AND is_deleted = 0
     ");
 
     $stmt->execute([$token]);

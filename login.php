@@ -27,6 +27,7 @@ if (is_post()) {
             SELECT *
             FROM user
             WHERE email = ?
+            AND is_deleted = 0
         ");
 
         $stmt->execute([$email]);

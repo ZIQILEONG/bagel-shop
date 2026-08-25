@@ -13,14 +13,10 @@ if ($id) {
     }
 }
 if ($u && is_post() && req('btn') == 'delete') {
-    $stm = $_db->prepare("DELETE FROM user WHERE id = ?");
-    $ok  = $stm->execute([$u->id]);
-    if ($ok) {
-        temp('info', 'Member deleted.');
-        redirect('user-listing.php');
-    }
-    temp('info', 'Cannot delete this member: existing orders or tokens reference this account.');
-    redirect('user-detail.php?id=' . $u->id);
+    $stm = $_db->prepare("UPDATE user SET is_deleted = 1 WHERE id = ?");
+    $stm->execute([$u->id]);
+    temp('info', 'Member deactivated.');
+    redirect('user-listing.php');
 }
 if (!$u && is_post() && req('btn') == 'batch') {
     $lines  = explode("\n", req('batch_data'));
