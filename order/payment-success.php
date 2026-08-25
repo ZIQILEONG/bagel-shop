@@ -19,81 +19,70 @@ if ($session->payment_status !== 'paid') {
     redirect('payment-cancel.php');
 }
 
-$intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
-$method = strtoupper($intent->payment_method_types[0]);
+$order_id = $session->metadata->order_id;
 
-$cart = $_SESSION['checkout_cart'] ?? [];
+// Fetch the order, confirm it belongs to this user and is still awaiting payment
+// check prevents double-processing on page refresh
+$stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+$stm->execute([$order_id, $_user->id]);
+$o = $stm->fetch();
 
-if (empty($cart)) {
+if (!$o) {
     redirect('history.php');
 }
 
-// Begin transaction
+if ($o->status !== 'Awaiting Payment') {
+    // Already processed payment (eg: due to page refreshed), show the order
+    redirect("detail.php?id=$order_id");
+}
+
+$intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
+$method = strtoupper($intent->payment_method_types[0]);
+
 $_db->beginTransaction();
 
-// Insert order
-$stm = $_db->prepare("INSERT INTO orders (datetime, count, total, status, user_id) VALUES (NOW(), 0, 0, 'Pending', ?)");
-$stm->execute([$_user->id]);
-$order_id = $_db->lastInsertId();
+// Mark order as paid, calculate reward points
+$points_earned = floor($o->total);
 
-// Insert items
-$count = 0;
-$total = 0;
-
-foreach ($cart as $product_id => $unit) {
-    $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
-    $stm->execute([$product_id]);
-    $product = $stm->fetch();
-
-    $subtotal = $product->price * $unit;
-
-    $stm = $_db->prepare("INSERT INTO order_item (order_id, product_id, price, unit, subtotal) VALUES (?, ?, ?, ?, ?)");
-    $stm->execute([$order_id, $product_id, $product->price, $unit, $subtotal]);
-
-    // reduce stock by the quantity purchased
-    $stm = $_db->prepare("UPDATE product SET stock = stock - ? WHERE id = ?");
-    $stm->execute([$unit, $product_id]);
-
-    $count += $unit;
-    $total += $subtotal;
-}
-
-// discount caculation (recalculate independently for security)
-$voucher = $_SESSION['voucher'] ?? null;
-$discount = 0;
-$voucher_code = null;
-
-if ($voucher) {
-    $discount = round($total * $voucher['percent'] / 100, 2);
-    $voucher_code = $voucher['code'];
-    $total -= $discount;
-}
-
-// update orders total
-$stm = $_db->prepare("UPDATE orders SET count = ?, total = ?, discount = ?, voucher_code = ? WHERE id = ?");
-$stm->execute([$count, $total, $discount, $voucher_code, $order_id]);
-
-// reward points
-$points_earned = floor($total);
-
-$stm = $_db->prepare("UPDATE orders SET points_earned = ? WHERE id = ?");
+$stm = $_db->prepare("UPDATE orders SET status = 'Pending', points_earned = ? WHERE id = ?");
 $stm->execute([$points_earned, $order_id]);
 
 $stm = $_db->prepare("UPDATE user SET points = points + ? WHERE id = ?");
 $stm->execute([$points_earned, $_user->id]);
 
-// show up-to-date points immediately after a purchase
+// Decrement stock for each item in this order
+$stm = $_db->prepare("SELECT * FROM order_item WHERE order_id = ?");
+$stm->execute([$order_id]);
+$items = $stm->fetchAll();
+
+foreach ($items as $item) {
+    $stm = $_db->prepare("UPDATE product SET stock = stock - ? WHERE id = ?");
+    $stm->execute([$item->unit, $item->product_id]);
+}
+
+// Record payment
+$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
+$stm->execute([$order_id, $method, $o->total, $session->payment_intent]);
+
+$_db->commit();
+
+// Refresh session's copy of points, header shows updated balance immediately
 $_user->points += $points_earned;
 $_SESSION['user'] = $_user;
 
-// Insert payment record
-$stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
-$stm->execute([$order_id, $method, $total, $session->payment_intent]);
+// Remove purchased items from the cart
+$checkout_cart = $_SESSION['checkout_cart'] ?? get_cart();
+$full_cart = get_cart();
+foreach ($checkout_cart as $product_id => $unit) {
+    unset($full_cart[$product_id]);
+}
+set_cart($full_cart);
+save_cart_to_db($_user->id, $_db);
 
-// Transaction commit
-$_db->commit();
+unset($_SESSION['checkout_cart']);
+unset($_SESSION['voucher']);
 
-// send e-recipt
+// Send e-receipt
 try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
@@ -110,37 +99,25 @@ try {
 
     $body = "Hi {$_user->name},\n\nThank You for your order!\n\n";
     $body .= "Order #: $order_id\n";
-    $body .= "Total: RM " . number_format($total, 2) . "\n";
+    $body .= "Total: RM " . number_format($o->total, 2) . "\n";
     $body .= "Payment Method: $method\n\n";
     $body .= "Items:\n";
 
-    foreach ($cart as $product_id => $unit) {
-        $stm = $_db->prepare("SELECT name, price FROM product WHERE id = ?");
-        $stm->execute([$product_id]);
-        $item = $stm->fetch();
-        $body .= "- {$item->name} x$unit = RM " . number_format($item->price * $unit, 2) . "\n";
+    foreach ($items as $item) {
+        $stm = $_db->prepare("SELECT name FROM product WHERE id = ?");
+        $stm->execute([$item->product_id]);
+        $p = $stm->fetch();
+        $body .= "- {$p->name} x{$item->unit} = RM " . number_format($item->subtotal, 2) . "\n";
     }
 
     $mail->Body = $body;
     $mail->send();
 }
 catch (Exception $e) {
-    // email failed, log it, but no block order form completing
     error_log("Receipt email failed: " . $mail->ErrorInfo);
 }
 
 // ----------------------------------------------------------------------------
-
-// removes only the items that just purchased
-$full_cart = get_cart();
-foreach ($cart as $product_id => $unit) {
-    unset($full_cart[$product_id]);
-}
-set_cart($full_cart);
-save_cart_to_db($_user->id, $_db);
-
-unset($_SESSION['checkout_cart']);
-unset($_SESSION['voucher']);
 
 temp('info', 'Payment successful! Your order has been placed.');
 redirect("detail.php?id=$order_id");
