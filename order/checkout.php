@@ -7,7 +7,7 @@ include '../_base.php';
 
 auth('Member');
 
-$cart = get_cart();
+$cart = $_SESSION['checkout_cart'] ?? [];
 
 if (empty($cart)) {
     redirect('cart.php');

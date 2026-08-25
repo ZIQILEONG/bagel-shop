@@ -22,7 +22,7 @@ if ($session->payment_status !== 'paid') {
 $intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
 $method = strtoupper($intent->payment_method_types[0]);
 
-$cart = get_cart();
+$cart = $_SESSION['checkout_cart'] ?? [];
 
 if (empty($cart)) {
     redirect('history.php');
@@ -131,7 +131,15 @@ catch (Exception $e) {
 
 // ----------------------------------------------------------------------------
 
-set_cart();
+// removes only the items that just purchased
+$full_cart = get_cart();
+foreach ($cart as $product_id => $unit) {
+    unset($full_cart[$product_id]);
+}
+set_cart($full_cart);
+save_cart_to_db($_user->id, $_db);
+
+unset($_SESSION['checkout_cart']);
 unset($_SESSION['voucher']);
 
 temp('info', 'Payment successful! Your order has been placed.');
