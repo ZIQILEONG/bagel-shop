@@ -1,0 +1,437 @@
+detail.php (new 25.8.26)
+
+<?php
+include __DIR__ . '/../_base.php';
+
+$id = get('id');
+if (!$id) {
+    redirect('/product/list.php');
+}
+
+// Handle Add to Cart (POST)
+if (is_post()) {
+    $unit = req('unit');
+    if ($unit > 0) {
+        update_cart($id, $unit);
+        set_flash('Added to cart successfully!', 'success');
+    } else {
+        set_flash('Please select a quantity.', 'error');
+    }
+    redirect(); // Redirect to same page to clear POST data
+}
+
+// Fetch Product Details
+$sql = "SELECT p.*, c.name as category_name 
+        FROM product p 
+        LEFT JOIN category c ON p.category_id = c.id 
+        WHERE p.id = ?";
+$product = db_query($sql, [$id])->fetch();
+
+if (!$product) {
+    die("Product not found.");
+}
+
+// Fetch Multiple Photos
+$photos_sql = "SELECT * FROM product_photo WHERE product_id = ? ORDER BY sort_order ASC, id ASC";
+$photos = db_query($photos_sql, [$id])->result();
+
+// Fallback: If no extra photos, use the main product photo
+if (empty($photos)) {
+    $photos = [(object)['filename' => $product->photo, 'is_main' => true]];
+}
+
+// Fetch Reviews
+$reviews_sql = "SELECT r.*, u.username FROM product_review r 
+                JOIN user u ON r.user_id = u.id 
+                WHERE r.product_id = ? 
+                ORDER BY r.created_at DESC";
+$reviews = db_query($reviews_sql, [$id])->result();
+
+// Get current cart quantity
+$cart = get_cart();
+$current_qty = $cart[$id] ?? 0;
+
+$_title = $product->name . ' | Pululu Bagel';
+include __DIR__ . '/../_head.php';
+?>
+
+<style>
+    /* Product Detail Layout */
+    .product-detail-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 40px;
+        margin-top: 30px;
+        background: var(--white);
+        padding: 30px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+
+    /* Image Slider Styles */
+    .gallery-wrapper {
+        position: relative;
+    }
+    .main-image-box {
+        width: 100%;
+        height: 400px;
+        border-radius: var(--radius);
+        overflow: hidden;
+        border: 1px solid var(--border);
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f9f9f9;
+    }
+    .main-image {
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+        transition: transform 0.3s ease;
+    }
+    .main-image:hover {
+        transform: scale(1.05);
+    }
+    
+    /* Thumbnails */
+    .thumbnail-list {
+        display: flex;
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 5px;
+    }
+    .thumb-item {
+        width: 80px;
+        height: 80px;
+        border-radius: 8px;
+        cursor: pointer;
+        border: 2px solid transparent;
+        object-fit: cover;
+        transition: all 0.2s;
+        flex-shrink: 0;
+    }
+    .thumb-item:hover, .thumb-item.active {
+        border-color: var(--brown);
+        opacity: 0.8;
+    }
+
+    /* Product Info Styles */
+    .product-title {
+        font-size: 28px;
+        color: var(--brown);
+        margin-bottom: 10px;
+    }
+    .product-meta {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        font-size: 14px;
+        color: var(--text-muted);
+    }
+    .price-tag {
+        font-size: 32px;
+        color: var(--red);
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .stock-status {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        margin-bottom: 20px;
+    }
+    .stock-in { background: #d1fae5; color: #065f46; }
+    .stock-out { background: #fee2e2; color: #991b1b; }
+
+    /* Quantity Selector */
+    .qty-selector {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 25px;
+    }
+    .qty-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid var(--border);
+        background: var(--white);
+        font-size: 20px;
+        cursor: pointer;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    .qty-btn:hover {
+        background: var(--brown);
+        color: white;
+        border-color: var(--brown);
+    }
+    .qty-input {
+        width: 60px;
+        height: 40px;
+        text-align: center;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 16px;
+        font-weight: bold;
+    }
+
+    /* Actions */
+    .action-btn {
+        width: 100%;
+        padding: 15px;
+        font-size: 16px;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+    .btn-add {
+        background: var(--brown);
+        color: white;
+    }
+    .btn-add:hover {
+        background: #5D4037;
+    }
+    .btn-disabled {
+        background: #ccc;
+        cursor: not-allowed;
+    }
+
+    /* Video Section */
+    .video-section {
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid var(--border);
+    }
+    .video-container {
+        position: relative;
+        padding-bottom: 56.25%; /* 16:9 */
+        height: 0;
+        overflow: hidden;
+        border-radius: 8px;
+        background: #000;
+    }
+    .video-container iframe {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    /* Reviews */
+    .reviews-section {
+        margin-top: 50px;
+        border-top: 2px solid var(--border);
+        padding-top: 30px;
+    }
+    .review-card {
+        background: #f9f9f9;
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 10px;
+        font-size: 14px;
+    }
+    .stars { color: #fbbf24; }
+
+    @media (max-width: 768px) {
+        .product-detail-container { grid-template-columns: 1fr; }
+        .main-image-box { height: 300px; }
+    }
+</style>
+
+<div class="container">
+    <!-- Breadcrumb -->
+    <div style="margin: 20px 0; font-size: 14px; color: var(--text-muted);">
+        <a href="/product/list.php" style="color: var(--brown);">Products</a> 
+        &raquo; <?= encode($product->name) ?>
+    </div>
+
+    <div class="product-detail-container">
+        <!-- Left: Gallery -->
+        <div class="gallery-wrapper">
+            <div class="main-image-box">
+                <img src="/products/<?= encode($photos[0]->filename) ?>" 
+                     alt="<?= encode($product->name) ?>" 
+                     class="main-image" 
+                     id="mainImage">
+            </div>
+            
+            <?php if (count($photos) > 1): ?>
+            <div class="thumbnail-list">
+                <?php foreach ($photos as $idx => $p): ?>
+                    <img src="/products/<?= encode($p->filename) ?>" 
+                         class="thumb-item <?= $idx === 0 ? 'active' : '' ?>" 
+                         onclick="changeImage(this)">
+                <?php endforeach; ?>
+            </div>
+            <?php endif; ?>
+
+            <!-- YouTube Video Integration -->
+            <?php if ($product->video_url): ?>
+            <div class="video-section">
+                <h4>Product Video</h4>
+                <div class="video-container">
+                    <?php 
+                        // Convert standard YT URL to embed URL
+                        $videoId = str_replace('watch?v=', 'embed/', $product->video_url);
+                        $videoId = str_replace('youtu.be/', 'embed/', $videoId);
+                    ?>
+                    <iframe src="<?= encode($videoId) ?>" frameborder="0" allowfullscreen></iframe>
+                </div>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Right: Info & Cart -->
+        <div>
+            <h1 class="product-title"><?= encode($product->name) ?></h1>
+            
+            <div class="product-meta">
+                <span>Category: <strong><?= encode($product->category_name ?? 'Uncategorized') ?></strong></span>
+                <?php if ($product->rating): ?>
+                <span class="stars">
+                    <?= str_repeat('★', round($product->rating)) ?> 
+                    (<?= number_format($product->rating, 1) ?>)
+                </span>
+                <?php endif; ?>
+            </div>
+
+            <div class="price-tag">RM <?= number_format($product->price, 2) ?></div>
+
+            <?php if ($product->stock > 0): ?>
+                <div class="stock-status stock-in">In Stock (<?= $product->stock ?> available)</div>
+            <?php else: ?>
+                <div class="stock-status stock-out">Out of Stock</div>
+            <?php endif; ?>
+
+            <p style="line-height: 1.6; color: var(--text); margin-bottom: 25px;">
+                <?= nl2br(encode($product->description)) ?>
+            </p>
+
+            <?php if ($_user?->role == 'Member'): ?>
+                <form method="post">
+                    <div class="qty-selector">
+                        <button type="button" class="qty-btn" id="btnMinus">−</button>
+                        <input type="number" name="unit" id="qtyInput" class="qty-input" 
+                               value="<?= $current_qty > 0 ? $current_qty : 1 ?>" 
+                               min="1" max="<?= $product->stock ?>">
+                        <button type="button" class="qty-btn" id="btnPlus">+</button>
+                    </div>
+
+                    <?php if ($product->stock > 0): ?>
+                        <button type="submit" class="action-btn btn-add">
+                            <?= $current_qty > 0 ? 'Update Cart' : 'Add to Cart' ?>
+                        </button>
+                    <?php else: ?>
+                        <button type="button" class="action-btn btn-disabled" disabled>Sold Out</button>
+                    <?php endif; ?>
+                </form>
+            <?php else: ?>
+                <div style="background: #fff3cd; padding: 15px; border-radius: 8px; color: #856404;">
+                    Please <a href="/login.php" style="font-weight: bold; color: inherit;">Login</a> to purchase this item.
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Reviews Section -->
+    <div class="reviews-section">
+        <h2>Customer Reviews (<?= count($reviews) ?>)</h2>
+        
+        <?php if ($_user): ?>
+            <div style="margin-bottom: 30px;">
+                <a href="/review/write.php?id=<?= $product->id ?>" style="color: var(--brown); text-decoration: underline;">Write a Review</a>
+            </div>
+        <?php endif; ?>
+
+        <?php if (empty($reviews)): ?>
+            <p>No reviews yet. Be the first!</p>
+        <?php else: ?>
+            <?php foreach ($reviews as $r): ?>
+                <div class="review-card">
+                    <div class="review-header">
+                        <strong><?= encode($r->username) ?></strong>
+                        <span class="stars"><?= str_repeat('★', $r->rating) ?></span>
+                    </div>
+                    <p style="margin: 0; font-size: 14px;"><?= nl2br(encode($r->comment)) ?></p>
+                    <small style="color: #999; display: block; margin-top: 5px;">
+                        <?= date('M d, Y', strtotime($r->created_at)) ?>
+                    </small>
+                </div>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Image Slider Logic
+    window.changeImage = function(img) {
+        $('#mainImage').attr('src', $(img).attr('src'));
+        $('.thumb-item').removeClass('active');
+        $(img).addClass('active');
+    };
+
+    // Quantity Logic
+    const maxStock = <?= $product->stock ?>;
+    
+    $('#btnPlus').click(function() {
+        let val = parseInt($('#qtyInput').val());
+        if (val < maxStock) {
+            $('#qtyInput').val(val + 1);
+        }
+    });
+
+    $('#btnMinus').click(function() {
+        let val = parseInt($('#qtyInput').val());
+        if (val > 1) {
+            $('#qtyInput').val(val - 1);
+        }
+    });
+
+    // Prevent manual input exceeding stock
+    $('#qtyInput').on('change', function() {
+        let val = parseInt($(this).val());
+        if (val > maxStock) $(this).val(maxStock);
+        if (val < 1) $(this).val(1);
+    });
+});
+</script>
+
+<?php include __DIR__ . '/../_foot.php'; ?>
+
+Multiple Photo Slider:
+Fetches all images from product_photo table.
+Displays a large main image.
+Shows thumbnails below; clicking a thumbnail updates the main image instantly using jQuery.
+Falls back to the single product.photo if no extra photos exist.
+Quantity Controls (+/-):
+Custom buttons to increment/decrement quantity.
+Logic Check: Prevents adding more than the available stock.
+If the item is already in the cart, it pre-fills the quantity and changes the button text to "Update Cart".
+Video Integration:
+Checks if video_url exists in the database.
+Automatically converts standard YouTube links to Embed links for display.
+Reviews:
+Lists existing reviews with star ratings.
+Provides a link for logged-in users to write a review.
+Stock Management:
+Shows "In Stock" or "Out of Stock" badges.
+Disables the "Add to Cart" button if stock is 0.
+How to Test:
+Ensure you have inserted rows into product_photo via phpMyAdmin for a specific product ID.
+Navigate to that product's detail page (e.g., http://localhost/bagel-shop/product/detail.php?id=1).
+You should see the gallery slider, the video (if added), and the working +/- buttons.

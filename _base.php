@@ -83,6 +83,57 @@ function save_photo($f, $folder, $width = 200, $height = 200) {
     return $photo;
 }
 
+// Save multiple photos for a product
+function save_product_photos($files, $product_id, $folder) {
+    $saved_photos = [];
+    require_once 'lib/SimpleImage.php';
+
+    foreach ($files as $file) {
+        if ($file['error'] == 0) {
+            $photo = uniqid() . '.jpg';
+            $img = new SimpleImage();
+            $img->fromFile($file['tmp_name'])
+                ->thumbnail(800, 800)
+                ->toFile("$folder/$photo", 'image/jpeg');
+
+            // Save to database
+            global $_db;
+            $stmt = $_db->prepare("INSERT INTO product_photo (product_id, photo) VALUES (?, ?)");
+            $stmt->execute([$product_id, $photo]);
+            $saved_photos[] = $photo;
+        }
+    }
+
+    return $saved_photos;
+}
+
+// Process image with transformations (flip, rotate, etc.)
+function process_image($source, $target, $operations = []) {
+    require_once 'lib/SimpleImage.php';
+    $img = new SimpleImage();
+    $img->fromFile($source);
+
+    foreach ($operations as $op) {
+        switch ($op['type']) {
+            case 'flip':
+                $img->flip($op['direction'] ?? 'x');
+                break;
+            case 'rotate':
+                $img->rotate($op['angle'] ?? 90);
+                break;
+            case 'resize':
+                $img->resize($op['width'] ?? 200, $op['height'] ?? 200);
+                break;
+            case 'crop':
+                $img->crop($op['x1'], $op['y1'], $op['x2'], $op['y2']);
+                break;
+        }
+    }
+
+    $img->toFile($target, 'image/jpeg');
+    return true;
+}
+
 // Is money?
 function is_money($value) {
     return preg_match('/^\-?\d+(\.\d{1,2})?$/', $value);
@@ -179,6 +230,12 @@ function html_select($key, $items, $default = '- Select One -', $attr = '') {
 function html_file($key, $accept = '', $attr = '') {
     echo "<input type='file' id='$key' name='$key' accept='$accept' $attr>";
 }
+
+// Generate multiple file input
+function html_file_multiple($key, $accept = '', $attr = '') {
+    echo "<input type='file' id='$key' name=\"{$key}[]\" accept='$accept' multiple $attr>";
+}
+
 // Generate table headers <th>
 function table_headers($fields, $sort, $dir, $href = '') {
     foreach ($fields as $k => $v) {
@@ -191,6 +248,95 @@ function table_headers($fields, $sort, $dir, $href = '') {
         echo "<th><a href='?sort=$k&dir=$d&$href' class='$c'>$v</a></th>";
     }
 }
+
+// Product Reviews & Ratings
+// Add a product review
+function add_review($product_id, $user_id, $rating, $comment) {
+    global $_db;
+
+    // Check if user already reviewed this product
+    $stmt = $_db->prepare("SELECT id FROM product_review WHERE product_id = ? AND user_id = ?");
+    $stmt->execute([$product_id, $user_id]);
+
+    if ($stmt->fetch()) {
+        return ['success' => false, 'message' => 'You have already reviewed this product.'];
+    }
+
+    $stmt = $_db->prepare("INSERT INTO product_review (product_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())");
+    $stmt->execute([$product_id, $user_id, $rating, $comment]);
+
+    // Update average rating
+    update_product_rating($product_id);
+
+    return ['success' => true, 'message' => 'Review submitted successfully!'];
+}
+
+// Update product average rating
+function update_product_rating($product_id) {
+    global $_db;
+
+    $stmt = $_db->prepare("SELECT AVG(rating) as avg_rating FROM product_review WHERE product_id = ?");
+    $stmt->execute([$product_id]);
+    $result = $stmt->fetch();
+
+    $avg_rating = $result->avg_rating ?? 0;
+
+    $stmt = $_db->prepare("UPDATE product SET rating = ? WHERE id = ?");
+    $stmt->execute([$avg_rating, $product_id]);
+}
+
+// Get product reviews
+function get_product_reviews($product_id) {
+    global $_db;
+    $stmt = $_db->prepare("
+        SELECT r.*, u.name as user_name
+        FROM product_review r
+        JOIN user u ON r.user_id = u.id
+        WHERE r.product_id = ?
+        ORDER BY r.created_at DESC
+    ");
+    $stmt->execute([$product_id]);
+    return $stmt->fetchAll();
+}
+
+// Get products by category
+function get_products_by_category($category_id = null, $limit = null) {
+    global $_db;
+
+    $where = '';
+    $params = [];
+
+    if ($category_id !== null && $category_id !== '') {
+        $where = 'WHERE p.category_id = ?';
+        $params[] = $category_id;
+    }
+
+    $query = "SELECT p.* FROM product p $where ORDER BY p.name";
+
+    if ($limit) {
+        $query .= " LIMIT $limit";
+    }
+
+    $stmt = $_db->prepare($query);
+    $stmt->execute($params);
+    return $stmt->fetchAll();
+}
+
+// Get all categories
+function get_categories() {
+    global $_db;
+    $stmt = $_db->query("SELECT * FROM category ORDER BY name");
+    return $stmt->fetchAll();
+}
+
+// Get product photos
+function get_product_photos($product_id) {
+    global $_db;
+    $stmt = $_db->prepare("SELECT * FROM product_photo WHERE product_id = ? ORDER BY sort_order, id");
+    $stmt->execute([$product_id]);
+    return $stmt->fetchAll();
+}
+
 // ============================================================================
 // Error Handlings
 // ============================================================================
@@ -361,6 +507,15 @@ function is_exists($value, $table, $field) {
 
 // Range 1-10
 $_units = array_combine(range(1, 10), range(1, 10));
+
+// Rating options (1-5 stars)
+$_ratings = [
+    1 => '★☆☆☆☆ (1)',
+    2 => '★★☆☆☆ (2)',
+    3 => '★★★☆☆ (3)',
+    4 => '★★★★☆ (4)',
+    5 => '★★★★★ (5)'
+];
 
 //auto login user if remember_token cookie is set and valid
 if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {

@@ -1,0 +1,399 @@
+detail.php (old-version 25.8.26)
+<?php
+include '../_base.php';
+auth('Admin');
+
+$id = req('id');
+$p = null;
+$photos = [];
+
+if ($id) {
+    $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
+    $stm->execute([$id]);
+    $p = $stm->fetch();
+
+    // Get additional photos
+    $stm = $_db->prepare("SELECT * FROM product_photo WHERE product_id = ? ORDER BY sort_order, id");
+    $stm->execute([$id]);
+    $photos = $stm->fetchAll();
+
+    if (!$p) {
+        redirect('list.php');
+    }
+}
+
+// Handle delete
+if ($p && is_post() && req('btn') == 'delete') {
+    $stm = $_db->prepare("DELETE FROM product WHERE id = ?");
+    $ok  = $stm->execute([$p->id]);
+    if ($ok) {
+        temp('info', 'Product deleted.');
+        redirect('product-listing.php');
+    }
+    temp('info', 'Cannot delete this product: it is referenced by existing orders.');
+    redirect('product-detail.php?id=' . $p->id);
+}
+
+// Handle save (create/update)
+if (is_post() && req('btn') != 'delete' && req('btn') != 'batch' && req('btn') != 'upload_photos' && req('btn') != 'delete_photo') {
+    $name  = req('name');
+    $price = req('price');
+    $stock = req('stock');
+    $category_id = req('category_id');
+    $video_url = req('video_url');
+    $photo = $p->photo ?? 'default.jpg';
+
+    // Validation
+    if ($name == '') {
+        $_err['name'] = 'Required';
+    }
+    if ($price == '') {
+        $_err['price'] = 'Required';
+    }
+    else if (!is_money($price) || $price < 0) {
+        $_err['price'] = 'Invalid value';
+    }
+    if ($stock == '') {
+        $_err['stock'] = 'Required';
+    }
+    else if (!ctype_digit($stock)) {
+        $_err['stock'] = 'Invalid value';
+    }
+
+    // Handle main photo upload
+    $f = get_file('photo');
+    if ($f && !getimagesize($f->tmp_name)) {
+        $_err['photo'] = 'Invalid image';
+    }
+
+    if (!$_err) {
+        if ($f) {
+            $dir = root('products');
+            if (!is_dir($dir)) {
+                mkdir($dir, 0755, true);
+            }
+            $photo = save_photo($f, $dir);
+        }
+
+        if ($p) {
+            $stm = $_db->prepare("UPDATE product SET name = ?, price = ?, stock = ?, photo = ?, category_id = ?, video_url = ? WHERE id = ?");
+            $stm->execute([$name, $price, $stock, $photo, $category_id, $video_url, $p->id]);
+            temp('info', 'Product updated.');
+            redirect('product-detail.php?id=' . $p->id);
+        }
+        else {
+            $max   = $_db->query("SELECT MAX(id) FROM product")->fetchColumn();
+            $num   = $max ? ((int) substr($max, 1) + 1) : 1;
+            $newId = 'P' . str_pad($num, 3, '0', STR_PAD_LEFT);
+            $stm = $_db->prepare("INSERT INTO product (id, name, price, photo, stock, category_id, video_url) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stm->execute([$newId, $name, $price, $photo, $stock, $category_id, $video_url]);
+            temp('info', 'Product created.');
+            redirect('product-detail.php?id=' . $newId);
+        }
+    }
+}
+
+// Handle multiple photo upload
+if (is_post() && req('btn') == 'upload_photos' && $p) {
+    $files = $_FILES['additional_photos'] ?? [];
+    if ($files && $files['error'][0] !== UPLOAD_ERR_NO_FILE) {
+        $dir = root('photos/products');
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $count = 0;
+        foreach ($files['tmp_name'] as $i => $tmp_name) {
+            if ($files['error'][$i] == 0) {
+                $file = [
+                    'tmp_name' => $tmp_name,
+                    'error' => $files['error'][$i],
+                    'name' => $files['name'][$i]
+                ];
+
+                $photo_name = uniqid() . '.jpg';
+                require_once 'lib/SimpleImage.php';
+                $img = new SimpleImage();
+                $img->fromFile($tmp_name)
+                    ->thumbnail(800, 800)
+                    ->toFile("$dir/$photo_name", 'image/jpeg');
+
+                // Save to database
+                $stmt = $_db->prepare("INSERT INTO product_photo (product_id, photo) VALUES (?, ?)");
+                $stmt->execute([$p->id, $photo_name]);
+                $count++;
+            }
+        }
+
+        temp('info', "$count photo(s) uploaded.");
+        redirect('product-detail.php?id=' . $p->id);
+    }
+}
+
+// Handle delete single photo
+if (is_post() && req('btn') == 'delete_photo' && $p) {
+    $photo_id = req('photo_id');
+    $photo_name = req('photo_name');
+
+    $stmt = $_db->prepare("DELETE FROM product_photo WHERE id = ? AND product_id = ?");
+    $stmt->execute([$photo_id, $p->id]);
+
+    // Delete file
+    $file_path = root("photos/products/$photo_name");
+    if (file_exists($file_path)) {
+        unlink($file_path);
+    }
+
+    temp('info', 'Photo deleted.');
+    redirect('product-detail.php?id=' . $p->id);
+}
+
+$name  = $name  ?? $p->name  ?? '';
+$price = $price ?? $p->price ?? '';
+$stock = $stock ?? $p->stock ?? '';
+$category_id = $category_id ?? $p->category_id ?? '';
+$video_url = $video_url ?? $p->video_url ?? '';
+
+// Get categories for dropdown
+$categories = get_categories();
+
+$_title = $p ? 'Product | Detail (Admin)' : 'Product | Create (Admin)';
+include '../_head.php';
+?>
+
+<style>
+    .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    .photo-item {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    .photo-item img {
+        width: 100%;
+        height: 150px;
+        object-fit: cover;
+        display: block;
+    }
+    .photo-item .delete-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(220, 38, 38, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+    }
+    .photo-item .delete-btn:hover {
+        background: rgba(185, 24, 24, 0.95);
+    }
+    .drop-zone {
+        border: 3px dashed var(--border);
+        border-radius: 8px;
+        padding: 30px;
+        text-align: center;
+        background: var(--cream);
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .drop-zone:hover, .drop-zone.dragover {
+        border-color: var(--red);
+        background: var(--pink);
+    }
+    .drop-zone p {
+        margin: 0;
+        color: var(--text-muted);
+    }
+    .video-preview {
+        margin-top: 10px;
+    }
+    .video-preview iframe {
+        width: 100%;
+        max-width: 560px;
+        aspect-ratio: 16/9;
+        border-radius: 8px;
+    }
+</style>
+
+<form method="post" enctype="multipart/form-data" class="form">
+    <?php if ($p): ?>
+    <label>Id</label>
+    <b><?= $p->id ?></b>
+    <br>
+    <?php endif ?>
+
+    <label for="name">Name</label>
+    <?= html_text('name', 'maxlength="100"') ?>
+    <?= err('name') ?>
+
+    <label for="price">Price (RM)</label>
+    <?= html_text('price', 'maxlength="10"') ?>
+    <?= err('price') ?>
+
+    <label for="stock">Stock</label>
+    <?= html_text('stock', 'maxlength="10"') ?>
+    <?= err('stock') ?>
+
+    <label for="category_id">Category</label>
+    <?= html_select('category_id', array_column($categories, 'name', 'id'), '- Select Category -') ?>
+
+    <label for="video_url">YouTube Video URL</label>
+    <?= html_text('video_url', 'placeholder="https://www.youtube.com/watch?v=..."') ?>
+    <?php if ($video_url): ?>
+        <div class="video-preview">
+            <?php
+            // Extract YouTube video ID
+            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/', $video_url, $matches);
+            if (isset($matches[1])) {
+                $video_id = $matches[1];
+                echo "<iframe src='https://www.youtube.com/embed/$video_id' frameborder='0' allowfullscreen></iframe>";
+            }
+            ?>
+        </div>
+    <?php endif; ?>
+
+    <label class="upload" for="photo">
+        Main Photo
+        <img src="/products/<?= $p->photo ?? 'default.jpg' ?>">
+        <?= html_file('photo', 'image/*') ?>
+    </label>
+    <?= err('photo') ?>
+
+    <section>
+        <button>Save</button>
+    </section>
+</form>
+
+<?php if ($p): ?>
+<!-- Multiple Photo Upload Section -->
+<section style="margin-top: 30px;">
+    <h2>Additional Photos</h2>
+
+    <form method="post" enctype="multipart/form-data" id="photo-upload-form">
+        <div class="drop-zone" id="dropZone">
+            <p>📁 Drag & Drop photos here or click to select</p>
+            <input type="file" name="additional_photos[]" id="additionalPhotos" multiple accept="image/*" style="display: none;">
+        </div>
+        <div id="preview-container" class="photo-grid" style="margin-top: 15px;"></div>
+        <section style="margin-top: 15px;">
+            <button type="submit" name="btn" value="upload_photos">Upload Photos</button>
+        </section>
+    </form>
+
+    <!-- Existing Photos Grid -->
+    <?php if ($photos): ?>
+    <h3 style="margin-top: 30px;">Uploaded Photos</h3>
+    <div class="photo-grid">
+        <?php foreach ($photos as $photo): ?>
+        <div class="photo-item">
+            <img src="/photos/products/<?= $photo->photo ?>" alt="Product Photo">
+            <form method="post" style="position: absolute; top: 5px; right: 5px;">
+                <?= html_hidden('photo_id', "value='$photo->id'") ?>
+                <?= html_hidden('photo_name', "value='$photo->photo'") ?>
+                <button type="submit" name="btn" value="delete_photo" class="delete-btn" data-confirm="Delete this photo?">×</button>
+            </form>
+        </div>
+        <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+
+<?php if (!$p): ?>
+<form method="post" class="form" style="margin-top: 30px;">
+    <label for="batch_data">Batch Add (one per line: name,price,stock)</label>
+    <?= html_textarea('batch_data', 'rows="6" placeholder="Plain Bagel,3.50,50&#10;Sesame Bagel,3.80,40"') ?>
+    <section>
+        <button name="btn" value="batch">Import</button>
+    </section>
+</form>
+<?php endif; ?>
+
+<?php if ($p): ?>
+<p style="margin-top: 30px;">
+    <button data-post="product-detail.php?id=<?= $p->id ?>&btn=delete" data-confirm>Delete Product</button>
+</p>
+<?php endif; ?>
+
+<p>
+    <button data-get="product-listing.php">Back to Listing</button>
+</p>
+
+<script>
+$(document).ready(function() {
+    // Drag and drop functionality
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('additionalPhotos');
+    const previewContainer = document.getElementById('preview-container');
+
+    // Click to open file selector
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Highlight drop zone
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.add('dragover'), false);
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => dropZone.classList.remove('dragover'), false);
+    });
+
+    // Handle dropped files
+    dropZone.addEventListener('drop', handleDrop, false);
+
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        handleFiles(files);
+    }
+
+    // Handle selected files
+    fileInput.addEventListener('change', function() {
+        handleFiles(this.files);
+    });
+
+    function handleFiles(files) {
+        ([...files]).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                previewFile(file);
+            }
+        });
+    }
+
+    function previewFile(file) {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onloadend = function() {
+            const div = document.createElement('div');
+            div.className = 'photo-item';
+            div.innerHTML = `
+                <img src="${reader.result}" alt="Preview">
+            `;
+            previewContainer.appendChild(div);
+        }
+    }
+});
+</script>
+
+<?php
+include '../_foot.php';

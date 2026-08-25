@@ -1,2 +1,30 @@
 config.php
 /vendor/
+
+# Compiled and build artifacts
+*.pyc
+__pycache__/
+
+# Dependencies
+vendor/
+node_modules/
+
+# Logs and temp files
+*.log
+*.tmp
+
+# Environment
+.env
+.env.local
+*.env.*
+
+# Editors
+.vscode/
+.idea/
+
+# Database
+*.sql
+
+# Original rules preserved
+*.log
+```
