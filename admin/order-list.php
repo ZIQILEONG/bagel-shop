@@ -7,7 +7,7 @@ include '../_base.php';
 auth('Admin');
 
 // return all orders, joined with user (name), newest first
-$stm = $_db->prepare("SELECT o.*, u.name FROM orders o JOIN user u ON o.user_id = u.id ORDER BY o.id DESC");
+$stm = $_db->prepare("SELECT o.*, u.name, u.is_deleted FROM orders o JOIN user u ON o.user_id = u.id ORDER BY o.id DESC");
 $stm->execute([]);
 $arr = $stm-> fetchAll();
 
@@ -34,7 +34,7 @@ include '../_head.php';
     <tr>
         <td><?= $o->id ?></td>
         <td><?= $o->datetime ?></td>
-        <td><?= $o->name ?></td>
+        <td><?= $o->name ?><?= $o->is_deleted ? " <span style='color:#b5192b;font-weight:bold;' title='Account disabled'>&#10071;</span>" : '' ?></td>
         <td class="right"><?= $o->count ?></td>
         <td class="right"><?= $o->total ?></td>
         <td><?= $o->status ?></td>

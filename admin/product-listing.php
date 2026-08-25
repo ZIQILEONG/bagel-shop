@@ -17,11 +17,12 @@ if (is_post() && req('btn') == 'delete_selected') {
 if (is_post() && req('btn') == 'increase_price') {
     $ids     = post('ids', []);
     $percent = req('percent');
-    if (is_array($ids) && count($ids) > 0 && is_numeric($percent)) {
+    if (is_array($ids) && count($ids) > 0 && is_numeric($percent) && $percent >= -100) {
         $in  = implode(',', array_fill(0, count($ids), '?'));
         $stm = $_db->prepare("UPDATE product SET price = ROUND(price * (1 + ?/100), 2) WHERE id IN ($in)");
         $stm->execute(array_merge([$percent], $ids));
-        temp('info', count($ids) . ' product(s) price increased by ' . $percent . '%.');
+        $action = $percent < 0 ? 'decreased' : 'increased';
+        temp('info', count($ids) . ' product(s) price ' . $action . ' by ' . abs($percent) . '%.');
     }
     redirect('product-listing.php');
 }
@@ -62,28 +63,6 @@ include '../_head.php';
 <div id="resultsWrap">
 <?php include 'product-listing-results.php'; ?>
 </div>
-<script>
-$(function () {
-    let timer = null;
-    function loadResults(page) {
-        $.get('product-listing.php', {
-            ajax: 1,
-            search: $('#search').val(),
-            sort: $('#sort').val(),
-            dir: $('#dir').val(),
-            page: page || 1
-        }, html => $('#resultsWrap').html(html));
-    }
-    $('#search').on('input', function () {
-        clearTimeout(timer);
-        timer = setTimeout(() => loadResults(1), 350); // debounce
-    });
-    $('#resultsWrap').on('click', '.pager a', function (e) {
-        e.preventDefault();
-        loadResults(new URL(this.href).searchParams.get('page'));
-    });
-    $('#searchForm').on('submit', e => { e.preventDefault(); loadResults(1); });
-});
-</script>
+<script src="../js/product-listing.js"></script>
 <?php
 include '../_foot.php';

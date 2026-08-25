@@ -584,7 +584,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['remember_token'])) {
         SELECT *
         FROM user
         WHERE remember_token = ?
-          AND remember_expires > NOW()
+        AND remember_expires > NOW()
     ");
 
     $stmt->execute([$token_hash]);
