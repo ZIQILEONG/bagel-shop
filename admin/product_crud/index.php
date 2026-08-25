@@ -2,12 +2,15 @@
 require '../../config.php';
 require '../../_base.php';
 
-$stmt = $_db->query("SELECT * FROM products");
+
+$stmt = $_db->query("SELECT * FROM products_crud");
 $products = $stmt->fetchAll();
+
 
 $_title = "Admin Product Maintenance";
 include '../../_head.php';
 ?>
+
 
 <h2>Product Admin CRUD</h2>
 <a href="create.php">[+] Add New Product</a>
@@ -34,5 +37,6 @@ include '../../_head.php';
     </tr>
     <?php endforeach ?>
 </table>
+
 
 <?php include '../../_foot.php'; ?>
