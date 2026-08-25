@@ -55,7 +55,10 @@ if (count($where_conditions) > 0) {
 }
 
 // Build query
-$query = "SELECT p.* FROM product p $where ORDER BY $sort $dir";
+$query = "SELECT p.*,
+    (SELECT AVG(rating) FROM product_review WHERE product_id = p.id) AS rating,
+    (SELECT COUNT(*) FROM product_review WHERE product_id = p.id) AS review_count
+    FROM product p $where ORDER BY $sort $dir";
 $pager = new SimplePager($query, $params, '12', $page);
 $arr   = $pager->result;
 

@@ -237,12 +237,19 @@ include '../_head.php';
         </div>
     <?php endif; endif; ?>
 
-    <label>Main Photo</label>
-    <?php if ($p && $p->photo): ?>
-        <img src="/products/<?= encode($p->photo) ?>" style="max-width: 200px; border: 1px solid #ddd; margin-bottom: 10px;">
-    <?php endif; ?>
-    <?= html_file('photo', 'accept="image/*"') ?>
-    <?= err('photo') ?>
+   <label>Main Photo</label>
+<?php if ($p && $p->photo): ?>
+    <img src="<?= app_url('products/' . encode($p->photo)) ?>"
+         style="max-width: 200px; border: 1px solid #ddd; margin-bottom: 10px;">
+    <div style="margin-bottom: 10px;">
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=main&action=rotate_left">⟲ Rotate Left</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=main&action=rotate_right">⟳ Rotate Right</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=main&action=flip_h">⇋ Flip H</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=main&action=flip_v">⇅ Flip V</button>
+    </div>
+<?php endif; ?>
+<?= html_file('photo', 'accept="image/*"') ?>
+<?= err('photo') ?>
 
     <section style="margin-top: 20px;">
         <button type="submit">Save Product</button>
@@ -270,13 +277,19 @@ include '../_head.php';
 <div class="photo-grid">
     <?php foreach ($photos as $photo): ?>
     <div class="photo-item">
-        <img src="/photos/products/<?= encode($photo->photo) ?>" alt="Gallery">
-        <form method="post" style="position: absolute; top: 5px; right: 5px;">
-            <?= html_hidden('photo_id', 'value="' . encode($photo->id) . '"') ?>
-            <?= html_hidden('photo_name', 'value="' . encode($photo->photo) . '"') ?>
-            <button type="submit" name="btn" value="delete_photo" class="delete-btn" onclick="return confirm('Delete this photo?')">×</button>
-        </form>
+    <img src="/photos/products/<?= encode($photo->photo) ?>" alt="Gallery">
+    <div style="padding: 8px; display: flex; gap: 4px; flex-wrap: wrap;">
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=gallery&photo_id=<?= $photo->id ?>&action=rotate_left" style="font-size:11px;">⟲</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=gallery&photo_id=<?= $photo->id ?>&action=rotate_right" style="font-size:11px;">⟳</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=gallery&photo_id=<?= $photo->id ?>&action=flip_h" style="font-size:11px;">⇋</button>
+        <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&type=gallery&photo_id=<?= $photo->id ?>&action=flip_v" style="font-size:11px;">⇅</button>
     </div>
+    <form method="post" style="position: absolute; top: 5px; right: 5px;">
+        <?= html_hidden('photo_id', 'value="' . encode($photo->id) . '"') ?>
+        <?= html_hidden('photo_name', 'value="' . encode($photo->photo) . '"') ?>
+        <button type="submit" name="btn" value="delete_photo" class="delete-btn" onclick="return confirm('Delete this photo?')">×</button>
+    </form>
+</div>
     <?php endforeach; ?>
 </div>
 <?php endif; ?>

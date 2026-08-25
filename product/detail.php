@@ -1,29 +1,57 @@
 <?php
 include '../_base.php';
 
+$id = req('id');
+
 if (is_post()) {
-    $id   = req('id');
-    $unit = req('unit');
-    update_cart($id, $unit);
-    redirect();
+    if (req('btn') == 'review') {
+        if (!$_user) {
+            temp('error', 'Please login to leave a review.');
+            redirect('login.php');
+        }
+        $rating  = (int) req('rating');
+        $comment = req('comment');
+
+        if ($rating >= 1 && $rating <= 5) {
+            $stm = $_db->prepare('INSERT INTO product_review (product_id, user_id, rating, comment) VALUES (?, ?, ?, ?)');
+            $stm->execute([$id, $_user->id, $rating, $comment]);
+            temp('info', 'Review submitted.');
+        } else {
+            temp('error', 'Please select a rating.');
+        }
+        redirect('detail.php?id=' . $id);
+    } else {
+        $unit = req('unit');
+        update_cart($id, $unit);
+        redirect();
+    }
 }
 
-$id  = req('id');
 $stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
 $stm->execute([$id]);
 $p = $stm->fetch();
 if (!$p) redirect('list.php');
 
-// Fetch gallery photos (from product_photo table)
+// Fetch gallery photos
 $stm = $_db->prepare('SELECT photo FROM product_photo WHERE product_id = ? ORDER BY sort_order, id');
 $stm->execute([$id]);
 $gallery = $stm->fetchAll(PDO::FETCH_COLUMN);
 
-// Build slider list: main photo first, then gallery photos
 $slides = [];
 if ($p->photo) $slides[] = '/products/' . $p->photo;
 foreach ($gallery as $g) $slides[] = '/photos/products/' . $g;
 if (!$slides) $slides[] = '/products/default.jpg';
+
+// Fetch reviews (with reviewer name)
+$stm = $_db->prepare('SELECT r.*, u.name AS reviewer_name FROM product_review r
+                       JOIN user u ON u.id = r.user_id
+                       WHERE r.product_id = ? ORDER BY r.created_at DESC');
+$stm->execute([$id]);
+$reviews = $stm->fetchAll();
+
+$stm = $_db->prepare('SELECT AVG(rating) AS avg_rating, COUNT(*) AS total FROM product_review WHERE product_id = ?');
+$stm->execute([$id]);
+$ratingStats = $stm->fetch();
 
 $cart = get_cart();
 $unit = $cart[$p->id] ?? 0;
@@ -106,6 +134,8 @@ include '../_head.php';
         margin: 10px 0;
     }
     .price-big { font-size: 20px; font-weight: bold; margin: 10px 0; }
+    .rating-summary { color: #fbbf24; font-size: 15px; margin: 6px 0; }
+    .rating-summary .count { color: #888; font-size: 13px; }
 
     .qty-row { display: flex; align-items: center; gap: 12px; margin-top: 20px; }
     .qty-btn {
@@ -123,6 +153,13 @@ include '../_head.php';
         border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;
     }
     .add-btn:disabled { background: #ccc; cursor: not-allowed; }
+
+    .reviews-section { max-width: 900px; margin: 40px auto 0; }
+    .review-form { background: #fafafa; border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 20px; }
+    .review-form select, .review-form textarea { width: 100%; margin: 6px 0 12px; padding: 8px; }
+    .review-item { border-bottom: 1px solid #eee; padding: 12px 0; }
+    .review-item .stars { color: #fbbf24; }
+    .review-item .meta { color: #888; font-size: 12px; }
 </style>
 
 <div class="detail-layout">
@@ -148,6 +185,16 @@ include '../_head.php';
     <div>
         <h2><?= encode($p->name) ?></h2>
 
+        <?php if ($ratingStats->total > 0): ?>
+        <div class="rating-summary">
+            <?= str_repeat('★', round($ratingStats->avg_rating)) . str_repeat('☆', 5 - round($ratingStats->avg_rating)) ?>
+            <?= number_format($ratingStats->avg_rating, 1) ?>
+            <span class="count">(<?= $ratingStats->total ?> review<?= $ratingStats->total > 1 ? 's' : '' ?>)</span>
+        </div>
+        <?php else: ?>
+        <div class="rating-summary"><span class="count">No reviews yet</span></div>
+        <?php endif; ?>
+
         <?php if ($p->stock <= 0): ?>
             <div class="stock-banner">ℹ️ Sorry, this item is currently unavailable</div>
         <?php endif; ?>
@@ -169,6 +216,44 @@ include '../_head.php';
             </button>
         </form>
     </div>
+</div>
+
+<div class="reviews-section">
+    <h3>Ratings &amp; Reviews</h3>
+
+    <?php if ($_user?->role == 'Member'): ?>
+    <form method="post" class="review-form">
+        <?= html_hidden('id') ?>
+        <input type="hidden" name="btn" value="review">
+
+        <label>Your Rating</label>
+        <select name="rating" required>
+            <option value="">-- select --</option>
+            <?php for ($i = 5; $i >= 1; $i--): ?>
+                <option value="<?= $i ?>"><?= $i ?> star<?= $i > 1 ? 's' : '' ?></option>
+            <?php endfor; ?>
+        </select>
+
+        <label>Your Review (optional)</label>
+        <textarea name="comment" rows="3" maxlength="500"></textarea>
+
+        <button type="submit">Submit Review</button>
+    </form>
+    <?php else: ?>
+    <p><a href="/login.php">Login</a> to leave a review.</p>
+    <?php endif; ?>
+
+    <?php if ($reviews): ?>
+        <?php foreach ($reviews as $r): ?>
+        <div class="review-item">
+            <div class="stars"><?= str_repeat('★', $r->rating) . str_repeat('☆', 5 - $r->rating) ?></div>
+            <div><?= $r->comment ? encode($r->comment) : '<em>No comment</em>' ?></div>
+            <div class="meta"><?= encode($r->reviewer_name) ?> — <?= date('d M Y', strtotime($r->created_at)) ?></div>
+        </div>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <p style="color:#888;">Be the first to review this bagel!</p>
+    <?php endif; ?>
 </div>
 
 <p style="max-width: 900px; margin: 20px auto 0;">
