@@ -54,28 +54,30 @@ if (is_post()) {
     }
 }
 
-$_title = 'Login';
+$_title = 'Log In | Pululu Bagel';
+$_body_class = 'pululu-auth-page';
 include '_head.php';
 ?>
 
 <div class="login-container">
 
-    <h2>Login</h2>
+    <span class="section-eyebrow">Welcome back</span>
+    <h2>Log in</h2>
 
     <p class="login-subtitle">
-        Welcome back! Please login to your account:
+        Sign in to order fresh bagels, use reward points and track your purchases.
     </p>
 
     <form method="post" class="login-form">
 
         <div class="input-group">
-            <?= html_text('email', 'maxlength="100" required placeholder="E-mail"') ?>
+            <input type="email" id="email" name="email" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" maxlength="100" autocomplete="email" required placeholder="E-mail">
             <label for="email">E-mail</label>
             <?= err('email') ?>
         </div>
 
         <div class="input-group">
-            <?= html_password('password', 'maxlength="100" required placeholder="Password"') ?>
+            <?= html_password('password', 'maxlength="100" autocomplete="current-password" required placeholder="Password"') ?>
             <label for="password">Password</label>
             <?= err('password') ?>
         </div>
@@ -92,7 +94,7 @@ include '_head.php';
         include 'captcha/widget.php';
         ?>
 
-        <button type="submit">LOGIN</button>
+        <button type="submit">Log in</button>
 
     </form>
 

@@ -54,40 +54,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$_title = 'User | Register';
+$_title = 'Create Account | Pululu Bagel';
+$_body_class = 'pululu-auth-page';
 include '../_head.php';
 ?>
 
 <div class="register-container">
 
-    <h2>Register</h2>
+    <span class="section-eyebrow">Join Pululu</span>
+    <h2>Create account</h2>
 
     <p class="register-subtitle">
-        Please fill in the fields below:
+        Save your details, earn reward points and make future orders faster.
     </p>
 
     <form method="post" class="register-form">
 
         <div class="input-group">
-            <?= html_text('name', 'maxlength="50" required placeholder="Name"') ?>
+            <?= html_text('name', 'maxlength="50" autocomplete="name" required placeholder="Name"') ?>
             <label for="name">Name</label>
             <?= err('name') ?>
         </div>
 
         <div class="input-group">
-            <?= html_text('email', 'maxlength="100" required placeholder="E-mail"') ?>
+            <input type="email" id="email" name="email" value="<?= htmlspecialchars($email, ENT_QUOTES, 'UTF-8') ?>" maxlength="100" autocomplete="email" required placeholder="E-mail">
             <label for="email">E-mail</label>
             <?= err('email') ?>
         </div>
 
         <div class="input-group">
-            <?= html_password('password', 'maxlength="100" required placeholder="Password"') ?>
+            <?= html_password('password', 'maxlength="100" autocomplete="new-password" required placeholder="Password"') ?>
             <label for="password">Password</label>
             <?= err('password') ?>
         </div>
 
         <div class="input-group">
-            <?= html_password('reenter_password', 'maxlength="100" required placeholder="Re-enter Password"') ?>
+            <?= html_password('reenter_password', 'maxlength="100" autocomplete="new-password" required placeholder="Re-enter Password"') ?>
             <label for="reenter_password">Re-enter Password</label>
             <?= err('reenter_password') ?>
         </div>
@@ -98,13 +100,13 @@ include '../_head.php';
         include '../captcha/widget.php';
         ?>
 
-        <button type="submit">CREATE ACCOUNT</button>
+        <button type="submit">Create account</button>
 
     </form>
 
     <p class="login-text">
         Already have an account?
-        <a href="../login.php">Login</a>
+        <a href="../login.php">Log in</a>
     </p>
 
 </div>

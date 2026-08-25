@@ -62,31 +62,24 @@ function resend_verification_email(
 
     $mail->Body = "
         <p>Dear {$safe_name},</p>
-
         <p>
             Click the link below to verify your
             Pululu Bagel account:
         </p>
-
         <p>
             <a href=\"{$safe_link}\">
                 Verify Email
             </a>
         </p>
-
-        <p>This link expires in 24 hours.</p>
-    ";
+        <p>This link expires in 24 hours.</p>";
 
     $mail->AltBody =
         "Verify your Pululu Bagel account: {$link}";
-
     $mail->send();
 }
 
 if (is_post()) {
-
     $email = trim($_POST['email'] ?? '');
-
     $turnstile_token =
         $_POST['cf-turnstile-response'] ?? '';
 
@@ -109,7 +102,6 @@ if (is_post()) {
         ");
 
         $stmt->execute([$email]);
-
         $user = $stmt->fetch();
 
         if (!$user) {
@@ -128,7 +120,6 @@ if (is_post()) {
             $turnstile_token,
             'resend'
         )) {
-
         $_err['captcha'] =
             'Please complete the Turnstile verification.';
     }
@@ -137,21 +128,16 @@ if (is_post()) {
     if (!$_err) {
 
         $token = bin2hex(random_bytes(32));
-
         $token_hash = hash(
             'sha256',
             $token
         );
-
         $expires = date(
             'Y-m-d H:i:s',
             strtotime('+24 hours')
         );
-
         try {
-
             $_db->beginTransaction();
-
             $stmt = $_db->prepare("
                 UPDATE user
                 SET verification_token = ?,
@@ -172,7 +158,6 @@ if (is_post()) {
             );
 
             $_db->commit();
-
             $success =
                 'A new verification email has been sent.';
         }
