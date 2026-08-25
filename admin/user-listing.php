@@ -8,9 +8,9 @@ if (is_post() && req('btn') == 'delete_selected') {
     $ids = array_diff($ids, [(string) $_user->id]); // never delete yourself
     if (count($ids) > 0) {
         $in  = implode(',', array_fill(0, count($ids), '?'));
-        $stm = $_db->prepare("DELETE FROM user WHERE id IN ($in)");
+        $stm = $_db->prepare("UPDATE user SET is_deleted = 1 WHERE id IN ($in)");
         $stm->execute(array_values($ids));
-        temp('info', count($ids) . ' member(s) deleted.');
+        temp('info', count($ids) . ' member(s) deactivated.');
     }
     redirect('user-listing.php');
 }
@@ -25,13 +25,15 @@ if (!in_array($sort, $sorts)) {
     $sort = 'id';
 }
 
-$where  = '';
+$where  = 'WHERE is_deleted = 0';
 $params = [];
 if ($search != '') {
-    $where = 'WHERE name LIKE ? OR email LIKE ?';
+    $where .= ' AND (name LIKE ? OR email LIKE ?)';
     $params[] = "%$search%";
     $params[] = "%$search%";
 }
+
+$query = "SELECT * FROM user $where ORDER BY $sort $dir";
 
 $query = "SELECT * FROM user $where ORDER BY $sort $dir";
 $pager = new SimplePager($query, $params, '10', $page);

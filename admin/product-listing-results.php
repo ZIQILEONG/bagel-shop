@@ -33,6 +33,6 @@ $_low_stock_threshold = 11;
 <button name="btn" value="delete_selected" data-confirm="Delete selected products?">Delete Selected</button>
 <label>Increase price by (%)</label>
 <input type="number" name="percent" step="0.01" min="0" style="width:80px">
-<button name="btn" value="increase_price" data-confirm="Increase price for selected products?">Increase Price</button>
+<button name="btn" value="increase_price">Increase Price</button>
 </form>
 <?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>

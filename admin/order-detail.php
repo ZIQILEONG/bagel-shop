@@ -17,7 +17,7 @@ $statuses = [
 // (2) Return order (based on id) - no user restriction, admin can view any order
 $id = req('id');
 
-$stm = $_db->prepare("SELECT o.*, u.name, u.email FROM orders o JOIN user u ON o.user_id = u.id WHERE o.id = ?");
+$stm = $_db->prepare("SELECT o.*, u.name, u.email, u.is_deleted FROM orders o JOIN user u ON o.user_id = u.id WHERE o.id = ?");
 $stm->execute([$id]);
 $o = $stm->fetch();
 
@@ -118,7 +118,7 @@ include '../_head.php';
     <br>
 
     <label>Member</label>
-    <div><?= $o->name ?> (<?= $o->email ?>)</div>
+    <div><?= $o->name ?><?= $o->is_deleted ? " <span style='color:#b5192b;font-weight:bold;' title='Account disabled'>&#10071;</span>" : '' ?> (<?= $o->email ?>)</div>
     <br>
 
     <label>Datetime</label>

@@ -5,12 +5,14 @@ include '../_base.php';
 // when add to cart, check for login. If not login, popout error prompting login. --Chai
 if (is_post()) {
     $btn = req('btn');
+    $cart = get_cart();
+
     if ($btn == 'clear') {
         set_cart();
         redirect('?');
     }
 
-    // delete selected items via checkbox array --ziqi
+    // delete selected items via checkbox array
     if ($btn == 'delete_selected') {
         $checked_items = $_POST['checked_items'] ?? [];
         foreach ($checked_items as $id) {
@@ -23,7 +25,7 @@ if (is_post()) {
     if ($btn == 'apply_voucher') {
         $code = req('voucher_code');
 
-        $stm = $_db->prepare("SELECT * FROM voucher WHERE CODE = ?");
+        $stm = $_db->prepare("SELECT * FROM voucher WHERE code = ?");
         $stm->execute([$code]);
         $v = $stm->fetch(); // v=voucher
 
@@ -35,13 +37,33 @@ if (is_post()) {
                 'percent' => $v->percent
             ];
             temp('info', 'Voucher applied successfully!');
-        } 
+        }
         else {// invalid, show error
             unset($_SESSION['voucher']);
             temp('info', 'Invalid or expired voucher code.');
         }
 
         redirect('?');
+    }
+
+    // checkout selected
+    if ($btn == 'checkout_selected') {
+        $checked_items = $_POST['checked_items'] ?? [];
+
+        if (empty($checked_items)) {
+            temp('info', 'Please select at least one item to checkout.');
+            redirect('?');
+        }
+
+        $checkout_cart = [];
+        foreach ($checked_items as $id) {
+            if (isset($cart[$id])) {
+                $checkout_cart[$id] = $cart[$id];
+            }
+        }
+
+        $_SESSION['checkout_cart'] = $checkout_cart;
+        redirect('checkout.php');
     }
 
     $id   = req('id');
@@ -66,7 +88,6 @@ include '../_head.php';
     .right {
         text-align: right;
     }
-    /* Layout styling for the new select layout elements */
     .cart-bulk-actions {
         margin-bottom: 15px;
         display: flex;
@@ -92,14 +113,23 @@ include '../_head.php';
 </style>
 
 <?php
+// ONE definition of $cart and $voucher, used everywhere below in this file
 $cart = get_cart();
+$voucher = $_SESSION['voucher'] ?? null;
 ?>
+
+<p id="selected-summary">
+    Selected: <span id="selected-count">0</span> item(s) —
+    Subtotal: RM <span id="selected-subtotal">0.00</span>
+    <?php if ($voucher): ?>
+        | After <?= $voucher['percent'] ?>% off: RM <span id="selected-final">0.00</span>
+    <?php endif ?>
+</p>
 
 <!-- ONE Master form to handle bulk item selection deletions -->
 <form method="post" id="cart-bulk-form">
 
     <?php if ($cart): ?>
-        <!-- Top selection tools layout bar -->
         <div class="cart-bulk-actions">
             <label style="cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
                 <input type="checkbox" id="select-all"> Select All
@@ -112,7 +142,7 @@ $cart = get_cart();
 
     <table class="table">
         <tr>
-            <th width="5%"></th> <!-- Header column space for the checklist checkboxes -->
+            <th width="5%"></th>
             <th>Id</th>
             <th>Image</th>
             <th>Name</th>
@@ -123,22 +153,21 @@ $cart = get_cart();
 
         <?php
             $count = 0;
-            $total = 0; 
-            
+            $total = 0;
+
             $stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
-            
+
             foreach ($cart as $id => $unit):
                 $stm->execute([$id]);
                 $p = $stm->fetch();
-                
+
                 $subtotal = $p->price * $unit;
                 $count += $unit;
-                $total += $subtotal; 
+                $total += $subtotal;
         ?>
             <tr>
-                <!-- Individual item checkbox matching item ID value -->
                 <td>
-                    <input type="checkbox" name="checked_items[]" value="<?= $p->id ?>" class="item-checkbox">
+                    <input type="checkbox" name="checked_items[]" value="<?= $p->id ?>" class="item-checkbox" data-subtotal="<?= $subtotal ?>">
                 </td>
                 <td><?= $p->id ?></td>
                 <td>
@@ -147,10 +176,9 @@ $cart = get_cart();
                 <td><?= $p->name ?></td>
                 <td class="right"><?= sprintf('%.2f', $p->price) ?></td>
                 <td>
-                    <!-- Separate isolated internal form tracking for inline qty changes -->
                     <div class="qty-form-container">
                         <input type="hidden" name="id" value="<?= $p->id ?>" class="row-id">
-                        <?= html_select('unit', $_units, $unit) ?>           
+                        <?= html_select('unit', $_units, $unit) ?>
                     </div>
                 </td>
                 <td class="right">
@@ -169,13 +197,10 @@ $cart = get_cart();
 
 <!-- show discounted price -->
 <?php
-$voucher = $_SESSION['voucher'] ?? null;
 $discount = 0;
-
 if ($voucher) {
     $discount = round($total * $voucher['percent'] / 100, 2);
 }
-
 $final_total = $total - $discount;
 ?>
 
@@ -196,7 +221,7 @@ $final_total = $total - $discount;
 <p>
     <?php if ($cart): ?>
         <?php if ($_user?->role == 'Member'): ?>
-            <button data-get="checkout.php">Checkout</button>
+            <button type="submit" name="btn" value="checkout_selected" form="cart-bulk-form">Checkout Selected</button>
         <?php else: ?>
             Please <a href="/login.php">login</a> as member to checkout
         <?php endif ?>
@@ -204,8 +229,6 @@ $final_total = $total - $discount;
 </p>
 
 <!-- voucher code -->
-<?php $voucher = $_SESSION['voucher'] ?? null; ?>
-
 <form method="post" class="form">
     <label>Voucher Code</label>
     <input type="text" name="voucher_code" value="<?= $voucher['code'] ?? '' ?>">
@@ -215,15 +238,12 @@ $final_total = $total - $discount;
     <?php endif ?>
 </form>
 
-<!-- Include jQuery script selectors to drive standard selection states -->
 <script>
 $(document).ready(function() {
-    // Select All Checkbox behavior layout rule
     $('#select-all').on('change', function() {
         $('.item-checkbox').prop('checked', this.checked);
     });
 
-    // Uncheck master box if an individual item gets unchecked manually
     $('.item-checkbox').on('change', function() {
         if ($('.item-checkbox:checked').length === $('.item-checkbox').length) {
             $('#select-all').prop('checked', true);
@@ -232,22 +252,40 @@ $(document).ready(function() {
         }
     });
 
-    // Safely hijack the dropdown triggers inside the bulk layout form wrapper
     $('.table select').on('change', function(e) {
         e.preventDefault();
-        
-        // Find specific target product contextual components relative to the clicked row elements
+
         let row = $(this).closest('tr');
         let productId = row.find('.row-id').val();
         let selectedUnit = $(this).val();
 
-        // Dynamically append target single row parameters data and submit directly via form reference
         let hiddenIdInput = $('<input>').attr({type: 'hidden', name: 'id', value: productId});
         let hiddenUnitInput = $('<input>').attr({type: 'hidden', name: 'unit', value: selectedUnit});
-        
-        // Temporarily append values and push processing execution safely
+
         $('#cart-bulk-form').append(hiddenIdInput, hiddenUnitInput).submit();
     });
+
+    let voucherPercent = <?= $voucher ? $voucher['percent'] : 0 ?>;
+
+    function updateSelectedSummary() {
+        let count = 0;
+        let subtotal = 0;
+
+        $('.item-checkbox:checked').each(function() {
+            count++;
+            subtotal += parseFloat($(this).data('subtotal'));
+        });
+
+        $('#selected-count').text(count);
+        $('#selected-subtotal').text(subtotal.toFixed(2));
+
+        if (voucherPercent > 0) {
+            let final = subtotal - (subtotal * voucherPercent / 100);
+            $('#selected-final').text(final.toFixed(2));
+        }
+    }
+
+    $('.item-checkbox, #select-all').on('change', updateSelectedSummary);
 });
 </script>
 
