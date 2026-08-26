@@ -12,7 +12,7 @@ $_title = "My Shipping Addresses";
 include '../_head.php';
 ?>
 
-<h2>My Shipping Address Book</h2>
+<h2>My Shipping Address</h2>
 <a href="address-create.php">[+] Add New Address</a>
 <hr>
 
