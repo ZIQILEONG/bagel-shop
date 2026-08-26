@@ -427,7 +427,55 @@ label > * {
     color: var(--red);
     font-size: 13px;
 }
+.password-requirements {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    font-size: 12px;
+}
 
+.password-requirement {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: #fff1f0;
+    color: #b5192b;
+}
+
+.password-requirement.valid {
+    background: #edf8ef;
+    color: #218838;
+}
+
+.requirement-icon {
+    width: 17px;
+    height: 17px;
+    flex: 0 0 17px;
+    display: grid;
+    place-items: center;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.requirement-icon::before {
+    content: "×";
+}
+
+.password-requirement.valid .requirement-icon::before {
+    content: "✓";
+}
+
+@media (max-width: 500px) {
+    .password-requirements {
+        grid-template-columns: 1fr;
+    }
+}
 /* Photo Upload ------------------------------------------------------------ */
 
 label.upload img {
