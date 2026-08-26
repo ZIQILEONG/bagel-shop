@@ -4,7 +4,12 @@ auth('Admin');
 $id = req('id');
 $p = null;
 if ($id) {
-    $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
+    $stm = $_db->prepare("
+        SELECT 
+            p.*
+        FROM product p 
+        WHERE p.id = ?"
+    );
     $stm->execute([$id]);
     $p = $stm->fetch();
     if (!$p) {
@@ -48,11 +53,18 @@ if (!$p && is_post() && req('btn') == 'batch') {
 }
 if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
     $name  = req('name');
+    $category_id = req('category_id');
     $price = req('price');
     $stock = req('stock');
+    $description = req('description');
+    $video_url = req('video_url');
     $photo = $p->photo ?? 'default.jpg';
+
     if ($name == '') {
         $_err['name'] = 'Required';
+    }
+    if ($category_id == '') {
+        $_err['category_id'] = 'Required';
     }
     if ($price == '') {
         $_err['price'] = 'Required';
@@ -66,6 +78,8 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
     else if (!ctype_digit($stock)) {
         $_err['stock'] = 'Invalid value';
     }
+    if ($video_url !== '' && (!filter_var($video_url, FILTER_VALIDATE_URL) || !str_contains($video_url, 'youtube.com'))) 
+        $_err['video_url'] = "Product video URL is not valid.<br>Example: https://www.youtube.com/watch?v=example";
     $f = get_file('photo');
     if ($f && !getimagesize($f->tmp_name)) {
         $_err['photo'] = 'Invalid image';
@@ -79,8 +93,24 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
             $photo = save_photo($f, $dir);
         }
         if ($p) {
-            $stm = $_db->prepare("UPDATE product SET name = ?, price = ?, stock = ?, photo = ? WHERE id = ?");
-            $stm->execute([$name, $price, $stock, $photo, $p->id]);
+            $stm = $_db->prepare("UPDATE product SET name = ?, category_id = ?, price = ?, stock = ?, photo = ?, description = ?, video_url = ? WHERE id = ?");
+            $stm->execute([$name, $category_id, $price, $stock, $photo, $description, $video_url, $p->id]);            
+
+            if (isset($_POST['sort_order'])) {
+                foreach ($_POST['sort_order'] as $photoId => $sortOrder) {
+                    $stm = $_db->prepare("
+                        UPDATE product_photo
+                        SET sort_order = ?
+                        WHERE id = ?
+                    ");
+
+                    $stm->execute([
+                        $sortOrder,
+                        $photoId
+                    ]);
+                }
+            }
+
             temp('info', 'Product updated.');
             redirect('product-detail.php?id=' . $p->id);
         }
@@ -88,8 +118,8 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
             $max   = $_db->query("SELECT MAX(id) FROM product")->fetchColumn();
             $num   = $max ? ((int) substr($max, 1) + 1) : 1;
             $newId = 'P' . str_pad($num, 3, '0', STR_PAD_LEFT);
-            $stm = $_db->prepare("INSERT INTO product (id, name, price, photo, stock) VALUES (?, ?, ?, ?, ?)");
-            $stm->execute([$newId, $name, $price, $photo, $stock]);
+            $stm = $_db->prepare("INSERT INTO product (id, name, category_id, price, photo, stock, description, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stm->execute([$newId, $name, $category_id, $price, $photo, $stock, $description, $video_url]);
             temp('info', 'Product created.');
             redirect('product-detail.php?id=' . $newId);
         }
@@ -98,30 +128,181 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
 $name  = $name  ?? $p->name  ?? '';
 $price = $price ?? $p->price ?? '';
 $stock = $stock ?? $p->stock ?? '';
+$category_id = $category_id ?? $p->category_id ?? '';
+$description = $description ?? $p->description ?? '';
+$video_url = $video_url ?? $p->video_url ?? '';
+
+$photoStm = $_db->prepare("
+    SELECT *
+    FROM product_photo
+    WHERE product_id = ?
+    ORDER BY sort_order
+");
+$photoStm->execute([$p->id]);
+$photos = $photoStm->fetchAll();
+
 // ----------------------------------------------------------------------------
 $_title = $p ? 'Product | Detail (Admin)' : 'Product | Create (Admin)';
 include '../_head.php';
 ?>
-<form method="post" enctype="multipart/form-data" class="form">
+<style>
+.detail-photos {
+    grid-column: 1 / -1;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.photo-header {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.photo-header div {
+    background: #f9e5db;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.photo-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+
+    padding: 16px;
+    margin-bottom: 16px;
+
+    background: #fffaf7;
+    border: 1px solid #ead5ca;
+    border-radius: 10px;
+}
+
+.photo-row div {
+    background: #f9e5db;
+    padding: 14px;
+    border-radius: 8px;
+    font-weight: bold;
+}
+
+.photo-box {
+    width: 100%;
+    height: 100px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: #eee;
+}
+
+.photo-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+}
+
+.photo-box img.enlarged {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    max-width: 80vw;
+    max-height: 80vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 30px rgba(0,0,0,0.4);
+}
+</style>
+
+<script>
+function enlargePhoto(img) {
+    img.classList.toggle('enlarged');
+}
+</script>
+
+<form method="post" enctype="multipart/form-data" class="form" style="grid: auto / 1fr 2fr 1fr !important;>
     <?php if ($p): ?>
     <label>Id</label>
-    <b><?= $p->id ?></b>
-    <br>
+    <input type="text" value="<?= $p->id ?>" disabled>
     <?php endif ?>
     <label for="name">Name</label>
-    <?= html_text('name', 'maxlength="100"') ?>
+    <?= html_text('name', 'maxlength="100" style="width:100%;"') ?>
     <?= err('name') ?>
+    <label>Category</label>
+    <select name="category_id" style="width:100%;padding:6px;" required>
+        <option value="">-- Select Category --</option>
+        <?php
+        $catStm = $_db->query("SELECT id, name FROM category ORDER BY name");
+        while ($cat = $catStm->fetch()) {
+            $selected = ($p -> category_id == $cat -> id) ? 'selected' : '';
+            echo "<option value=\"{$cat -> id}\" $selected>{$cat -> name}</option>";
+        }
+        ?>
+    </select>
+    <?= err('category_id') ?>
     <label for="price">Price (RM)</label>
-    <?= html_text('price', 'maxlength="10"') ?>
+    <?= html_text('price', 'maxlength="10" style="width:100%;"') ?>
     <?= err('price') ?>
     <label for="stock">Stock</label>
-    <?= html_text('stock', 'maxlength="10"') ?>
+    <?= html_text('stock', 'maxlength="10" style="width:100%;"') ?>
     <?= err('stock') ?>
+    <label for="description">Description</label>
+    <textarea name="description" id="description" rows="4" style="width:100%;"><?= htmlspecialchars(trim($p->description)) ?></textarea>
+    <br>
+    <label for="video_url">Product Video Url:</label>
+    <?= html_text('video_url', 'placeholder="https://www.youtube.com/watch?v=example" style="width:100%;"') ?>
+    <?= err('video_url') ?>
+    <label>Product Photo:</label>
     <label class="upload" for="photo">
         <img src="/products/<?= $p->photo ?? 'default.jpg' ?>">
         <?= html_file('photo', 'image/*') ?>
     </label>
     <?= err('photo') ?>
+
+    <!-- Display product detail photos if available -->
+    <div class="detail-photos">
+        <div class="photo-header">
+            <div>Product Detail Photo</div>
+        </div>
+
+        <div class="photo-row">
+            <div>Order</div>
+            <div>Photo Name</div>
+            <div>Photo</div>
+
+            <?php foreach ($photos as $photo): ?>
+                <div class="photo-order">
+                    <input
+                        type="number"
+                        name="sort_order[<?= $photo->id ?>]"
+                        value="<?= $photo->sort_order ?>"
+                        style="width:100%;height:100%;"
+                        min="1" 
+                    >
+                </div>
+
+                <div class="photo-name">
+                    <?= htmlspecialchars($photo->photo) ?>
+                </div>
+
+                <div class="photo-box">
+                    <img
+                        src="/products/<?= htmlspecialchars($photo->photo) ?>"
+                        alt="Product Detail Photo"
+                        onclick="enlargePhoto(this)"
+                    >
+                </div>                
+            <?php endforeach; ?>
+        </div>
+    </div>
+
     <section>
         <button>Save</button>
     </section>

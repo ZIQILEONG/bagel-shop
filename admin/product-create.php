@@ -4,12 +4,16 @@ auth('Admin');
 $error = '';
 if (is_post()) {
     $name = trim(post('name'));
+    $category_id = post('category_id');
     $price = post('price');
     $stock = post('stock');
     $description = trim(post('description'));
+    $product_video_url = trim(post('product_video_url'));
     if ($name === '') $error .= "Product name cannot be empty.<br>";
+    if ($category_id === '') $error .= "Category must be selected.<br>";
     if (!is_numeric($price) || $price <= 0) $error .= "Price must be greater than zero.<br>";
     if (!is_numeric($stock) || $stock < 0) $error .= "Stock cannot be negative.<br>";
+    if ($product_video_url !== '' && (!filter_var($product_video_url, FILTER_VALIDATE_URL) || !str_contains($product_video_url, 'youtube.com'))) $error .= "Product video URL is not valid.<br>Example: https://www.youtube.com/watch?v=example";
     if ($error === '') {
         //Auto Generate product ID P001 P002 P003
         $rs = $_db->query("SELECT id FROM product ORDER BY id DESC LIMIT 1");
@@ -21,16 +25,46 @@ if (is_post()) {
             $newProductId = "P001";
         }
         //Insert new product into product table
-        $stm = $_db->prepare("INSERT INTO product (id, name, price, stock, description) VALUES (?,?,?,?,?)");
-        $stm->execute([$newProductId, $name, $price, $stock, $description]);
+        $stm = $_db->prepare("INSERT INTO product (id, name, price, video_url, stock, description, category_id) VALUES (?,?,?,?,?,?,?)");
+        $stm->execute([$newProductId, $name, $price, $product_video_url, $stock, $description, $category_id]);
         //Upload photo and insert into product_photo table
         if (!empty($_FILES['photo']['name'])) {
             $ext = pathinfo($_FILES['photo']['name'], PATHINFO_EXTENSION);
             $photoName = time() . "." . strtolower($ext);
             move_uploaded_file($_FILES['photo']['tmp_name'], "../products/" . $photoName);
-            $photoStm = $_db->prepare("INSERT INTO product_photo (product_id, photo, sort_order, created_at) VALUES (?,?,0,NOW())");
-            $photoStm->execute([$newProductId, $photoName]);
+            $photoStm = $_db->prepare("UPDATE product SET photo = ? WHERE id = ?");
+            $photoStm->execute([$photoName, $newProductId]);
         }
+
+        // Upload multiple photos and insert into product_photo table
+        if (!empty($_FILES['photos']['name'][0])) {
+            $sort_order = 1;
+            foreach ($_FILES['photos']['name'] as $i => $filename) {
+                if ($_FILES['photos']['error'][$i] == UPLOAD_ERR_OK) {
+                    $ext = pathinfo($filename, PATHINFO_EXTENSION);
+
+                    $detailPhotoName = time() . "_" . $i . "." . strtolower($ext);
+
+                    move_uploaded_file(
+                        $_FILES['photos']['tmp_name'][$i],
+                        "../products/" . $detailPhotoName
+                    );
+
+                    $photoStm = $_db->prepare("
+                        INSERT INTO product_photo (product_id, photo, sort_order, created_at)
+                        VALUES (?, ?, ?, ?)
+                    ");
+
+                    $photoStm->execute([
+                        $newProductId,
+                        $detailPhotoName,
+                        $sort_order++,
+                        date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
+        }
+
         temp('info','New product created successfully.');
         redirect('product-listing.php');
     }
@@ -50,6 +84,19 @@ include '../_head.php';
         <input type="text" name="name" style="width:100%;padding:6px;" value="<?= post('name','') ?>" required>
     </div>
     <div style="margin-bottom:12px;">
+        <label>Category:</label>
+        <select name="category_id" style="width:100%;padding:6px;" required>
+            <option value="">-- Select Category --</option>
+            <?php
+            $catStm = $_db->query("SELECT id, name FROM category ORDER BY name");
+            while ($cat = $catStm->fetch()) {
+                $selected = (post('category_id') == $cat -> id) ? 'selected' : '';
+                echo "<option value=\"{$cat -> id}\" $selected>{$cat -> name}</option>";
+            }
+            ?>
+        </select>
+    </div>
+    <div style="margin-bottom:12px;">
         <label>Price (RM):</label>
         <input type="number" step="0.01" name="price" style="width:100%;padding:6px;" value="<?= post('price','') ?>" required>
     </div>
@@ -61,6 +108,10 @@ include '../_head.php';
         <label>Description:</label>
         <textarea name="description" rows="4" style="width:100%;padding:6px;"><?= post('description','') ?></textarea>
     </div>
+    <div style="margin-bottom:12px;">
+        <label>Product Video Url:</label>
+        <input type="text" name="product_video_url" style="width:100%;padding:6px;" value="<?= post('product_video_url','') ?>" placeholder="https://www.youtube.com/watch?v=example">
+    </div>
     <div style="margin-bottom:16px;">
         <label>Product Photo:</label>
         <!-- id="photoInput" -->
@@ -70,9 +121,17 @@ include '../_head.php';
             <img id="previewImg" style="margin-top:10px; max-width:200px; display:none; border:1px solid #aaa;">
         </div>
     </div>
+    <div style="margin-bottom:12px;">
+        <label>Product Detail Photo:</label>
+        <input type="file" name="photos[]" multiple accept="image/*">
+    </div>
     <div>
         <button type="submit" style="padding:8px 16px;">Save Product</button>
-        <a href="product-listing.php" style="margin-left:12px;">Cancel</a>
+        <button type="button"
+                onclick="window.location.href='product-listing.php'"
+                style="margin-left:12px;">
+            Cancel
+        </button>
     </div>
 </form>
 

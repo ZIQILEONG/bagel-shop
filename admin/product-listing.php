@@ -28,23 +28,23 @@ if (is_post() && req('btn') == 'increase_price') {
 }
 
 $search = get('search', '');
-$sort   = get('sort', 'id');
+$sort   = get('sort', 'p.id');
 $dir    = get('dir', 'asc') == 'desc' ? 'desc' : 'asc';
 $page   = get('page', '1');
 
-$sorts = ['id', 'name', 'price', 'stock'];
+$sorts = ['p.id', 'c.name', 'p.name', 'p.price', 'p.stock'];
 if (!in_array($sort, $sorts)) {
-    $sort = 'id';
+    $sort = 'p.id';
 }
 
 $where  = '';
 $params = [];
 if ($search != '') {
-    $where = 'WHERE name LIKE ?';
+    $where = 'WHERE p.name LIKE ?';
     $params[] = "%$search%";
 }
 
-$query = "SELECT * FROM product $where ORDER BY $sort $dir";
+$query = "SELECT p.*, c.name as category_name FROM product p left join category c on p.category_id = c.id $where ORDER BY $sort $dir";
 $pager = new SimplePager($query, $params, '10', $page);
 $arr   = $pager->result;
 if (get('ajax') == '1') {

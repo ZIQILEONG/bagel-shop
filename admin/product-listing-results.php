@@ -15,7 +15,7 @@ $_low_stock_threshold = 11;
     <tr>
         <th></th>
         <th>Photo</th>
-        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'price' => 'Price (RM)', 'stock' => 'Stock'], $sort, $dir, 'search=' . encode($search)) ?>
+        <?= table_headers(['id' => 'Id', 'category_name' => 'Category', 'name' => 'Name', 'price' => 'Price (RM)', 'stock' => 'Stock'], $sort, $dir, 'search=' . encode($search)) ?>
         <th></th>
     </tr>
     <?php foreach ($arr as $p): ?>
@@ -24,6 +24,7 @@ $_low_stock_threshold = 11;
         <td><input type="checkbox" name="ids[]" value="<?= $p->id ?>"></td>
         <td><img src="/products/<?= $p->photo ?>" width="50" height="50"></td>
         <td><?= $p->id ?></td>
+        <td><?= $p->category_name ?></td>
         <td><?= $p->name ?></td>
         <td class="right"><?= $p->price ?></td>
         <td class="right">
