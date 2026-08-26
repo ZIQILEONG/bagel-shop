@@ -5,11 +5,6 @@ $_low_stock_threshold = 11;
 ?>
 <p><?= $pager->item_count ?> record(s)</p>
 
-<!-- Add New Product  -->
-<a href="product-create.php" style="display:inline-block; margin-bottom:10px; padding:8px 14px; background:#8b4513; color:white; text-decoration:none; border-radius:4px;">
-    + Add New Product
-</a>
-
 <form method="post">
 <table class="table">
     <tr>
