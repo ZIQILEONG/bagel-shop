@@ -102,7 +102,7 @@ $session = \Stripe\Checkout\Session::create([
     'line_items' => [[
         'price_data' => [
             'currency' => 'myr',
-            'product_data' => ['name' => "Yami Bagel Shop Order #$order_id"],
+            'product_data' => ['name' => "Pululu Bagel Shop Order #$order_id"],
             'unit_amount' => round($total * 100),
         ],
         'quantity' => 1,
