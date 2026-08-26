@@ -5,12 +5,16 @@ include '../config.php';
 
 $name = '';
 $email = '';
+$phone_no = '';
+$phone_error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
+    $phone_no = trim($_POST['phone_no'] ?? '');
 
+    // Do not trim passwords
     $password_input = $_POST['password'] ?? '';
     $reenter_password_input = $_POST['reenter_password'] ?? '';
     $turnstile_token = $_POST['cf-turnstile-response'] ?? '';
@@ -26,6 +30,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     else if (!is_email($email)) {
         $_err['email'] = 'Invalid email';
+    }
+
+    // Phone validation
+    $phone_normalized = preg_replace('/[\s().-]/', '', $phone_no);
+
+    if ($phone_no === '') {
+        $phone_error = 'Phone number is required';
+    }
+    else if (!preg_match('/^(01\d{8,9}|\+601\d{8,9})$/', $phone_normalized)) {
+        $phone_error = 'Please enter a valid Malaysian phone number';
     }
 
     // Password validation
@@ -56,24 +70,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $_err['reenter_password'] = 'Passwords do not match';
     }
 
-    // Check duplicate email
-    if (!$_err && is_exists($email, 'user', 'email')) {
+    // Duplicate email
+    if ($phone_error === '' &&
+        !$_err &&
+        is_exists($email, 'user', 'email')) {
+
         $_err['email'] = 'Email already exists';
     }
 
-    // Turnstile validation
-    if (!$_err && !verify_turnstile($turnstile_token, 'register')) {
+    // Turnstile
+    if ($phone_error === '' &&
+        !$_err &&
+        !verify_turnstile($turnstile_token, 'register')) {
+
         $_err['captcha'] = 'Please complete the Turnstile verification.';
     }
 
-    // Continue to puzzle verification
-    if (!$_err) {
+    // Continue to puzzle
+    if ($phone_error === '' && !$_err) {
 
         begin_pending_auth('register', [
             'name' => $name,
             'email' => $email,
+            'phone_no' => $phone_normalized,
 
-            // Store only the hashed password
             'password_hash' => password_hash(
                 $password_input,
                 PASSWORD_DEFAULT
@@ -89,6 +109,12 @@ $_body_class = 'pululu-auth-page';
 
 include '../_head.php';
 ?>
+
+<?php if ($phone_error !== ''): ?>
+<script>
+alert(<?= json_encode($phone_error) ?>);
+</script>
+<?php endif; ?>
 
 <div class="register-container">
 
@@ -128,6 +154,24 @@ include '../_head.php';
             <label for="email">E-mail</label>
 
             <?= err('email') ?>
+        </div>
+
+        <div class="input-group">
+            <input
+                type="tel"
+                id="phone_no"
+                name="phone_no"
+                value="<?= htmlspecialchars($phone_no, ENT_QUOTES, 'UTF-8') ?>"
+                maxlength="16"
+                inputmode="tel"
+                autocomplete="tel"
+                required
+                placeholder="Phone number"
+            >
+
+            <label for="phone_no">Phone number</label>
+
+            <!-- No err() here. Invalid phone uses an alert only. -->
         </div>
 
         <div class="input-group">

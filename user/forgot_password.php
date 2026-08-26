@@ -1,112 +1,213 @@
 <?php
 
 include '../_base.php';
+include '../config.php';
 
 require_once '../PHPMailer-master/src/PHPMailer.php';
 require_once '../PHPMailer-master/src/SMTP.php';
 require_once '../PHPMailer-master/src/Exception.php';
-require_once '../config.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $email = trim($_POST['email']);
-    if ($email == '') {
-        $_err['email'] = 'Please enter your email.';
+$email = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+
+    $email = trim($_POST['email'] ?? '');
+
+    if ($email === '') {
+        $_err['email'] = 'Email is required';
     }
     else if (!is_email($email)) {
-        $_err['email'] = 'Invalid email.';
+        $_err['email'] = 'Invalid email address';
     }
+
     if (!$_err) {
-        $stm = $_db->prepare(
-            "SELECT * FROM user WHERE email = ?"
-        );
-        $stm->execute([$email]);
-        $user = $stm->fetch();
-        if ($user) {
-            // Generate reset token
+
+        $stmt = $_db->prepare("
+            SELECT *
+            FROM user
+            WHERE email = ?
+        ");
+
+        $stmt->execute([$email]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            $_err['email'] = 'Email address was not found';
+        }
+        else {
+
             $token = bin2hex(random_bytes(50));
 
-            // Token expires after 5 minutes
-            $expire = date("Y-m-d H:i:s", strtotime("+5 minutes"));
-
-            // Save token
-            $stm = $_db->prepare(
-                "INSERT INTO token (user_id, token, expire)
-                 VALUES (?, ?, ?)"
+            $expire = date(
+                'Y-m-d H:i:s',
+                strtotime('+5 minutes')
             );
-            $stm->execute([
+
+            $stmt = $_db->prepare("
+                INSERT INTO token (user_id, token, expire)
+                VALUES (?, ?, ?)
+            ");
+
+            $stmt->execute([
                 $user->id,
                 $token,
                 $expire
             ]);
 
-            // Reset link
-            $link = "http://localhost:8000/user/reset.php?token=" . $token;
+            $scheme = (
+                !empty($_SERVER['HTTPS']) &&
+                $_SERVER['HTTPS'] !== 'off'
+            ) ? 'https' : 'http';
 
-            // Send email
-            $mail = new PHPMailer(true);
+            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = SMTP_USERNAME;
-            $mail->Password = SMTP_PASSWORD;
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-            $mail->Port = 587;
-
-            $mail->setFrom(
-                'pululubagelshop@gmail.com',
-                'Pululu Bagel'
+            $link = $scheme . '://' . $host . app_url(
+                'user/reset.php?token=' . urlencode($token)
             );
 
-            $mail->addAddress($email);
+            $safe_name = htmlspecialchars(
+                $user->name,
+                ENT_QUOTES,
+                'UTF-8'
+            );
 
-            $mail->Subject = 'Password Reset';
+            $safe_link = htmlspecialchars(
+                $link,
+                ENT_QUOTES,
+                'UTF-8'
+            );
 
-            $mail->Body = "
-            Dear {$user->name},
-            We received a request to reset your password.
-            Click the link below to reset your password:
-            $link
-            This link expires in 5 minutes.
-            If you did not request this, please ignore this email.
-            Pululu Bagel
-            ";
-            $mail->send();
-            temp('info', 'Password reset link has been sent to your email.');
-        }
-        else {
-            $_err['email'] = 'Email not found.';
+            try {
+
+                $mail = new PHPMailer(true);
+
+                $mail->isSMTP();
+                $mail->Host = 'smtp.gmail.com';
+                $mail->SMTPAuth = true;
+                $mail->Username = SMTP_USERNAME;
+                $mail->Password = SMTP_PASSWORD;
+                $mail->SMTPSecure =
+                    PHPMailer::ENCRYPTION_STARTTLS;
+                $mail->Port = 587;
+
+                $mail->setFrom(
+                    SMTP_USERNAME,
+                    'Pululu Bagel'
+                );
+
+                $mail->addAddress(
+                    $email,
+                    $user->name
+                );
+
+                $mail->isHTML(true);
+                $mail->Subject =
+                    'Reset Your Pululu Bagel Password';
+
+                $mail->Body = "
+                    <p>Dear {$safe_name},</p>
+
+                    <p>
+                        We received a request to reset your password.
+                    </p>
+
+                    <p>
+                        <a href=\"{$safe_link}\">
+                            Click here to reset your password
+                        </a>
+                    </p>
+
+                    <p>
+                        This link expires in 5 minutes.
+                    </p>
+
+                    <p>
+                        If you did not request this, ignore this email.
+                    </p>
+
+                    <p>Pululu Bagel</p>
+                ";
+
+                $mail->AltBody =
+                    "Reset your password here: {$link}";
+
+                $mail->send();
+
+                temp(
+                    'info',
+                    'Password reset link sent to your email.'
+                );
+
+                redirect('forgot_password.php');
+            }
+            catch (Throwable $error) {
+
+                $_err['email'] =
+                    'Email could not be sent. Please try again.';
+            }
         }
     }
 }
-        $_title = 'Forgot Password';
-        include '../_head.php';
-        ?>
-        <div class="forgot-container">
-            <h2>Forgot Password</h2>
-            <p class="forgot-subtitle">
-                Enter your email to receive a password reset link:
-            </p>
-            <form method="post" class="forgot-form">
-                <div class="input-group">
-                    <?= html_text('email', 'maxlength="100" required placeholder="E-mail"') ?>
-                    <label for="email">E-mail</label>
-                    <?= err('email') ?>
-                </div>
-                <button type="submit">
-                    SEND RESET LINK
-                </button>
-            </form>
-            <p class="back-login-text">
-                Remember your password?
-                <a href="../login.php">Login</a>
-            </p>
-        </div>
 
-<?php
-include '../_foot.php';
+$_title = 'Forgot Password | Pululu Bagel';
+$_body_class = 'pululu-auth-page';
+
+include '../_head.php';
 ?>
+
+<section class="pululu-forgot-page">
+
+    <div class="pululu-forgot-card">
+
+        <span class="pululu-forgot-label">
+            ACCOUNT HELP
+        </span>
+
+        <h1>Forgot password?</h1>
+
+        <p class="pululu-forgot-description">
+            Enter your email address and we will send you
+            a password reset link.
+        </p>
+
+        <form method="post" class="pululu-forgot-form">
+
+            <div class="pululu-forgot-field">
+
+                <label for="email">
+                    Email address
+                </label>
+
+                <?= html_text(
+                    'email',
+                    'maxlength="100" autocomplete="email" required placeholder="E-mail"'
+                ) ?>
+
+            </div>
+
+            <?= err('email') ?>
+
+            <button type="submit">
+                Send reset link
+            </button>
+
+        </form>
+
+        <a
+            class="pululu-back-login"
+            href="../login.php"
+        >
+            Back to login
+        </a>
+
+        <p class="pululu-forgot-note">
+            The reset link expires after 5 minutes.
+        </p>
+
+    </div>
+
+</section>
+
+<?php include '../_foot.php'; ?>

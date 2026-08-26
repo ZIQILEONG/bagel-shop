@@ -476,6 +476,140 @@ label > * {
         grid-template-columns: 1fr;
     }
 }
+
+/* Forgot password page*---------------------------------------------------- */
+.pululu-forgot-page {
+    display: flex;
+    justify-content: center;
+    padding: 48px 20px 80px;
+    background: #fffaf5;
+}
+
+.pululu-forgot-card {
+    width: min(100%, 560px);
+    padding: 42px 44px;
+    border: 1px solid #e8cbbd;
+    border-radius: 18px;
+    background: #fffdf9;
+    box-shadow: 0 8px 24px rgba(107, 62, 38, 0.08);
+    text-align: center;
+}
+
+.pululu-forgot-label {
+    color: #d36d4f;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+}
+
+.pululu-forgot-card h1 {
+    margin: 8px 0 12px;
+    color: #4b2a25;
+    font-family: 'Roboto', sans-serif;
+    font-size: 40px;
+    font-weight: 400;
+}
+
+.pululu-forgot-description {
+    max-width: 400px;
+    margin: 0 auto 30px;
+    color: #8a6458;
+    font-size: 15px;
+    line-height: 1.6;
+}
+
+.pululu-forgot-form {
+    text-align: left;
+}
+
+.pululu-forgot-field label {
+    display: block;
+    margin-bottom: 8px;
+    color: #4b2a25;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.pululu-forgot-field input {
+    width: 100%;
+    height: 54px;
+    padding: 0 15px;
+    border: 1px solid #e8cbbd;
+    border-radius: 10px;
+    background: #fff8f2;
+    color: #4b2a25;
+    font: 16px 'Roboto', sans-serif;
+    outline: none;
+}
+
+.pululu-forgot-field input:focus {
+    border-color: #d36d4f;
+    box-shadow: 0 0 0 3px rgba(211, 109, 79, 0.12);
+}
+
+.pululu-forgot-field input::placeholder {
+    color: #8a6458;
+}
+
+.pululu-forgot-form .err {
+    display: block;
+    margin-top: 8px;
+    color: #c72732;
+    font-size: 13px;
+}
+
+.pululu-forgot-form .err:empty {
+    display: none;
+}
+
+.pululu-forgot-form button {
+    width: 100%;
+    height: 54px;
+    margin-top: 20px;
+    border: 0;
+    border-radius: 10px;
+    background: #d36d4f;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.pululu-forgot-form button:hover {
+    background: #b9553f;
+}
+
+.pululu-back-login {
+    display: inline-block;
+    margin-top: 24px;
+    color: #b9553f;
+    font-size: 14px;
+    font-weight: 700;
+    
+}
+
+.pululu-forgot-note {
+    margin: 18px 0 0;
+    color: #a58e81;
+    font-size: 12px;
+}
+
+@media (max-width: 600px) {
+    .pululu-forgot-page {
+        padding: 28px 14px 60px;
+    }
+
+    .pululu-forgot-card {
+        padding: 32px 22px;
+    }
+
+    .pululu-forgot-card h1 {
+        font-size: 32px;
+    }
+}
+
 /* Photo Upload ------------------------------------------------------------ */
 
 label.upload img {
