@@ -22,8 +22,7 @@ class SimplePager {
         $this->item_count = $stm->fetchColumn();
 
         // Set [page count]
-        $this->page_count = ceil($this->item_count / $this->limit);
-
+        $this->page_count = ceil((int)$this->item_count / (int)$this->limit);
         // Calculate offset
         $offset = ($this->page - 1) * $this->limit;
 
