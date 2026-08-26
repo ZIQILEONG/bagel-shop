@@ -9,7 +9,7 @@ $_title = 'Freshly Baked Bagels | Pululu Bagel';
 $_body_class = 'pululu-home-page';
 include '_head.php';
 ?>
-
+//testing
 <section class="home-hero" aria-labelledby="home-title">
     <div class="home-hero-copy">
         <span class="section-eyebrow">Fresh from our oven</span>
