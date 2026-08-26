@@ -132,6 +132,27 @@ include '../_head.php';
     <label>Total</label>
     <div>RM <?= $o->total ?></div>
     <br>
+
+    <label>Delivery Method</label>
+    <div><?= $o->delivery_method ?><?= $o->delivery_fee > 0 ? ' (+RM ' . number_format($o->delivery_fee, 2) . ')' : '' ?></div>
+    <br>
+
+    <?php if ($o->delivery_method == 'Delivery' && $o->address_id): ?>
+    <?php
+    $stm = $_db->prepare("SELECT * FROM shipping_address WHERE id = ?");
+    $stm->execute([$o->address_id]);
+    $addr = $stm->fetch();
+    ?>
+    <?php if ($addr): ?>
+    <label>Delivery Address</label>
+    <div>
+        <?= $addr->recipient_name ?> (<?= $addr->phone ?>)<br>
+        <?= $addr->address_line1 ?> <?= $addr->address_line2 ?><br>
+        <?= $addr->city ?>, <?= $addr->state ?> <?= $addr->postcode ?>, <?= $addr->country ?>
+    </div>
+    <br>
+    <?php endif ?>
+    <?php endif ?>
 </form>
 
 <p><?= count($arr) ?> item(s)</p>

@@ -60,7 +60,7 @@ if (is_post()) {
         $_SESSION['checkout_cart'] = $checkout_cart;
         $_SESSION['use_points'] = isset($_POST['use_points']);
 
-        redirect('checkout.php');
+        redirect('checkout-options.php');
     }
 
     $id   = req('id');

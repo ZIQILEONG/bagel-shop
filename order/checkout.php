@@ -13,6 +13,13 @@ if (empty($cart)) {
     redirect('cart.php');
 }
 
+$delivery_method = $_SESSION['delivery_method'] ?? null;
+$address_id = $_SESSION['address_id'] ?? null;
+
+if (!$delivery_method) {
+    redirect('checkout-options.php');
+}
+
 $count = 0;
 $total = 0;
 
@@ -48,11 +55,15 @@ if ($use_points && $_user->points > 0) {
     $total -= $points_value;
 }
 
+// Add delivery fee AFTER voucher/points, so it's not discounted away
+$delivery_fee = ($delivery_method == 'Delivery') ? 7.00 : 0.00;
+$total += $delivery_fee;
+
 // (A) Create order NOW, status 'Awaiting Payment'
 $_db->beginTransaction();
 
-$stm = $_db->prepare("INSERT INTO orders (datetime, count, total, discount, voucher_code, points_earned, points_used, status, user_id) VALUES (NOW(), ?, ?, ?, ?, 0, ?, 'Awaiting Payment', ?)");
-$stm->execute([$count, $total, $discount, $voucher_code, $points_used, $_user->id]);
+$stm = $_db->prepare("INSERT INTO orders (datetime, count, total, discount, voucher_code, points_earned, points_used, delivery_method, delivery_fee, address_id, status, user_id) VALUES (NOW(), ?, ?, ?, ?, 0, ?, ?, ?, ?, 'Awaiting Payment', ?)");
+$stm->execute([$count, $total, $discount, $voucher_code, $points_used, $delivery_method, $delivery_fee, $address_id, $_user->id]);
 $order_id = $_db->lastInsertId();
 
 foreach ($cart as $product_id => $unit) {
@@ -66,7 +77,6 @@ foreach ($cart as $product_id => $unit) {
     $stm->execute([$order_id, $product_id, $product->price, $unit, $subtotal]);
 }
 
-// (B) Reserve points now - deduct immediately since committing to this order
 if ($points_used > 0) {
     $stm = $_db->prepare("UPDATE user SET points = points - ? WHERE id = ?");
     $stm->execute([$points_used, $_user->id]);
@@ -76,7 +86,6 @@ if ($points_used > 0) {
 
 $_db->commit();
 
-// (C) Remove purchased items from the live cart now - they're reserved in this order
 $full_cart = get_cart();
 foreach ($cart as $product_id => $unit) {
     unset($full_cart[$product_id]);
@@ -87,8 +96,10 @@ save_cart_to_db($_user->id, $_db);
 unset($_SESSION['checkout_cart']);
 unset($_SESSION['voucher']);
 unset($_SESSION['use_points']);
+unset($_SESSION['delivery_method']);
+unset($_SESSION['address_id']);
 
-// (D) Create Stripe session, or skip Stripe entirely if fully covered by discount/points
+// (B) Create Stripe session, or skip if fully covered
 \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
 if ($total <= 0) {
@@ -102,7 +113,7 @@ $session = \Stripe\Checkout\Session::create([
     'line_items' => [[
         'price_data' => [
             'currency' => 'myr',
-            'product_data' => ['name' => "Pululu Bagel Shop Order #$order_id"],
+            'product_data' => ['name' => "Yami Bagel Shop Order #$order_id"],
             'unit_amount' => round($total * 100),
         ],
         'quantity' => 1,
@@ -114,5 +125,3 @@ $session = \Stripe\Checkout\Session::create([
 ]);
 
 redirect($session->url);
-
-// ----------------------------------------------------------------------------
