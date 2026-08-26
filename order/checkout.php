@@ -13,7 +13,6 @@ if (empty($cart)) {
     redirect('cart.php');
 }
 
-// Calculate subtotal
 $count = 0;
 $total = 0;
 
@@ -28,7 +27,6 @@ foreach ($cart as $product_id => $unit) {
     $total += $subtotal;
 }
 
-// Apply voucher
 $voucher = $_SESSION['voucher'] ?? null;
 $discount = 0;
 $voucher_code = null;
@@ -39,7 +37,6 @@ if ($voucher) {
     $total -= $discount;
 }
 
-// Apply reward points (1 point = RM0.01), capped so it can't take total below 0
 $use_points = $_SESSION['use_points'] ?? false;
 $points_used = 0;
 
@@ -69,13 +66,31 @@ foreach ($cart as $product_id => $unit) {
     $stm->execute([$order_id, $product_id, $product->price, $unit, $subtotal]);
 }
 
+// (B) Reserve points now - deduct immediately since committing to this order
+if ($points_used > 0) {
+    $stm = $_db->prepare("UPDATE user SET points = points - ? WHERE id = ?");
+    $stm->execute([$points_used, $_user->id]);
+    $_user->points -= $points_used;
+    $_SESSION['user'] = $_user;
+}
+
 $_db->commit();
 
-// (B) Create Stripe session, tagged with this order_id
+// (C) Remove purchased items from the live cart now - they're reserved in this order
+$full_cart = get_cart();
+foreach ($cart as $product_id => $unit) {
+    unset($full_cart[$product_id]);
+}
+set_cart($full_cart);
+save_cart_to_db($_user->id, $_db);
+
+unset($_SESSION['checkout_cart']);
+unset($_SESSION['voucher']);
+unset($_SESSION['use_points']);
+
+// (D) Create Stripe session, or skip Stripe entirely if fully covered by discount/points
 \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
-// Stripe requires amount > 0 - if points/voucher fully cover the cost, charge a minimum RM1 placeholder is not ideal,
-// so we guard: if total rounds to 0, skip Stripe entirely and mark as paid directly.
 if ($total <= 0) {
     $stm = $_db->prepare("UPDATE orders SET status = 'Pending' WHERE id = ?");
     $stm->execute([$order_id]);

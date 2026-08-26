@@ -92,7 +92,12 @@ include '../_head.php';
     <button data-get="history.php">History</button>
 </p>
 
-<?php if ($o->status == 'Pending'): ?>
+<?php if ($o->status == 'Awaiting Payment'): ?>
+<p>
+    <button data-get="pay.php?id=<?= $o->id ?>">Pay Now</button>
+    <button data-post="cancel.php?id=<?= $o->id ?>" data-confirm>Cancel Order</button>
+</p>
+<?php elseif ($o->status == 'Pending'): ?>
 <p>
     <button data-post="cancel.php?id=<?= $o->id ?>" data-confirm>Cancel Order</button>
 </p>

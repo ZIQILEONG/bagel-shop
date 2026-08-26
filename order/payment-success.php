@@ -13,9 +13,9 @@ auth('Member');
 $free_order_id = req('free_order');
 
 if ($free_order_id) {
-    // Order was fully covered by voucher/points - no Stripe payment happened
     $order_id = $free_order_id;
     $method = 'FREE (Voucher/Points)';
+    $transaction_id = 'N/A';
 
     $stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
     $stm->execute([$order_id, $_user->id]);
@@ -47,26 +47,26 @@ else {
 
     $intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
     $method = strtoupper($intent->payment_method_types[0]);
+    $transaction_id = $session->payment_intent;
 }
 
-// Guard against double-processing (e.g. page refresh re-hitting this URL)
+// Guard against double-processing (e.g. page refresh)
 if ($o->status !== 'Awaiting Payment') {
     redirect("detail.php?id=$order_id");
 }
 
 $_db->beginTransaction();
 
-// (A) Mark order as paid, calculate reward points earned on final amount actually paid
+// Mark order as paid, award points earned on final amount paid
 $points_earned = floor($o->total);
 
 $stm = $_db->prepare("UPDATE orders SET status = 'Pending', points_earned = ? WHERE id = ?");
 $stm->execute([$points_earned, $order_id]);
 
-// (B) Apply points balance change: deduct what was spent, add what was earned
-$stm = $_db->prepare("UPDATE user SET points = points - ? + ? WHERE id = ?");
-$stm->execute([$o->points_used, $points_earned, $_user->id]);
+$stm = $_db->prepare("UPDATE user SET points = points + ? WHERE id = ?");
+$stm->execute([$points_earned, $_user->id]);
 
-// (C) Decrement stock for each item in this order
+// Decrement stock for each item
 $stm = $_db->prepare("SELECT * FROM order_item WHERE order_id = ?");
 $stm->execute([$order_id]);
 $items = $stm->fetchAll();
@@ -76,30 +76,16 @@ foreach ($items as $item) {
     $stm->execute([$item->unit, $item->product_id]);
 }
 
-// (D) Record payment
+// Record payment
 $stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
-$stm->execute([$order_id, $method, $o->total, $free_order_id ? 'N/A' : $session->payment_intent]);
+$stm->execute([$order_id, $method, $o->total, $transaction_id]);
 
 $_db->commit();
 
-// Refresh session's copy of points so header shows updated balance immediately
-$_user->points = $_user->points - $o->points_used + $points_earned;
+$_user->points += $points_earned;
 $_SESSION['user'] = $_user;
 
-// (E) Remove purchased items from the real cart (only the ones bought)
-$checkout_cart = $_SESSION['checkout_cart'] ?? get_cart();
-$full_cart = get_cart();
-foreach ($checkout_cart as $product_id => $unit) {
-    unset($full_cart[$product_id]);
-}
-set_cart($full_cart);
-save_cart_to_db($_user->id, $_db);
-
-unset($_SESSION['checkout_cart']);
-unset($_SESSION['voucher']);
-unset($_SESSION['use_points']);
-
-// (F) Send e-receipt
+// Send e-receipt
 try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
