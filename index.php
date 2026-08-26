@@ -89,6 +89,48 @@ include '_head.php';
     </div>
 </section>
 
+<section class="store-location" id="location">
+
+    <div class="store-location-info">
+
+        <span class="section-eyebrow">
+            Visit Pululu
+        </span>
+
+        <h2>Find our store</h2>
+
+        <p>
+            Visit us and enjoy freshly baked Pululu Bagels.
+        </p>
+
+        <address>
+            TAR UMT Block D<br>
+            Kuala Lumpur, Malaysia
+        </address>
+
+        <a
+            class="location-button"
+            href="https://www.google.com/maps/search/?api=1&amp;query=3.2168553,101.7266496"
+            target="_blank"
+            rel="noopener"
+        >
+            Open in Google Maps →
+        </a>
+
+    </div>
+
+    <div class="store-map">
+        <iframe
+            src="https://www.google.com/maps?q=3.2168553,101.7266496&amp;z=18&amp;output=embed"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            title="TAR UMT Block D location"
+        ></iframe>
+    </div>
+
+</section>
+
 <details class="demo-access">
     <summary>Assignment demo access</summary>
     <div class="demo-access-content">
