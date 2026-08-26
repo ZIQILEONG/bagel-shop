@@ -7,7 +7,6 @@ $addr = $stm->fetch();
 if(!$addr){
     redirect('address-list.php');
 }
-
 if(is_post()){
     $recipient_name = req('recipient_name');
     $phone = req('phone');
@@ -17,7 +16,6 @@ if(is_post()){
     $state = req('state');
     $postcode = req('postcode');
     $country = req('country');
-
     $stm = $_db->prepare("UPDATE shipping_address SET recipient_name=?,phone=?,address_line1=?,address_line2=?,city=?,state=?,postcode=?,country=? WHERE id=? AND user_id=?");
     $stm->execute([$recipient_name,$phone,$address_line1,$address_line2,$city,$state,$postcode,$country,$id,$_user->id]);
     redirect('address-list.php');
@@ -27,32 +25,31 @@ include '../_head.php';
 ?>
 <h2>Edit Shipping Address</h2>
 <form method="post">
+    <div style="margin‑bottom:12px;">
+        <button type="button" id="getLocationBtn">Use My Current Location</button>
+    </div>
     <div>
-        <label>Recipient Name</label><br>
+        <label>Recipient Name :</label><br>
         <input type="text" name="recipient_name" value="<?= $addr->recipient_name ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
-        <label>Phone</label><br>
+        <label>Phone :</label><br>
         <input type="text" name="phone" value="<?= $addr->phone ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
-        <label>Address Line 1</label><br>
+        <label>Address :</label><br>
         <input type="text" name="address_line1" value="<?= $addr->address_line1 ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
-        <label>Address Line 2</label><br>
-        <input type="text" name="address_line2" value="<?= $addr->address_line2 ?>" style="width:100%;padding:6px;">
-    </div>
-    <div style="margin-top:8px;">
-        <label>City</label><br>
+        <label>City :</label><br>
         <input type="text" name="city" value="<?= $addr->city ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
-        <label>State</label><br>
+        <label>State :</label><br>
         <input type="text" name="state" value="<?= $addr->state ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
-        <label>Postcode</label><br>
+        <label>Postcode :</label><br>
         <input type="text" name="postcode" value="<?= $addr->postcode ?>" required style="width:100%;padding:6px;">
     </div>
     <div style="margin-top:8px;">
@@ -72,4 +69,68 @@ include '../_head.php';
         <a href="address-list.php">Cancel</a>
     </div>
 </form>
+<script>
+const getLocationBtn = document.getElementById('getLocationBtn');
+getLocationBtn.addEventListener('click', async ()=>{
+    if (!navigator.geolocation) {
+        alert("Your browser does not support geolocation");
+        return;
+    }
+    navigator.geolocation.getCurrentPosition(
+        async (position)=>{
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            try{
+                // 增加countrycodes=my 限定马来西亚，减少错误数据
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&countrycodes=my`);
+                const data = await res.json();
+                const adr = data.address;
+
+                // ✅只有拿到有效值才填入，否则保留表单原本内容，不会清空旧地址
+                if(adr.road || adr.house_number){
+                    document.querySelector('[name="address_line1"]').value = `${adr.road??''} ${adr.house_number??''}`.trim();
+                }
+                if(adr.city || adr.town || adr.village){
+                    document.querySelector('[name="city"]').value = adr.city ?? adr.town ?? adr.village;
+                }
+                if(adr.state){
+                    document.querySelector('[name="state"]').value = adr.state;
+                }
+                if(adr.postcode){
+                    document.querySelector('[name="postcode"]').value = adr.postcode;
+                }
+
+                const countrySelect = document.querySelector('[name="country"]');
+                if(adr.country === "Malaysia") countrySelect.value = "Malaysia";
+
+            }catch(err){
+                alert("Location retrieved, but address parsing failed. Please fill in address manually.");
+                console.error(err);
+            }
+        },
+        (error)=>{
+            let popupMsg = "";
+            switch(error.code){
+                case error.PERMISSION_DENIED:
+                    popupMsg = "Location permission is disabled.\nPlease enable location permission for this website in your device settings and try again.";
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    popupMsg = "Unable to retrieve your location";
+                    break;
+                case error.TIMEOUT:
+                    popupMsg = "Location request timed out. Please check your network and location settings.";
+                    break;
+                default:
+                    popupMsg = "An error occurred while fetching location";
+            }
+            alert(popupMsg);
+        },
+        {
+            enableHighAccuracy:true,
+            timeout:10000,
+            maximumAge:0
+        }
+    );
+})
+</script>
 <?php include '../_foot.php'; ?>
