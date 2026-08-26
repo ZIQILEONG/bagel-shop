@@ -10,47 +10,63 @@ use PHPMailer\PHPMailer\Exception;
 
 auth('Member');
 
-\Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+$free_order_id = req('free_order');
 
-$session_id = req('session_id');
-$session = \Stripe\Checkout\Session::retrieve($session_id);
+if ($free_order_id) {
+    // Order was fully covered by voucher/points - no Stripe payment happened
+    $order_id = $free_order_id;
+    $method = 'FREE (Voucher/Points)';
 
-if ($session->payment_status !== 'paid') {
-    redirect('payment-cancel.php');
+    $stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+    $stm->execute([$order_id, $_user->id]);
+    $o = $stm->fetch();
+
+    if (!$o) {
+        redirect('history.php');
+    }
+}
+else {
+    \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+    $session_id = req('session_id');
+    $session = \Stripe\Checkout\Session::retrieve($session_id);
+
+    if ($session->payment_status !== 'paid') {
+        redirect('payment-cancel.php');
+    }
+
+    $order_id = $session->metadata->order_id;
+
+    $stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
+    $stm->execute([$order_id, $_user->id]);
+    $o = $stm->fetch();
+
+    if (!$o) {
+        redirect('history.php');
+    }
+
+    $intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
+    $method = strtoupper($intent->payment_method_types[0]);
 }
 
-$order_id = $session->metadata->order_id;
-
-// Fetch the order, confirm it belongs to this user and is still awaiting payment
-// check prevents double-processing on page refresh
-$stm = $_db->prepare("SELECT * FROM orders WHERE id = ? AND user_id = ?");
-$stm->execute([$order_id, $_user->id]);
-$o = $stm->fetch();
-
-if (!$o) {
-    redirect('history.php');
-}
-
+// Guard against double-processing (e.g. page refresh re-hitting this URL)
 if ($o->status !== 'Awaiting Payment') {
-    // Already processed payment (eg: due to page refreshed), show the order
     redirect("detail.php?id=$order_id");
 }
 
-$intent = \Stripe\PaymentIntent::retrieve($session->payment_intent);
-$method = strtoupper($intent->payment_method_types[0]);
-
 $_db->beginTransaction();
 
-// Mark order as paid, calculate reward points
+// (A) Mark order as paid, calculate reward points earned on final amount actually paid
 $points_earned = floor($o->total);
 
 $stm = $_db->prepare("UPDATE orders SET status = 'Pending', points_earned = ? WHERE id = ?");
 $stm->execute([$points_earned, $order_id]);
 
-$stm = $_db->prepare("UPDATE user SET points = points + ? WHERE id = ?");
-$stm->execute([$points_earned, $_user->id]);
+// (B) Apply points balance change: deduct what was spent, add what was earned
+$stm = $_db->prepare("UPDATE user SET points = points - ? + ? WHERE id = ?");
+$stm->execute([$o->points_used, $points_earned, $_user->id]);
 
-// Decrement stock for each item in this order
+// (C) Decrement stock for each item in this order
 $stm = $_db->prepare("SELECT * FROM order_item WHERE order_id = ?");
 $stm->execute([$order_id]);
 $items = $stm->fetchAll();
@@ -60,17 +76,17 @@ foreach ($items as $item) {
     $stm->execute([$item->unit, $item->product_id]);
 }
 
-// Record payment
+// (D) Record payment
 $stm = $_db->prepare("INSERT INTO payment (order_id, method, amount, status, transaction_id, datetime) VALUES (?, ?, ?, 'Paid', ?, NOW())");
-$stm->execute([$order_id, $method, $o->total, $session->payment_intent]);
+$stm->execute([$order_id, $method, $o->total, $free_order_id ? 'N/A' : $session->payment_intent]);
 
 $_db->commit();
 
-// Refresh session's copy of points, header shows updated balance immediately
-$_user->points += $points_earned;
+// Refresh session's copy of points so header shows updated balance immediately
+$_user->points = $_user->points - $o->points_used + $points_earned;
 $_SESSION['user'] = $_user;
 
-// Remove purchased items from the cart
+// (E) Remove purchased items from the real cart (only the ones bought)
 $checkout_cart = $_SESSION['checkout_cart'] ?? get_cart();
 $full_cart = get_cart();
 foreach ($checkout_cart as $product_id => $unit) {
@@ -81,8 +97,9 @@ save_cart_to_db($_user->id, $_db);
 
 unset($_SESSION['checkout_cart']);
 unset($_SESSION['voucher']);
+unset($_SESSION['use_points']);
 
-// Send e-receipt
+// (F) Send e-receipt
 try {
     $mail = new PHPMailer(true);
     $mail->isSMTP();
@@ -99,7 +116,7 @@ try {
 
     $body = "Hi {$_user->name},\n\nThank You for your order!\n\n";
     $body .= "Order #: $order_id\n";
-    $body .= "Total: RM " . number_format($o->total, 2) . "\n";
+    $body .= "Total Paid: RM " . number_format($o->total, 2) . "\n";
     $body .= "Payment Method: $method\n\n";
     $body .= "Items:\n";
 

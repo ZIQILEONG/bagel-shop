@@ -477,7 +477,13 @@ function update_cart($id, $unit) {
     global $_user, $_db;
 
     $cart = get_cart();
+
     if ($unit >= 1 && $unit <= 10 && is_exists($id, 'product', 'id')) {
+        $existing_total = array_sum($cart) - ($cart[$id] ?? 0);
+        if ($existing_total + $unit > 100) {
+            temp('info', 'Cart limit reached: maximum 100 items allowed.');
+            return;
+        }
         $cart[$id] = $unit;
         ksort($cart);
     }
@@ -486,7 +492,7 @@ function update_cart($id, $unit) {
     }
     set_cart($cart);
 
-    // If a user is logged in, sync it to the database immediately --ziqi
+    // If a user is logged in, sync it to the database immediately
     if ($_user && $_db) {
         save_cart_to_db($_user->id, $_db);
     }
