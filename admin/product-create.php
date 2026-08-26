@@ -63,9 +63,9 @@ include '../_head.php';
     </div>
     <div style="margin-bottom:16px;">
         <label>Product Photo:</label>
-        <!-- 这里加 id="photoInput" -->
+        <!-- id="photoInput" -->
         <input type="file" name="photo" id="photoInput" accept="image/*">
-        <!-- 预览图片，默认隐藏 -->
+        <!-- Preview image, hidden by default -->
         <div>
             <img id="previewImg" style="margin-top:10px; max-width:200px; display:none; border:1px solid #aaa;">
         </div>
@@ -76,7 +76,7 @@ include '../_head.php';
     </div>
 </form>
 
-<!--图片预览JS脚本-->
+<!--Image Preview JS Script-->
 <script>
     const fileInput = document.getElementById('photoInput');
     const previewImg = document.getElementById('previewImg');
