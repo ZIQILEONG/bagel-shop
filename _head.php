@@ -3,7 +3,6 @@ $header_cart_count = array_sum(get_cart());
 $header_role = $_user->role ?? null;
 $header_name = $_user ? htmlspecialchars((string) $_user->name, ENT_QUOTES, 'UTF-8') : 'Account';
 $header_path = str_replace('\\', '/', $_SERVER['PHP_SELF'] ?? '');
-
 $header_active = static function (string $section) use ($header_path): string {
     return str_contains($header_path, $section) ? ' class="is-active" aria-current="page"' : '';
 };
@@ -21,7 +20,6 @@ $header_active = static function (string $section) use ($header_path): string {
     <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= app_url('css/app.css') ?>">
     <link rel="stylesheet" href="<?= app_url('css/navbar.css') ?>">
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">
@@ -30,7 +28,6 @@ $header_active = static function (string $section) use ($header_path): string {
 </head>
 <body id="top" class="<?= htmlspecialchars($_body_class ?? '', ENT_QUOTES, 'UTF-8') ?>">
     <div id="info" role="status" aria-live="polite"><?= temp('info') ?></div>
-
     <div class="pululu-announcement">
         <div class="pululu-announcement-inner">
             <span><b>Freshly baked daily</b> in small batches</span>
@@ -38,18 +35,15 @@ $header_active = static function (string $section) use ($header_path): string {
             <span>Order now and enjoy disocunts with promo code: <b>BAGEL10 || WELCOME20</b></span>
         </div>
     </div>
-
     <header class="pululu-header">
         <div class="pululu-header-main">
             <a class="pululu-brand" href="<?= app_url('index.php') ?>" aria-label="Pululu Bagel home">
                 <img src="<?= app_url('images/logo.jpeg') ?>" alt="Pululu bear holding a bagel">
                 <span><b>Pululu</b><small>Bagel Bakery</small></span>
             </a>
-
             <button class="pululu-menu-toggle" type="button" aria-controls="pululuPrimaryNav" aria-expanded="false" aria-label="Open menu">
                 <span></span><span></span><span></span>
             </button>
-
             <div class="pululu-actions">
                 <details class="pululu-search">
                     <summary aria-label="Search products">
@@ -67,7 +61,6 @@ $header_active = static function (string $section) use ($header_path): string {
                         </div>
                     </form>
                 </details>
-
                 <details class="pululu-account">
                     <summary aria-label="Account menu">
                         <?php if ($_user && !empty($_user->photo)): ?>
@@ -80,7 +73,6 @@ $header_active = static function (string $section) use ($header_path): string {
                         <?php endif ?>
                         <span><?= $header_name ?></span>
                     </summary>
-
                     <div class="pululu-account-menu">
                         <?php if (!$_user): ?>
                             <strong>Welcome to Pululu</strong>
@@ -99,7 +91,6 @@ $header_active = static function (string $section) use ($header_path): string {
                         <?php endif ?>
                     </div>
                 </details>
-
                 <?php if ($header_role === 'Member'): ?>
                     <a class="pululu-cart" href="<?= app_url('order/cart.php') ?>" aria-label="Shopping cart with <?= (int) $header_cart_count ?> items">
                         <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -112,7 +103,6 @@ $header_active = static function (string $section) use ($header_path): string {
                 <?php endif ?>
             </div>
         </div>
-
         <nav class="navbar" id="pululuPrimaryNav" aria-label="Primary navigation">
             <div class="navbar-inner">
                 <a href="<?= app_url('index.php') ?>"<?= $header_active('/index.php') ?>>
@@ -121,7 +111,6 @@ $header_active = static function (string $section) use ($header_path): string {
                 <a href="<?= app_url('product/list.php') ?>"<?= $header_active('/product/') ?>>
                     <span class="flip"><span>Shop Bagels</span><span>Shop Bagels</span></span>
                 </a>
-
                 <?php if ($header_role === 'Member'): ?>
                     <a href="<?= app_url('order/history.php') ?>"<?= $header_active('/order/history.php') ?>>
                         <span class="flip"><span>My Orders</span><span>My Orders</span></span>
@@ -136,6 +125,7 @@ $header_active = static function (string $section) use ($header_path): string {
                     <a href="<?= app_url('admin/product-listing.php') ?>"<?= $header_active('/admin/product') ?>>
                         <span class="flip"><span>Manage Products</span><span>Manage Products</span></span>
                     </a>
+                    
                     <a href="<?= app_url('admin/user-listing.php') ?>"<?= $header_active('/admin/user') ?>>
                         <span class="flip"><span>Manage Members</span><span>Manage Members</span></span>
                     </a>
@@ -153,5 +143,4 @@ $header_active = static function (string $section) use ($header_path): string {
             </div>
         </nav>
     </header>
-
     <main>

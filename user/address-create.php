@@ -1,4 +1,5 @@
-<?php include '../_base.php';
+<?php
+include '../_base.php';
 auth('Member');
 $error = '';
 if(is_post()){
@@ -40,11 +41,36 @@ include '../_head.php';
 .leaflet-control-mybutton:hover {
     background:#b85030;
 }
+.btn-primary{
+    background:#d1603d;
+    color:#ffffff;
+    border:none;
+    padding:12px 28px;
+    border-radius:14px;
+    font-size:16px;
+    cursor:pointer;
+}
+.btn-primary:hover{
+    background:#b85030;
+}
+.btn-cancel{
+    display:inline-block;
+    color:#333333;
+    text-decoration:none;
+    padding:12px 28px;
+    border-radius:14px;
+    border:1px solid #bbbbbb;
+    font-size:16px;
+    margin-left:10px;
+    cursor:pointer;
+}
+.btn-cancel:hover{
+    background:#f3f3f3;
+}
 </style>
 <h2>Add New Shipping Address</h2>
 <form method="post">
     <div id="map"></div>
-
     <div>
         <label>Recipient Name</label><br>
         <input type="text" name="recipient_name" required style="width:100%;padding:6px;">
@@ -86,11 +112,10 @@ include '../_head.php';
         </select>
     </div>
     <div style="margin-top:12px;">
-        <button type="submit">Save Address</button>
-        <a href="address-list.php">Cancel</a>
+        <button type="submit" class="btn-primary">Save Address</button>
+        <a href="address-list.php" class="btn-cancel">Cancel</a>
     </div>
 </form>
-
 <script>
 const map = L.map('map', {
     worldCopyJump: false,
@@ -98,12 +123,10 @@ const map = L.map('map', {
     minZoom:3,
     maxZoom:18
 }).setView([3.1390, 101.6869], 6);
-
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     noWrap:true
 }).addTo(map);
-
 // ✅ The button is created as a Leaflet Control and added directly to the map layers, sharing the same layer as the map.const locationBtn = L.control({position:'topleft'});
 locationBtn.onAdd = function(map) {
     const div = L.DomUtil.create('div','leaflet-control');
@@ -116,14 +139,12 @@ locationBtn.onAdd = function(map) {
     return div;
 }
 locationBtn.addTo(map);
-
 // Real-time latitude locking logic
 map.on('drag',function(){
     let c = map.getCenter();
     c.lat = Math.max(-84, Math.min(84, c.lat));
     map.setCenter(c,{animate:false});
 })
-
 let locationMarker = null;
 function getCurrentLocation(){
     if (!navigator.geolocation) {
