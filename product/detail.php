@@ -13,7 +13,8 @@ if (is_post()) {
         if ($rating < 1 || $rating > 5) {
             temp('error', 'Please select a rating.');
         } else {
-            $result = add_review($id, $_user->id, $rating, $comment);
+            $userId = $_user->id ?? $_user->user_id ?? null;
+            $result = add_review($id, $userId, $rating, $comment);
             temp($result['success'] ? 'info' : 'error', $result['message']);
         }
         redirect('detail.php?id=' . $id);
@@ -34,6 +35,16 @@ $stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
 $stm->execute([$id]);
 $p = $stm->fetch();
 if (!$p) redirect('list.php');
+
+$youtubeEmbedUrl = '';
+if (!empty($p->video_url)) {
+    $videoUrl = trim($p->video_url);
+    if (preg_match('%(?:youtube(?:-nocookie)?\.com/(?:[^/]+/.+/|(?:v|e(?:mbed)?)/|.*[?&]v=)|youtu\.be/)([^"&?/ ]{11})%i', $videoUrl, $match)) {
+        $youtubeEmbedUrl = "https://www.youtube.com/embed/" . $match[1];
+    } elseif (strlen($videoUrl) === 11) {
+        $youtubeEmbedUrl = "https://www.youtube.com/embed/" . $videoUrl;
+    }
+}
 
 // Check if current item is a bundle
 $isBundle = ($p->category_id == 4 || stripos($p->name, '5 Bagels') !== false);
@@ -385,6 +396,22 @@ include '../_head.php';
         </form>
     </div>
 </div>
+
+<?php if (!empty($youtubeEmbedUrl)): ?>
+    <div class="video-container" style="max-width: 900px; margin: 30px auto;">
+        <h3>Product Video</h3>
+        <iframe 
+            width="100%" 
+            height="450" 
+            src="<?= encode($youtubeEmbedUrl) ?>" 
+            title="Product Video" 
+            frameborder="0" 
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+            allowfullscreen
+            style="border-radius: 10px;">
+        </iframe>
+    </div>
+<?php endif; ?>
 
 <div class="reviews-section">
     <h3>Ratings &amp; Reviews</h3>
