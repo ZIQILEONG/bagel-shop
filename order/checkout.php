@@ -13,7 +13,7 @@ if (empty($cart)) {
     redirect('cart.php');
 }
 
-// Calculate total
+// Calculate subtotal
 $count = 0;
 $total = 0;
 
@@ -39,11 +39,23 @@ if ($voucher) {
     $total -= $discount;
 }
 
-// Create order NOW, status 'Awaiting Payment'
+// Apply reward points (1 point = RM0.01), capped so it can't take total below 0
+$use_points = $_SESSION['use_points'] ?? false;
+$points_used = 0;
+
+if ($use_points && $_user->points > 0) {
+    $points_value_available = $_user->points / 100;
+    $points_value = min($points_value_available, $total);
+    $points_value = round($points_value, 2);
+    $points_used = (int) round($points_value * 100);
+    $total -= $points_value;
+}
+
+// (A) Create order NOW, status 'Awaiting Payment'
 $_db->beginTransaction();
 
-$stm = $_db->prepare("INSERT INTO orders (datetime, count, total, discount, voucher_code, status, user_id) VALUES (NOW(), ?, ?, ?, ?, 'Awaiting Payment', ?)");
-$stm->execute([$count, $total, $discount, $voucher_code, $_user->id]);
+$stm = $_db->prepare("INSERT INTO orders (datetime, count, total, discount, voucher_code, points_earned, points_used, status, user_id) VALUES (NOW(), ?, ?, ?, ?, 0, ?, 'Awaiting Payment', ?)");
+$stm->execute([$count, $total, $discount, $voucher_code, $points_used, $_user->id]);
 $order_id = $_db->lastInsertId();
 
 foreach ($cart as $product_id => $unit) {
@@ -59,8 +71,16 @@ foreach ($cart as $product_id => $unit) {
 
 $_db->commit();
 
-// Create Stripe session, tagged with this order_id
+// (B) Create Stripe session, tagged with this order_id
 \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
+
+// Stripe requires amount > 0 - if points/voucher fully cover the cost, charge a minimum RM1 placeholder is not ideal,
+// so we guard: if total rounds to 0, skip Stripe entirely and mark as paid directly.
+if ($total <= 0) {
+    $stm = $_db->prepare("UPDATE orders SET status = 'Pending' WHERE id = ?");
+    $stm->execute([$order_id]);
+    redirect("payment-success.php?free_order=$order_id");
+}
 
 $session = \Stripe\Checkout\Session::create([
     'payment_method_types' => ['card', 'fpx'],
@@ -79,3 +99,5 @@ $session = \Stripe\Checkout\Session::create([
 ]);
 
 redirect($session->url);
+
+// ----------------------------------------------------------------------------

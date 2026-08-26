@@ -2,7 +2,7 @@
 include '../_base.php';
 
 // ---------------------------------------------------------------------------
-// when add to cart, check for login. If not login, popout error prompting login. --Chai
+
 if (is_post()) {
     $btn = req('btn');
     $cart = get_cart();
@@ -12,33 +12,29 @@ if (is_post()) {
         redirect('?');
     }
 
-    // delete selected items via checkbox array
     if ($btn == 'delete_selected') {
         $checked_items = $_POST['checked_items'] ?? [];
         foreach ($checked_items as $id) {
-            update_cart($id, 0);    // sets quantity to 0 to remove item
+            update_cart($id, 0);
         }
         redirect('?');
     }
 
-    // apply voucher
     if ($btn == 'apply_voucher') {
         $code = req('voucher_code');
 
         $stm = $_db->prepare("SELECT * FROM voucher WHERE code = ?");
         $stm->execute([$code]);
-        $v = $stm->fetch(); // v=voucher
+        $v = $stm->fetch();
 
-        // check exists, active, not expired
         if ($v && $v->active == 1 && $v->expiry >= date('Y-m-d')) {
-            // valid
             $_SESSION['voucher'] = [
                 'code' => $code,
                 'percent' => $v->percent
             ];
             temp('info', 'Voucher applied successfully!');
         }
-        else {// invalid, show error
+        else {
             unset($_SESSION['voucher']);
             temp('info', 'Invalid or expired voucher code.');
         }
@@ -46,7 +42,6 @@ if (is_post()) {
         redirect('?');
     }
 
-    // checkout selected
     if ($btn == 'checkout_selected') {
         $checked_items = $_POST['checked_items'] ?? [];
 
@@ -63,6 +58,8 @@ if (is_post()) {
         }
 
         $_SESSION['checkout_cart'] = $checkout_cart;
+        $_SESSION['use_points'] = isset($_POST['use_points']);
+
         redirect('checkout.php');
     }
 
@@ -79,215 +76,194 @@ include '../_head.php';
 ?>
 
 <style>
-    .popup {
-        width: 100px;
-        height: 100px;
-        object-fit: cover;
-        border-radius: 4px;
-    }
-    .right {
-        text-align: right;
-    }
-    .cart-bulk-actions {
-        margin-bottom: 15px;
-        display: flex;
-        gap: 15px;
-        align-items: center;
-    }
-    .btn-delete-selected {
-        background-color: #dc3545;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-    .btn-delete-selected:hover {
-        background-color: #c82333;
-    }
-    .item-checkbox, #select-all {
-        width: 16px;
-        height: 16px;
-        cursor: pointer;
-    }
+    .popup { width: 100px; height: 100px; object-fit: cover; border-radius: 4px; }
+    .right { text-align: right; }
+    .cart-bulk-actions { margin-bottom: 15px; display: flex; gap: 15px; align-items: center; }
+    .btn-delete-selected { background-color: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .btn-delete-selected:hover { background-color: #c82333; }
+    .item-checkbox, #select-all { width: 16px; height: 16px; cursor: pointer; }
+    #summary-box { border: 1px solid #ccc; padding: 12px; margin: 15px 0; max-width: 400px; }
+    #summary-box div { display: flex; justify-content: space-between; margin: 4px 0; }
 </style>
 
 <?php
-// ONE definition of $cart and $voucher, used everywhere below in this file
 $cart = get_cart();
 $voucher = $_SESSION['voucher'] ?? null;
+$cart_count = array_sum($cart);
 ?>
 
-<p id="selected-summary">
-    Selected: <span id="selected-count">0</span> item(s) —
-    Subtotal: RM <span id="selected-subtotal">0.00</span>
-    <?php if ($voucher): ?>
-        | After <?= $voucher['percent'] ?>% off: RM <span id="selected-final">0.00</span>
-    <?php endif ?>
-</p>
+<?php if (!$cart): ?>
 
-<!-- ONE Master form to handle bulk item selection deletions -->
-<form method="post" id="cart-bulk-form">
+    <p>🛒 Your cart is empty. <a href="/product/list.php">Browse bagels</a> to get started!</p>
 
-    <?php if ($cart): ?>
+<?php else: ?>
+
+    <form method="post" id="cart-bulk-form">
+
         <div class="cart-bulk-actions">
             <label style="cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 6px;">
-                <input type="checkbox" id="select-all"> Select All
+                <input type="checkbox" id="select-all" checked> Select All
             </label>
             <button type="submit" name="btn" value="delete_selected" class="btn-delete-selected" onclick="return confirm('Delete selected items from cart?')">
                 🗑️ Delete Selected
             </button>
         </div>
-    <?php endif; ?>
 
-    <table class="table">
-        <tr>
-            <th width="5%"></th>
-            <th>Id</th>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Price (RM)</th>
-            <th>Unit</th>
-            <th>Subtotal (RM)</th>
-        </tr>
-
-        <?php
-            $count = 0;
-            $total = 0;
-
-            $stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
-
-            foreach ($cart as $id => $unit):
-                $stm->execute([$id]);
-                $p = $stm->fetch();
-
-                $subtotal = $p->price * $unit;
-                $count += $unit;
-                $total += $subtotal;
-        ?>
+        <table class="table">
             <tr>
-                <td>
-                    <input type="checkbox" name="checked_items[]" value="<?= $p->id ?>" class="item-checkbox" data-subtotal="<?= $subtotal ?>">
-                </td>
-                <td><?= $p->id ?></td>
-                <td>
-                    <img src="/products/<?= $p->photo ?>" class="popup">
-                </td>
-                <td><?= $p->name ?></td>
-                <td class="right"><?= sprintf('%.2f', $p->price) ?></td>
-                <td>
-                    <div class="qty-form-container">
+                <th width="5%"></th>
+                <th>Id</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Price (RM)</th>
+                <th>Unit</th>
+                <th>Subtotal (RM)</th>
+            </tr>
+
+            <?php
+                $stm = $_db->prepare('SELECT * FROM product WHERE id = ?');
+
+                foreach ($cart as $id => $unit):
+                    $stm->execute([$id]);
+                    $p = $stm->fetch();
+                    $subtotal = $p->price * $unit;
+            ?>
+                <tr>
+                    <td>
+                        <input type="checkbox" name="checked_items[]" value="<?= $p->id ?>" class="item-checkbox" data-subtotal="<?= $subtotal ?>" checked>
+                    </td>
+                    <td><?= $p->id ?></td>
+                    <td><img src="/products/<?= $p->photo ?>" class="popup"></td>
+                    <td><?= $p->name ?></td>
+                    <td class="right"><?= sprintf('%.2f', $p->price) ?></td>
+                    <td>
                         <input type="hidden" name="id" value="<?= $p->id ?>" class="row-id">
                         <?= html_select('unit', $_units, $unit) ?>
-                    </div>
-                </td>
-                <td class="right">
-                    <?= sprintf('%.2f', $subtotal) ?>
-                </td>
-            </tr>
-        <?php endforeach ?>
+                    </td>
+                    <td class="right"><?= sprintf('%.2f', $subtotal) ?></td>
+                </tr>
+            <?php endforeach ?>
+        </table>
 
-        <tr>
-            <th colspan="5"></th>
-            <th class="right"><?= $count ?></th>
-            <th class="right"><?= sprintf('%.2f', $total) ?></th>
-        </tr>
-    </table>
-</form>
+        <p style="color:#666; font-size:13px;">
+            Cart total: <?= $cart_count ?> / 100 items
+            <?php if ($cart_count >= 100): ?>
+                <b style="color:red">— Cart limit reached, cannot add more.</b>
+            <?php endif ?>
+        </p>
 
-<!-- show discounted price -->
-<?php
-$discount = 0;
-if ($voucher) {
-    $discount = round($total * $voucher['percent'] / 100, 2);
-}
-$final_total = $total - $discount;
-?>
-
-<table class="table">
-    <?php if ($voucher): ?>
-    <tr>
-        <th>Discount (<?= $voucher['percent'] ?>% - <?= $voucher['code'] ?>)</th>
-        <td class="right">- RM <?= number_format($discount, 2) ?></td>
-    </tr>
-    <?php endif ?>
-    <tr>
-        <th>Total to Pay</th>
-        <td class="right"><b>RM <?= number_format($final_total, 2) ?></b></td>
-    </tr>
-</table>
-
-<!-- checkout button -->
-<p>
-    <?php if ($cart): ?>
-        <?php if ($_user?->role == 'Member'): ?>
-            <button type="submit" name="btn" value="checkout_selected" form="cart-bulk-form">Checkout Selected</button>
-        <?php else: ?>
-            Please <a href="/login.php">login</a> as member to checkout
+        <?php $points_value_available = floor(($_user->points ?? 0) / 100 * 100) / 100; ?>
+        <?php if (($_user->points ?? 0) > 0): ?>
+        <p>
+            <label>
+                <input type="checkbox" id="use-points" name="use_points" value="1">
+                Use my <?= $_user->points ?> points (worth RM <?= number_format($points_value_available, 2) ?>) for discount
+            </label>
+        </p>
         <?php endif ?>
-    <?php endif ?>
-</p>
 
-<!-- voucher code -->
-<form method="post" class="form">
-    <label>Voucher Code</label>
-    <input type="text" name="voucher_code" value="<?= $voucher['code'] ?? '' ?>">
-    <button name="btn" value="apply_voucher">Apply</button>
-    <?php if ($voucher): ?>
-        <p>✅ Voucher applied: <?= $voucher['percent'] ?>% off</p>
-    <?php endif ?>
-</form>
+        <div id="summary-box">
+            <div><span>Selected items:</span> <b id="selected-count">0</b></div>
+            <div><span>Subtotal:</span> <b>RM <span id="selected-subtotal">0.00</span></b></div>
+            <div id="voucher-row" style="display:none;"><span>Voucher (<?= $voucher['percent'] ?? 0 ?>%):</span> <b>- RM <span id="voucher-discount">0.00</span></b></div>
+            <div id="points-row" style="display:none;"><span>Points used:</span> <b>- RM <span id="points-discount">0.00</span></b></div>
+            <div><span><b>Total to Pay:</b></span> <b>RM <span id="final-total">0.00</span></b></div>
+        </div>
 
-<script>
-$(document).ready(function() {
-    $('#select-all').on('change', function() {
-        $('.item-checkbox').prop('checked', this.checked);
-    });
+        <p>
+            <?php if ($_user?->role == 'Member'): ?>
+                <button type="submit" name="btn" value="checkout_selected" id="checkout-btn">Checkout Selected</button>
+            <?php else: ?>
+                Please <a href="/login.php">login</a> as member to checkout
+            <?php endif ?>
+        </p>
+    </form>
 
-    $('.item-checkbox').on('change', function() {
-        if ($('.item-checkbox:checked').length === $('.item-checkbox').length) {
-            $('#select-all').prop('checked', true);
-        } else {
-            $('#select-all').prop('checked', false);
-        }
-    });
+    <form method="post" class="form">
+        <label>Voucher Code</label>
+        <input type="text" name="voucher_code" value="<?= $voucher['code'] ?? '' ?>">
+        <button name="btn" value="apply_voucher">Apply</button>
+        <?php if ($voucher): ?>
+            <p>✅ Voucher applied: <?= $voucher['percent'] ?>% off</p>
+        <?php endif ?>
+    </form>
 
-    $('.table select').on('change', function(e) {
-        e.preventDefault();
-
-        let row = $(this).closest('tr');
-        let productId = row.find('.row-id').val();
-        let selectedUnit = $(this).val();
-
-        let hiddenIdInput = $('<input>').attr({type: 'hidden', name: 'id', value: productId});
-        let hiddenUnitInput = $('<input>').attr({type: 'hidden', name: 'unit', value: selectedUnit});
-
-        $('#cart-bulk-form').append(hiddenIdInput, hiddenUnitInput).submit();
-    });
-
-    let voucherPercent = <?= $voucher ? $voucher['percent'] : 0 ?>;
-
-    function updateSelectedSummary() {
-        let count = 0;
-        let subtotal = 0;
-
-        $('.item-checkbox:checked').each(function() {
-            count++;
-            subtotal += parseFloat($(this).data('subtotal'));
+    <script>
+    $(document).ready(function() {
+        $('#select-all').on('change', function() {
+            $('.item-checkbox').prop('checked', this.checked);
+            updateSelectedSummary();
         });
 
-        $('#selected-count').text(count);
-        $('#selected-subtotal').text(subtotal.toFixed(2));
+        $('.item-checkbox').on('change', function() {
+            $('#select-all').prop('checked', $('.item-checkbox:checked').length === $('.item-checkbox').length);
+            updateSelectedSummary();
+        });
 
-        if (voucherPercent > 0) {
-            let final = subtotal - (subtotal * voucherPercent / 100);
-            $('#selected-final').text(final.toFixed(2));
+        $('.table select').on('change', function(e) {
+            e.preventDefault();
+            let row = $(this).closest('tr');
+            let productId = row.find('.row-id').val();
+            let selectedUnit = $(this).val();
+            let hiddenIdInput = $('<input>').attr({type: 'hidden', name: 'id', value: productId});
+            let hiddenUnitInput = $('<input>').attr({type: 'hidden', name: 'unit', value: selectedUnit});
+            $('#cart-bulk-form').append(hiddenIdInput, hiddenUnitInput).submit();
+        });
+
+        $('#use-points').on('change', updateSelectedSummary);
+
+        let voucherPercent = <?= $voucher ? $voucher['percent'] : 0 ?>;
+        let pointsAvailableValue = <?= $points_value_available ?>;
+
+        function updateSelectedSummary() {
+            let count = 0;
+            let subtotal = 0;
+
+            $('.item-checkbox:checked').each(function() {
+                count++;
+                subtotal += parseFloat($(this).data('subtotal'));
+            });
+
+            $('#selected-count').text(count);
+            $('#selected-subtotal').text(subtotal.toFixed(2));
+
+            if (count === 0) {
+                $('#voucher-row, #points-row').hide();
+                $('#final-total').text('0.00');
+                $('#checkout-btn').prop('disabled', true).text('Select items to checkout');
+                return;
+            }
+
+            $('#checkout-btn').prop('disabled', false).text('Checkout Selected');
+
+            let afterVoucher = subtotal;
+            if (voucherPercent > 0) {
+                let voucherDiscount = subtotal * voucherPercent / 100;
+                afterVoucher = subtotal - voucherDiscount;
+                $('#voucher-discount').text(voucherDiscount.toFixed(2));
+                $('#voucher-row').show();
+            } else {
+                $('#voucher-row').hide();
+            }
+
+            let finalTotal = afterVoucher;
+            if ($('#use-points').is(':checked')) {
+                let pointsUsed = Math.min(pointsAvailableValue, afterVoucher);
+                finalTotal = afterVoucher - pointsUsed;
+                $('#points-discount').text(pointsUsed.toFixed(2));
+                $('#points-row').show();
+            } else {
+                $('#points-row').hide();
+            }
+
+            $('#final-total').text(finalTotal.toFixed(2));
         }
-    }
 
-    $('.item-checkbox, #select-all').on('change', updateSelectedSummary);
-});
-</script>
+        updateSelectedSummary();
+    });
+    </script>
+
+<?php endif ?>
 
 <?php
 include '../_foot.php';
