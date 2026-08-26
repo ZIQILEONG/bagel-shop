@@ -35,7 +35,7 @@ $header_active = static function (string $section) use ($header_path): string {
         <div class="pululu-announcement-inner">
             <span><b>Freshly baked daily</b> in small batches</span>
             <span class="announcement-divider" aria-hidden="true"></span>
-            <span>Order now and enjoy <b>10% off</b></span>
+            <span>Order now and enjoy disocunts with promo code: <b>BAGEL10 || WELCOME20</b></span>
         </div>
     </div>
 
