@@ -60,6 +60,7 @@ include '../_head.php';
     <?= html_hidden('dir') ?>
     <button type="submit">Search</button>
 </form>
+
 <div id="resultsWrap">
 <?php include 'product-listing-results.php'; ?>
 </div>
