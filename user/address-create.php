@@ -2,7 +2,6 @@
 include '../_base.php';
 auth('Member');
 $error = '';
-
 // Telephone numbering rules by country (key = country name; min, max = local number digit lengths)
 $phoneRules = [
     'Malaysia'    => ['min' =>9, 'max'=>10],
@@ -13,7 +12,6 @@ $phoneRules = [
     'Philippines' => ['min' =>9, 'max'=>10],
     'Vietnam'     => ['min' =>9, 'max'=>10],
 ];
-
 if(is_post()){
     $recipient_name = trim(req('recipient_name'));
     $phone_country_code = trim(req('phone_country_code'));
@@ -24,18 +22,15 @@ if(is_post()){
     $state = trim(req('state'));
     $postcode = trim(req('postcode'));
     $country = req('country');
-
-    // 1. address line1 
+    // 1. address line1
     if ($address_line1 === '') {
         $error = "Address Line 1 cannot be empty! Please fill in house number and street name.";
     }
-
     // 2. Phone number validation: Only digits allowed.
     if($error === ''){
         if(!ctype_digit($phone)){
             $error = "Phone number only accept digits.";
         }else{
-            // Retrieve the number length rules for this country.
             $rule = $phoneRules[$phone_country_code] ?? null;
             if($rule){
                 $len = strlen($phone);
@@ -45,7 +40,6 @@ if(is_post()){
             }
         }
     }
-
     if ($error === '') {
         $stm = $_db->prepare("INSERT INTO shipping_address(user_id,recipient_name,phone_country_code,phone,address_line1,address_line2,city,state,postcode,country) VALUES (?,?,?,?,?,?,?,?,?,?)");
         $stm->execute([$_user->id,$recipient_name,$phone_country_code,$phone,$address_line1,$address_line2,$city,$state,$postcode,$country]);
@@ -59,7 +53,7 @@ include '../_head.php';
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 #map {
-    height:260px;
+    height:380px;
     width:100%;
     border:1px solid #cccccc;
     border-radius:4px;
@@ -129,7 +123,6 @@ include '../_head.php';
         <label>Recipient Name</label><br>
         <input type="text" name="recipient_name" required style="width:100%;padding:6px;" value="<?= post('recipient_name','') ?>">
     </div>
-
     <div style="margin-top:8px;">
         <label>Phone Number</label><br>
         <div class="phone-row">
@@ -146,7 +139,6 @@ include '../_head.php';
         </div>
         <small id="phoneHint" style="color:#666"></small>
     </div>
-
     <div style="margin-top:8px;">
         <label>Address Line 1 <small>(House No. & Street, REQUIRED)</small></label><br>
         <input type="text" name="address_line1" required style="width:100%;padding:6px;" value="<?= post('address_line1','') ?>">
@@ -184,9 +176,7 @@ include '../_head.php';
         <a href="address-list.php" class="btn-cancel">Cancel</a>
     </div>
 </form>
-
 <script>
-// The front-end phone number validation rules are consistent with the PHP implementation.
 const phoneRuleMap = {
     'Malaysia':    {min:9, max:10},
     'Singapore':   {min:8, max:8},
@@ -196,20 +186,17 @@ const phoneRuleMap = {
     'Philippines': {min:9, max:10},
     'Vietnam':     {min:9, max:10},
 };
-
 const phoneCountrySel = document.getElementById('phoneCountryCode');
 const phoneInput = document.getElementById('phoneNumber');
 const phoneHint = document.getElementById('phoneHint');
 const addressCountrySel = document.getElementById('addressCountry');
 const form = document.getElementById('addressForm');
 
-// Update address country; synchronize phone country.
 addressCountrySel.addEventListener('change',function(){
     phoneCountrySel.value = this.value;
     updatePhonePlaceholder();
 });
 phoneCountrySel.addEventListener('change',updatePhonePlaceholder);
-
 function updatePhonePlaceholder(){
     const c = phoneCountrySel.value;
     const rule = phoneRuleMap[c];
@@ -218,12 +205,10 @@ function updatePhonePlaceholder(){
 }
 updatePhonePlaceholder();
 
-// Form submission validation
 form.addEventListener('submit',function(e){
     const num = phoneInput.value.trim();
     const country = phoneCountrySel.value;
     const rule = phoneRuleMap[country];
-// Allow only numbers
     if(!/^\d+$/.test(num)){
         alert("Phone number only accept digits.");
         e.preventDefault();
@@ -237,34 +222,38 @@ form.addEventListener('submit',function(e){
     }
 });
 
-// ========== Map Section (Fixes for state=region and street number logic; preserves all original functionality) ==========const map = L.map('map', {
-    worldCopyJump: false,
-    inertia: false,
-    minZoom:3,
-    maxZoom:18
-}).setView([3.1390, 101.6869], 6);
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap contributors',
-    noWrap:true
-}).addTo(map);
-const locationBtn = L.control({position:'topleft'});
-locationBtn.onAdd = function(map) {
-    const div = L.DomUtil.create('div','leaflet-control');
-    const btn = L.DomUtil.create('button','leaflet-control-mybutton',div);
-    btn.textContent = "Use My Current Location";
-    L.DomEvent.on(btn,'click',function(e){
-        L.DomEvent.stopPropagation(e);
-        getCurrentLocation();
-    })
-    return div;
-}
-locationBtn.addTo(map);
-map.on('drag',function(){
-    let c = map.getCenter();
-    c.lat = Math.max(-84, Math.min(84, c.lat));
-    map.setCenter(c,{animate:false});
-})
+let map;
 let locationMarker = null;
+document.addEventListener('DOMContentLoaded', function(){
+    map = L.map('map', {
+        worldCopyJump: false,
+        inertia: false,
+        minZoom:3,
+        maxZoom:18
+    }).setView([3.1390, 101.6869], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors',
+        noWrap:true
+    }).addTo(map);
+    const locationBtn = L.control({position:'topleft'});
+    locationBtn.onAdd = function(map) {
+        const div = L.DomUtil.create('div','leaflet-control');
+        const btn = L.DomUtil.create('button','leaflet-control-mybutton',div);
+        btn.textContent = "Use My Current Location";
+        L.DomEvent.on(btn,'click',function(e){
+            L.DomEvent.stopPropagation(e);
+            getCurrentLocation();
+        })
+        return div;
+    }
+    locationBtn.addTo(map);
+    map.on('drag',function(){
+        let c = map.getCenter();
+        c.lat = Math.max(-84, Math.min(84, c.lat));
+        map.setCenter(c,{animate:false});
+    })
+});
+
 function getCurrentLocation(){
     if (!navigator.geolocation) {
         alert("Your browser does not support geolocation");
@@ -281,42 +270,37 @@ function getCurrentLocation(){
                 locationMarker = L.marker([lat,lng]).addTo(map);
             }
             try{
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&zoom=14`);
+                // Increasing the zoom level to 16 results in better street detail resolution for the Malaysia region.
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&zoom=16`);
                 const data = await res.json();
+                console.log("reverse geocode result:", data);
+                if(!data || !data.address){
+                    console.warn("Nominatim return empty address");
+                    return;
+                }
                 const adr = data.address;
-
                 let parts = [];
                 if(adr.house_number) parts.push(adr.house_number);
                 if(adr.road) parts.push(adr.road);
                 let line1 = parts.join(' ').trim();
                 document.querySelector('[name="address_line1"]').value = line1;
-
                 let line2 = `${adr.suburb??''} ${adr.neighbourhood??''}`.trim();
                 document.querySelector('[name="address_line2"]').value = line2;
-
                 document.querySelector('[name="city"]').value = adr.city ?? adr.town ?? adr.village ?? '';
                 document.querySelector('[name="state"]').value = adr.state ?? adr.region ?? '';
                 document.querySelector('[name="postcode"]').value = adr.postcode ?? '';
-
                 const countrySelect = document.querySelector('[name="country"]');
                 const countryName = adr.country;
                 for(let opt of countrySelect.options){
                     if(opt.textContent === countryName){
                         countrySelect.value = opt.value;
-                        // Synchronously update the country for the phone number
                         phoneCountrySel.value = opt.value;
                         updatePhonePlaceholder();
                         break;
                     }
                 }
-
-                if(!adr.house_number){
-                    alert("Location loaded successfully.\n⚠️ House number could not be detected automatically.\nPlease manually fill in your house number in Address Line 1.");
-                }
-
             }catch(err){
-                alert("Location retrieved, but address parsing failed. Please fill in address manually.");
-                console.error(err);
+                console.error("Reverse geocode error:", err);
             }
         },
         (error)=>{
