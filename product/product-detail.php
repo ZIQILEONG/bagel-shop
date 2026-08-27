@@ -12,8 +12,24 @@ $stm->execute([$id]);
 $p = $stm->fetch();
 
 if (!$p) {
-    redirect('product-listing.php');
+    redirect('list.php');
 }
+
+// Universal YouTube Embed URL Parser (handles watch, shorts, youtu.be, and extra params)
+function get_youtube_embed_url($url) {
+    $url = trim($url ?? '');
+    if ($url === '') return null;
+
+    $videoId = null;
+    if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/))([\w-]{11})/i', $url, $matches)) {
+        $videoId = $matches[1];
+    }
+
+    return $videoId ? "https://www.youtube.com/embed/{$videoId}?rel=0" : null;
+}
+
+$rawVideoUrl   = $p->video_url ?? $p->video ?? $p->youtube_url ?? '';
+$embedVideoUrl = get_youtube_embed_url($rawVideoUrl);
 
 // Check if this product is a 5-Bagel Set bundle
 $isSet5 = (stripos($p->name, '5 Bagel') !== false || stripos($p->name, '5-Pack') !== false || stripos($p->name, '5') !== false);
@@ -80,7 +96,6 @@ if (is_post() && req('action') == 'add_to_cart') {
     }
 
     if ($qty > 0 && $qty <= $p->stock) {
-        // Save to cart session
         $cartItemKey = $isSet5 ? $p->id . '_' . md5(json_encode($selectedFlavours)) : $p->id;
         $_SESSION['cart'][$cartItemKey] = [
             'id'       => $p->id,
@@ -91,8 +106,6 @@ if (is_post() && req('action') == 'add_to_cart') {
         ];
 
         temp('info', "Added {$qty} item(s) to your cart!");
-        
-        // Direct root redirection to index.php
         redirect('/index.php');
     } else {
         temp('error', 'Invalid quantity requested.');
@@ -107,7 +120,7 @@ if (is_post() && req('action') == 'submit_review') {
     $review_text = trim(req('review_text'));
 
     if ($rating >= 1 && $rating <= 5) {
-        $ins = $_db->prepare("INSERT INTO product_review (product_id, user_id, rating, review, created_at) VALUES (?, ?, ?, ?, NOW())");
+        $ins = $_db->prepare("INSERT INTO product_review (product_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())");
         $ins->execute([$p->id, $_user->id, $rating, $review_text]);
         temp('info', 'Thank you for your review!');
         redirect("product-detail.php?id={$p->id}");
@@ -503,6 +516,49 @@ body {
     color: var(--primary-brown);
 }
 
+/* =========================================================
+   YOUTUBE VIDEO SHOWCASE CARD
+   ========================================================= */
+.pdp-video-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid var(--border-color);
+    padding: 32px 36px;
+    box-shadow: 0 4px 20px rgba(62, 38, 25, 0.04);
+    margin-bottom: 36px;
+}
+.pdp-video-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-color);
+}
+.pdp-video-title {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--primary-brown);
+}
+.pdp-video-responsive {
+    position: relative;
+    width: 100%;
+    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    height: 0;
+    overflow: hidden;
+    border-radius: 14px;
+    background: #000;
+    border: 1px solid var(--border-color);
+}
+.pdp-video-responsive iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+}
+
 /* Reviews Container */
 .pdp-reviews-container {
     background: var(--card-bg);
@@ -655,7 +711,7 @@ body {
     <div class="pdp-breadcrumb">
         <a href="/">Home</a>
         <span>&rsaquo;</span>
-        <a href="product-listing.php">Shop Bagels</a>
+        <a href="list.php">Shop Bagels</a>
         <span>&rsaquo;</span>
         <span><?= htmlspecialchars($p->name) ?></span>
     </div>
@@ -767,6 +823,24 @@ body {
         </div>
     </div>
 
+    <!-- YouTube Product Video Integration -->
+    <?php if ($embedVideoUrl): ?>
+        <div class="pdp-video-card">
+            <div class="pdp-video-header">
+                <span style="font-size: 22px;">🎬</span>
+                <div class="pdp-video-title">Watch <?= htmlspecialchars($p->name) ?> in Action</div>
+            </div>
+            <div class="pdp-video-responsive">
+                <iframe 
+                    src="<?= htmlspecialchars($embedVideoUrl) ?>" 
+                    title="<?= htmlspecialchars($p->name) ?> Video Showcase"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen>
+                </iframe>
+            </div>
+        </div>
+    <?php endif; ?>
+
     <!-- Reviews Container -->
     <div class="pdp-reviews-container">
         <div class="pdp-section-header">
@@ -807,7 +881,7 @@ body {
                             </div>
                             <span class="pdp-review-date"><?= date('M d, Y', strtotime($rev->created_at)) ?></span>
                         </div>
-                       <p class="pdp-review-body"><?= nl2br(htmlspecialchars($rev->comment ?? $rev->review_text ?? $rev->content ?? $rev->message ?? '')) ?></p>
+                        <p class="pdp-review-body"><?= nl2br(htmlspecialchars($rev->comment ?? $rev->review_text ?? $rev->content ?? $rev->message ?? '')) ?></p>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -819,7 +893,7 @@ body {
         <?php endif; ?>
 
         <div class="pdp-back-box">
-            <a href="product-listing.php" class="pdp-btn-back">&larr; Back to Shop</a>
+            <a href="list.php" class="pdp-btn-back">&larr; Back to Shop</a>
         </div>
     </div>
 </div>
