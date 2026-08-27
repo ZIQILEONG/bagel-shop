@@ -1,17 +1,21 @@
 <?php
 include '../_base.php';
+require '../lib/SimplePager.php';
 
 if (is_post()) {
     $id   = req('id');
-    $unit = req('unit');
+    $unit = (int)req('unit', 1);
     update_cart($id, $unit);
     redirect();
 }
 
+// ---------------- Filters & Search ----------------
 $search      = get('search', '');
 $category_id = get('category_id', '');
 $min_price   = get('min_price', '');
 $max_price   = get('max_price', '');
+$sort        = get('sort', 'name_asc');
+$page        = get('page', '1');
 
 $where  = [];
 $params = [];
@@ -24,121 +28,580 @@ if ($category_id != '') {
     $where[]  = 'p.category_id = ?';
     $params[] = $category_id;
 }
-if ($min_price != '') {
+if ($min_price != '' && is_numeric($min_price)) {
     $where[]  = 'p.price >= ?';
     $params[] = $min_price;
 }
-if ($max_price != '') {
+if ($max_price != '' && is_numeric($max_price)) {
     $where[]  = 'p.price <= ?';
     $params[] = $max_price;
 }
 
-$sql = 'SELECT p.* FROM product p';
-if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
-$sql .= ' ORDER BY p.name';
+// ---------------- Sorting ----------------
+switch ($sort) {
+    case 'price_asc':
+        $orderBy = 'p.price ASC, p.name ASC';
+        break;
+    case 'price_desc':
+        $orderBy = 'p.price DESC, p.name ASC';
+        break;
+    case 'rating_desc':
+        $orderBy = 'p.rating DESC, p.name ASC';
+        break;
+    case 'name_desc':
+        $orderBy = 'p.name DESC';
+        break;
+    case 'name_asc':
+    default:
+        $orderBy = 'p.name ASC';
+        break;
+}
 
-$stm = $_db->prepare($sql);
-$stm->execute($params);
-$products = $stm->fetchAll();
+$sql = 'SELECT p.*, c.name AS category_name FROM product p LEFT JOIN category c ON p.category_id = c.id';
+if ($where) {
+    $sql .= ' WHERE ' . implode(' AND ', $where);
+}
+$sql .= ' ORDER BY ' . $orderBy;
+
+// SimplePager: 8 or 12 items per page for a clean 4-column grid
+$pager    = new SimplePager($sql, $params, 8, $page);
+$products = $pager->result;
 
 $categories = get_categories();
 
-$_title = 'Product | List';
+$_title = 'Shop Fresh Bagels | Pululu';
 include '../_head.php';
 ?>
 
 <style>
-    .filter-bar {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-        gap: 12px;
-        align-items: end;
-        background: #fafafa;
-        border: 1px solid #eee;
-        border-radius: 10px;
-        padding: 15px;
-        margin-bottom: 20px;
-    }
-    .filter-bar label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
-    .filter-bar input, .filter-bar select { width: 100%; padding: 7px; box-sizing: border-box; }
+/* =========================================================
+   PULULU COMPLETE SHOPPING PAGE UI/UX
+   ========================================================= */
+:root {
+    --pl-primary: #cf7953;
+    --pl-primary-hover: #b86440;
+    --pl-brown-dark: #3e2619;
+    --pl-text: #4a3b32;
+    --pl-muted: #968377;
+    --pl-border: #ebdcd5;
+    --pl-card-bg: #ffffff;
+    --pl-gold: #f5a623;
+}
 
+body {
+    background-color: #faf5f0;
+    color: var(--pl-text);
+}
+
+.pl-page-wrapper {
+    max-width: 1160px;
+    margin: 24px auto 60px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Header */
+.pl-header-banner {
+    text-align: center;
+    margin-bottom: 28px;
+}
+.pl-header-banner h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin: 0 0 6px;
+}
+.pl-header-banner p {
+    font-size: 14px;
+    color: var(--pl-muted);
+    margin: 0;
+}
+
+/* Filter & Sort Bar Card */
+.filter-card {
+    background: var(--pl-card-bg);
+    border: 1px solid var(--pl-border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    box-shadow: 0 4px 16px rgba(62, 38, 25, 0.03);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 1.2fr 1fr 1fr auto;
+    gap: 12px;
+    align-items: end;
+}
+
+.filter-field label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--pl-brown-dark);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.filter-field input,
+.filter-field select {
+    width: 100%;
+    padding: 9.5px 12px;
+    box-sizing: border-box;
+    border: 1.5px solid var(--pl-border);
+    border-radius: 10px;
+    background: #fffdfc;
+    font-size: 13.5px;
+    color: var(--pl-text);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.filter-field input:focus,
+.filter-field select:focus {
+    border-color: var(--pl-primary);
+    box-shadow: 0 0 0 3px rgba(207, 121, 83, 0.12);
+}
+
+.btn-apply-filter {
+    background: var(--pl-primary);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 40px;
+}
+.btn-apply-filter:hover {
+    background: var(--pl-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(207, 121, 83, 0.25);
+}
+
+/* Result Meta info */
+.pl-results-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: var(--pl-muted);
+    margin-bottom: 18px;
+    padding: 0 4px;
+}
+
+/* Products Grid (4 columns) */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+    margin-bottom: 36px;
+}
+
+/* Product Card */
+.product-card {
+    border: 1px solid var(--pl-border);
+    border-radius: 16px;
+    overflow: hidden;
+    background: var(--pl-card-bg);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 3px 12px rgba(62, 38, 25, 0.03);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.product-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(62, 38, 25, 0.08);
+}
+.product-card .img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #fdfbf9;
+    overflow: hidden;
+}
+.product-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+.product-card:hover img {
+    transform: scale(1.04);
+}
+
+.product-card .info {
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+.product-card .category-badge {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--pl-primary);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.product-card .name {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--pl-brown-dark);
+    margin-bottom: 5px;
+    line-height: 1.3;
+}
+.product-card .rating {
+    color: var(--pl-gold);
+    font-size: 11.5px;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.product-card .price {
+    font-size: 15.5px;
+    font-weight: 800;
+    color: var(--pl-primary);
+    margin-bottom: 12px;
+}
+
+/* Card Action Bottom */
+.card-action-wrap {
+    margin-top: auto;
+    padding-top: 10px;
+    border-top: 1px solid #f8eee8;
+}
+.cart-form-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.cart-form-row select {
+    width: 58px;
+    padding: 7px;
+    border-radius: 8px;
+    border: 1px solid var(--pl-border);
+    background: #fff;
+    font-size: 13px;
+    outline: none;
+}
+.btn-card-add {
+    flex: 1;
+    background: var(--pl-primary);
+    color: #fff;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.btn-card-add:hover {
+    background: var(--pl-primary-hover);
+}
+.btn-view-bundle {
+    display: block;
+    text-align: center;
+    background: #fdf2eb;
+    color: var(--pl-primary);
+    border: 1px solid #f7dfd3;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.btn-view-bundle:hover {
+    background: var(--pl-primary);
+    color: #fff;
+}
+.login-hint-btn {
+    display: block;
+    text-align: center;
+    font-size: 12px;
+    color: var(--pl-muted);
+    text-decoration: none;
+    padding: 8px 0;
+    font-weight: 600;
+}
+.login-hint-btn:hover {
+    color: var(--pl-primary);
+    text-decoration: underline;
+}
+
+/* Empty State */
+.pl-empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    background: #fff;
+    border: 1px solid var(--pl-border);
+    border-radius: 16px;
+}
+.pl-empty-state h3 {
+    font-size: 18px;
+    color: var(--pl-brown-dark);
+    margin: 10px 0 6px;
+}
+.pl-empty-state p {
+    font-size: 13px;
+    color: var(--pl-muted);
+    margin: 0;
+}
+
+/* =========================================================
+   PULULU EXACT SMART PAGINATION (FIXES TEXT OVERFLOW)
+   ========================================================= */
+.pl-pagination-wrap,
+.pager {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    gap: 8px !important;
+    margin: 45px auto 25px !important;
+    padding: 0 !important;
+    list-style: none !important;
+}
+
+/* Default state for all buttons: auto-width pill */
+.pl-pagination-wrap a,
+.pl-pagination-wrap span,
+.pager a,
+.pager span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    min-height: 38px !important;
+    padding: 0 16px !important;                /* Plenty of space for text */
+    min-width: 38px !important;
+    width: auto !important;                     /* Expands naturally to fit words */
+    white-space: nowrap !important;             /* Prevents text break */
+    border-radius: 9999px !important;           /* Smooth rounded pill */
+    border: 1px solid #ebdcd5 !important;
+    background: #ffffff !important;
+    color: #3e2619 !important;
+    font-size: 13.5px !important;
+    font-weight: 600 !important;
+    text-decoration: none !important;
+    box-shadow: 0 1px 3px rgba(62, 38, 25, 0.04) !important;
+    box-sizing: border-box !important;
+    transition: all 0.15s ease !important;
+}
+
+/* Specific wide pill for Previous and First to guarantee zero overflow */
+.pl-pagination-wrap a:has-text,
+.pager a, .pager span {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+}
+
+/* Numbers only: perfect circles (applies to items with short width) */
+.pl-pagination-wrap a:not(:empty),
+.pager a, .pager span {
+    aspect-ratio: auto;
+}
+
+/* Hover state */
+.pl-pagination-wrap a:hover,
+.pager a:hover {
+    background: #fff8f5 !important;
+    border-color: #cf7953 !important;
+    color: #cf7953 !important;
+}
+
+/* Active / Current Page (Terracotta pill/circle with white text) */
+.pl-pagination-wrap .active,
+.pl-pagination-wrap .current,
+.pl-pagination-wrap span.current,
+.pager .active,
+.pager .current,
+.pager span.current,
+.pager a.current {
+    background: #9d482b !important;
+    border-color: #9d482b !important;
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    box-shadow: 0 2px 6px rgba(157, 72, 43, 0.25) !important;
+}
+
+/* Disabled items */
+.pl-pagination-wrap .disabled,
+.pager .disabled {
+    opacity: 0.4 !important;
+    cursor: not-allowed !important;
+    background: #ffffff !important;
+    border-color: #ebdcd5 !important;
+    color: #968377 !important;
+}
+
+@media (max-width: 1024px) {
     .products-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-        gap: 18px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
     }
-    .product-card {
-        border: 1px solid #eee;
-        border-radius: 10px;
-        overflow: hidden;
-        background: #fff;
+    .filter-grid {
+        grid-template-columns: 1fr 1fr;
     }
-    .product-card img {
-        width: 100%; height: 180px; object-fit: cover; cursor: pointer;
+}
+
+@media (max-width: 680px) {
+    .products-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
     }
-    .product-card .info { padding: 12px; }
-    .product-card .name { font-weight: bold; margin-bottom: 4px; }
-    .product-card .price { color: #d9534f; font-weight: bold; }
-    .product-card .rating { color: #fbbf24; font-size: 13px; }
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
 </style>
 
-<form method="get" class="filter-bar">
-    <div>
-        <label>Search</label>
-        <?= html_search('search', 'placeholder="Search bagels..."') ?>
+<div class="pl-page-wrapper">
+    <!-- Header -->
+    <div class="pl-header-banner">
+        <h1>Freshly Baked Bagels</h1>
+        <p>Hand-rolled, boiled, and baked fresh every morning in small batches.</p>
     </div>
-    <div>
-        <label>Category</label>
-        <?php
-        $cat_opts = [];
-        foreach ($categories as $c) $cat_opts[$c->id] = $c->name;
-        ?>
-        <?= html_select('category_id', $cat_opts, 'All Categories') ?>
-    </div>
-    <div>
-        <label>Min Price (RM)</label>
-        <?= html_number('min_price', 0, '', '0.01') ?>
-    </div>
-    <div>
-        <label>Max Price (RM)</label>
-        <?= html_number('max_price', 0, '', '0.01') ?>
-    </div>
-    <div>
-        <button type="submit">Apply</button>
-    </div>
-</form>
 
-<div class="products-grid">
-    <?php foreach ($products as $p): ?>
-        <?php
-        $cart = get_cart();
-        $id   = $p->id;
-        $unit = $cart[$p->id] ?? 0;
-        ?>
-        <div class="product-card">
-            <a href="detail.php?id=<?= $p->id ?>">
-                <img src="/products/<?= encode($p->photo) ?>" alt="<?= encode($p->name) ?>">
-            </a>
-            <div class="info">
-                <div class="name"><?= encode($p->name) ?></div>
-                <?php if ($p->rating): ?>
-                <div class="rating"><?= str_repeat('★', round($p->rating)) ?> <?= number_format($p->rating, 1) ?></div>
-                <?php endif; ?>
-                <div class="price">RM <?= number_format($p->price, 2) ?></div>
-                <div>Stock: <?= $p->stock ?></div>
-
-                <?php if ($_user?->role == 'Member'): ?>
-                <form method="post">
-                    <?= html_hidden('id') ?>
-                    <?= html_select('unit', $_units, $unit ?: '') ?>
-                    <button type="submit">Add</button>
-                </form>
-                <?php else: ?>
-                <a href="<?= app_url('login.php') ?>">Login to order</a>
-                <?php endif; ?>
+    <!-- Filter & Sorting Bar -->
+    <div class="filter-card">
+        <form method="get" class="filter-grid" id="filterForm">
+            <div class="filter-field">
+                <label>Search</label>
+                <?= html_search('search', 'placeholder="Search bagels..." value="' . encode($search) . '"') ?>
             </div>
+
+            <div class="filter-field">
+                <label>Category</label>
+                <?php
+                $cat_opts = ['' => '-- All Categories --'];
+                foreach ($categories as $c) {
+                    $cat_opts[$c->id] = $c->name;
+                }
+                ?>
+                <?= html_select('category_id', $cat_opts, $category_id) ?>
+            </div>
+
+            <div class="filter-field">
+                <label>Sort By</label>
+                <?php
+                $sort_opts = [
+                    'name_asc'    => 'Name (A to Z)',
+                    'name_desc'   => 'Name (Z to A)',
+                    'price_asc'   => 'Price: Low to High',
+                    'price_desc'  => 'Price: High to Low',
+                    'rating_desc' => 'Top Rated'
+                ];
+                ?>
+                <?= html_select('sort', $sort_opts, $sort) ?>
+            </div>
+
+            <div class="filter-field">
+                <label>Min (RM)</label>
+                <?= html_number('min_price', 0, '', '0.50', 'placeholder="0.00" value="' . encode($min_price) . '"') ?>
+            </div>
+
+            <div class="filter-field">
+                <label>Max (RM)</label>
+                <?= html_number('max_price', 0, '', '0.50', 'placeholder="50.00" value="' . encode($max_price) . '"') ?>
+            </div>
+
+            <div>
+                <button type="submit" class="btn-apply-filter">Apply</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Meta Info -->
+    <div class="pl-results-meta">
+        <span>Showing <?= count($products) ?> of <?= $pager->count ?> bagels</span>
+        <?php if ($search || $category_id || $min_price || $max_price): ?>
+            <a href="list.php" style="color: var(--pl-primary); text-decoration: none; font-weight: 600;">Clear Filters ✕</a>
+        <?php endif; ?>
+    </div>
+
+    <!-- Products Grid (4 Columns) -->
+    <?php if (!empty($products)): ?>
+        <div class="products-grid">
+            <?php foreach ($products as $p): ?>
+                <?php
+                $cart = get_cart();
+                $cartEntry = $cart[$p->id] ?? 0;
+                $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
+                $isSet5 = (stripos($p->name, '5 Bagel') !== false || stripos($p->name, '5-Pack') !== false || stripos($p->name, '5') !== false);
+                ?>
+                <div class="product-card">
+                    <a href="detail.php?id=<?= $p->id ?>" class="img-wrap">
+                        <img src="/products/<?= encode($p->photo ?: 'default.jpg') ?>" alt="<?= encode($p->name) ?>">
+                    </a>
+                    <div class="info">
+                        <span class="category-badge"><?= encode($p->category_name ?? 'Bagel') ?></span>
+                        <div class="name"><?= encode($p->name) ?></div>
+
+                        <div class="rating">
+                            <span><?= str_repeat('★', (int)round($p->rating ?? 5)) ?><?= str_repeat('☆', 5 - (int)round($p->rating ?? 5)) ?></span>
+                            <span><?= number_format($p->rating ?? 5.0, 1) ?></span>
+                        </div>
+
+                        <div class="price">RM <?= number_format($p->price, 2) ?></div>
+
+                        <div class="card-action-wrap">
+                            <?php if ($isSet5): ?>
+                                <a href="detail.php?id=<?= $p->id ?>" class="btn-view-bundle">
+                                    Choose Flavours &rarr;
+                                </a>
+                            <?php elseif (isset($_user) && $_user->role == 'Member'): ?>
+                                <form method="post" class="cart-form-row">
+                                    <input type="hidden" name="id" value="<?= encode($p->id) ?>">
+                                    <?= html_select('unit', $_units ?? [1=>1, 2=>2, 3=>3, 4=>4, 5=>5], $unit > 0 ? (string)$unit : '1') ?>
+                                    <button type="submit" class="btn-card-add">Add</button>
+                                </form>
+                            <?php else: ?>
+                                <a href="<?= app_url('login.php') ?>" class="login-hint-btn">Login to order</a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
         </div>
-    <?php endforeach; ?>
+
+        <!-- Pagination Bar -->
+        <div class="pl-pagination-wrap">
+            <?php
+            // SimplePager HTML Output
+            $pager->html();
+            ?>
+        </div>
+
+    <?php else: ?>
+        <div class="pl-empty-state">
+            <div style="font-size: 38px;">🥯</div>
+            <h3>No bagels found</h3>
+            <p>Try adjusting your search criteria or price filters.</p>
+        </div>
+    <?php endif; ?>
 </div>
+
+<script>
+// Auto-submit filter form when category or sort order changes
+document.addEventListener('DOMContentLoaded', function() {
+    const categorySelect = document.querySelector('select[name="category_id"]');
+    const sortSelect = document.querySelector('select[name="sort"]');
+    const filterForm = document.getElementById('filterForm');
+
+    if (categorySelect) {
+        categorySelect.addEventListener('change', () => filterForm.submit());
+    }
+    if (sortSelect) {
+        sortSelect.addEventListener('change', () => filterForm.submit());
+    }
+});
+</script>
 
 <?php include '../_foot.php'; ?>
