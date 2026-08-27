@@ -5,12 +5,17 @@ auth('Admin');
 
 if (is_post() && req('btn') == 'delete_selected') {
     $ids = post('ids', []);
+    $before = count($ids);
     $ids = array_diff($ids, [(string) $_user->id]); // never delete yourself
     if (count($ids) > 0) {
         $in  = implode(',', array_fill(0, count($ids), '?'));
         $stm = $_db->prepare("UPDATE user SET is_deleted = 1 WHERE id IN ($in)");
         $stm->execute(array_values($ids));
         temp('info', count($ids) . ' member(s) deactivated.');
+    }
+    
+    else if ($before > 0) {
+        temp('info', 'No members deactivated — you cannot deactivate your own account.');
     }
     redirect('user-listing.php');
 }
