@@ -127,25 +127,28 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     noWrap:true
 }).addTo(map);
-// ✅ The button is created as a Leaflet Control and added directly to the map layers, sharing the same layer as the map.const locationBtn = L.control({position:'topleft'});
+
+const locationBtn = L.control({position:'topleft'});
 locationBtn.onAdd = function(map) {
     const div = L.DomUtil.create('div','leaflet-control');
     const btn = L.DomUtil.create('button','leaflet-control-mybutton',div);
     btn.textContent = "Use My Current Location";
     L.DomEvent.on(btn,'click',function(e){
-        L.DomEvent.stopPropagation(e); 
+        L.DomEvent.stopPropagation(e);
         getCurrentLocation();
     })
     return div;
 }
 locationBtn.addTo(map);
-// Real-time latitude locking logic
+
 map.on('drag',function(){
     let c = map.getCenter();
     c.lat = Math.max(-84, Math.min(84, c.lat));
     map.setCenter(c,{animate:false});
 })
+
 let locationMarker = null;
+
 function getCurrentLocation(){
     if (!navigator.geolocation) {
         alert("Your browser does not support geolocation");
@@ -162,23 +165,34 @@ function getCurrentLocation(){
                 locationMarker = L.marker([lat,lng]).addTo(map);
             }
             try{
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&countrycodes=my`);
+                // Remove countrycodes=my to support multi-country geolocation.
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`);
                 const data = await res.json();
                 const adr = data.address;
-                if(adr.road || adr.house_number){
-                    document.querySelector('[name="address_line1"]').value = `${adr.road??''} ${adr.house_number??''}`.trim();
-                }
-                if(adr.city || adr.town || adr.village){
-                    document.querySelector('[name="city"]').value = adr.city ?? adr.town ?? adr.village;
-                }
-                if(adr.state){
-                    document.querySelector('[name="state"]').value = adr.state;
-                }
-                if(adr.postcode){
-                    document.querySelector('[name="postcode"]').value = adr.postcode;
-                }
+
+                // Address Line 1: House/Building Number + Street Name
+                let line1 = `${adr.house_number??''} ${adr.road??''}`.trim();
+                document.querySelector('[name="address_line1"]').value = line1;
+
+                // Address Line2: suburb / neighborhood community
+                let line2 = `${adr.suburb??''} ${adr.neighbourhood??''}`.trim();
+                document.querySelector('[name="address_line2"]').value = line2;
+
+                // city / town / village
+                document.querySelector('[name="city"]').value = adr.city ?? adr.town ?? adr.village ?? '';
+                document.querySelector('[name="state"]').value = adr.state ?? '';
+                document.querySelector('[name="postcode"]').value = adr.postcode ?? '';
+
+                // Automatically match the country dropdown list.
                 const countrySelect = document.querySelector('[name="country"]');
-                if(adr.country === "Malaysia") countrySelect.value = "Malaysia";
+                const countryName = adr.country;
+                for(let opt of countrySelect.options){
+                    if(opt.textContent === countryName){
+                        countrySelect.value = opt.value;
+                        break;
+                    }
+                }
+
             }catch(err){
                 alert("Location retrieved, but address parsing failed. Please fill in address manually.");
                 console.error(err);
