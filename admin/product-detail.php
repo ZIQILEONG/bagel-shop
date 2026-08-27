@@ -292,16 +292,38 @@ function enlargePhoto(img) {
                     <?= htmlspecialchars($photo->photo) ?>
                 </div>
 
-                <div class="photo-box">
-                    <img
-                        src="/products/<?= htmlspecialchars($photo->photo) ?>"
-                        alt="Product Detail Photo"
-                        onclick="enlargePhoto(this)"
-                    >
-                </div>                
-            <?php endforeach; ?>
+                    </div>
+</div>
+
+<!-- === NEW: Image edit (rotate/flip) section === -->
+<div class="detail-photos" style="margin-top:20px;">
+    <div class="photo-header"><div>Edit Photos (Rotate / Flip)</div></div>
+    <div class="photo-row" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <?php if ($p && $p->photo): ?>
+        <div>
+            <div class="photo-box"><img src="/products/<?= encode($p->photo) ?>"></div>
+            <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=rotate_left">⟲</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=rotate_right">⟳</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=flip_h">⇋</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=flip_v">⇅</button>
+            </div>
         </div>
+        <?php endif; ?>
+        <?php foreach ($photos as $photo): ?>
+        <div>
+            <div class="photo-box"><img src="/products/<?= encode($photo->photo) ?>"></div>
+            <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=rotate_left">⟲</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=rotate_right">⟳</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=flip_h">⇋</button>
+                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=flip_v">⇅</button>
+            </div>
+        </div>
+        <?php endforeach; ?>
     </div>
+</div>
+<!-- === END NEW section === -->
 
     <section>
         <button>Save</button>

@@ -1,8 +1,6 @@
 <?php
-include __DIR__ . '/../_base.php';
-require_once __DIR__ . '/../lib/SimplePager.php';
+include '../_base.php';
 
-// Handle add to cart
 if (is_post()) {
     $id   = req('id');
     $unit = req('unit');
@@ -10,56 +8,39 @@ if (is_post()) {
     redirect();
 }
 
-// Get filter parameters
-$search = get('search', '');
+$search      = get('search', '');
 $category_id = get('category_id', '');
-$min_price = get('min_price', '');
-$max_price = get('max_price', '');
-$sort   = get('sort', 'name');
-$dir    = get('dir', 'asc') == 'desc' ? 'desc' : 'asc';
-$page   = get('page', '1');
+$min_price   = get('min_price', '');
+$max_price   = get('max_price', '');
 
-// Validate sort field
-$sorts = ['name', 'price', 'stock', 'rating'];
-if (!in_array($sort, $sorts)) {
-    $sort = 'name';
-}
-
-// Build WHERE clause
-$where_conditions = [];
+$where  = [];
 $params = [];
 
 if ($search != '') {
-    $where_conditions[] = 'p.name LIKE ?';
+    $where[]  = 'p.name LIKE ?';
     $params[] = "%$search%";
 }
-
 if ($category_id != '') {
-    $where_conditions[] = 'p.category_id = ?';
+    $where[]  = 'p.category_id = ?';
     $params[] = $category_id;
 }
-
 if ($min_price != '') {
-    $where_conditions[] = 'p.price >= ?';
+    $where[]  = 'p.price >= ?';
     $params[] = $min_price;
 }
-
 if ($max_price != '') {
-    $where_conditions[] = 'p.price <= ?';
+    $where[]  = 'p.price <= ?';
     $params[] = $max_price;
 }
 
-$where = '';
-if (count($where_conditions) > 0) {
-    $where = 'WHERE ' . implode(' AND ', $where_conditions);
-}
+$sql = 'SELECT p.* FROM product p';
+if ($where) $sql .= ' WHERE ' . implode(' AND ', $where);
+$sql .= ' ORDER BY p.name';
 
-// Build query
-$query = "SELECT p.* FROM product p $where ORDER BY $sort $dir";
-$pager = new SimplePager($query, $params, '12', $page);
-$arr   = $pager->result;
+$stm = $_db->prepare($sql);
+$stm->execute($params);
+$products = $stm->fetchAll();
 
-// Get categories for filter dropdown
 $categories = get_categories();
 
 $_title = 'Product | List';
@@ -67,238 +48,97 @@ include '../_head.php';
 ?>
 
 <style>
-    .filter-section {
-        background: var(--white);
-        padding: 20px;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
+    .filter-bar {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 12px;
+        align-items: end;
+        background: #fafafa;
+        border: 1px solid #eee;
+        border-radius: 10px;
+        padding: 15px;
         margin-bottom: 20px;
     }
-    .filter-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-        gap: 15px;
-        align-items: end;
-    }
-    .filter-group {
-        display: flex;
-        flex-direction: column;
-        gap: 5px;
-    }
-    .filter-group label {
-        font-weight: bold;
-        color: var(--brown);
-        font-size: 14px;
-    }
+    .filter-bar label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 4px; }
+    .filter-bar input, .filter-bar select { width: 100%; padding: 7px; box-sizing: border-box; }
+
     .products-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-        gap: 20px;
-        margin-top: 20px;
+        grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+        gap: 18px;
     }
     .product-card {
-        background: var(--white);
-        border-radius: var(--radius);
+        border: 1px solid #eee;
+        border-radius: 10px;
         overflow: hidden;
-        box-shadow: var(--shadow);
-        transition: transform 0.2s, box-shadow 0.2s;
-        position: relative;
+        background: #fff;
     }
-    .product-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    .product-card img {
+        width: 100%; height: 180px; object-fit: cover; cursor: pointer;
     }
-    .product-image {
-        width: 100%;
-        height: 200px;
-        object-fit: cover;
-        cursor: pointer;
-        transition: opacity 0.2s;
-    }
-    .product-image:hover {
-        opacity: 0.9;
-    }
-    .product-info {
-        padding: 15px;
-    }
-    .product-name {
-        font-weight: bold;
-        color: var(--text);
-        margin-bottom: 8px;
-        font-size: 16px;
-    }
-    .product-price {
-        color: var(--red);
-        font-weight: bold;
-        font-size: 18px;
-        margin-bottom: 5px;
-    }
-    .product-stock {
-        color: var(--text-muted);
-        font-size: 13px;
-        margin-bottom: 10px;
-    }
-    .product-rating {
-        color: #fbbf24;
-        font-size: 14px;
-        margin-bottom: 10px;
-    }
-    .product-actions {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-    }
-    .product-actions select {
-        flex: 1;
-        padding: 8px;
-        border-radius: 6px;
-        border: 1px solid var(--border);
-    }
-    .product-actions button {
-        padding: 8px 15px;
-        font-size: 13px;
-    }
-    .cart-indicator {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        background: var(--green, #10b981);
-        color: white;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-    }
-    .clear-filters {
-        display: inline-block;
-        margin-top: 15px;
-        color: var(--red);
-        text-decoration: underline;
-        cursor: pointer;
-    }
+    .product-card .info { padding: 12px; }
+    .product-card .name { font-weight: bold; margin-bottom: 4px; }
+    .product-card .price { color: #d9534f; font-weight: bold; }
+    .product-card .rating { color: #fbbf24; font-size: 13px; }
 </style>
 
-<div class="filter-section">
-    <form method="get" class="filter-grid">
-        <div class="filter-group">
-            <label>Search</label>
-            <?= html_search('search', 'placeholder="Search bagels..."') ?>
-        </div>
-
-        <div class="filter-group">
-            <label>Category</label>
-            <?= html_select('category_id', array_column($categories, 'name', 'id'), 'All Categories') ?>
-        </div>
-
-        <div class="filter-group">
-            <label>Min Price (RM)</label>
-            <?= html_number('min_price', '', '', '0.01', 'placeholder="0"') ?>
-        </div>
-
-        <div class="filter-group">
-            <label>Max Price (RM)</label>
-            <?= html_number('max_price', '', '', '0.01', 'placeholder="100"') ?>
-        </div>
-
-        <div class="filter-group">
-            <label>Sort By</label>
-            <?= html_select('sort', ['name' => 'Name', 'price' => 'Price', 'stock' => 'Stock', 'rating' => 'Rating'], null) ?>
-        </div>
-
-        <div class="filter-group">
-            <label>Order</label>
-            <?= html_select('dir', ['asc' => 'Low to High / A-Z', 'desc' => 'High to Low / Z-A'], null) ?>
-        </div>
-
-        <div class="filter-group">
-            <button type="submit">Apply Filters</button>
-        </div>
-    </form>
-
-    <?php if ($search || $category_id || $min_price || $max_price): ?>
-    <a href="/product/list.php" class="clear-filters">✕ Clear all filters</a>
-    <?php endif; ?>
-</div>
+<form method="get" class="filter-bar">
+    <div>
+        <label>Search</label>
+        <?= html_search('search', 'placeholder="Search bagels..."') ?>
+    </div>
+    <div>
+        <label>Category</label>
+        <?php
+        $cat_opts = [];
+        foreach ($categories as $c) $cat_opts[$c->id] = $c->name;
+        ?>
+        <?= html_select('category_id', $cat_opts, 'All Categories') ?>
+    </div>
+    <div>
+        <label>Min Price (RM)</label>
+        <?= html_number('min_price', 0, '', '0.01') ?>
+    </div>
+    <div>
+        <label>Max Price (RM)</label>
+        <?= html_number('max_price', 0, '', '0.01') ?>
+    </div>
+    <div>
+        <button type="submit">Apply</button>
+    </div>
+</form>
 
 <div class="products-grid">
-    <?php foreach ($arr as $p): ?>
+    <?php foreach ($products as $p): ?>
         <?php
         $cart = get_cart();
         $id   = $p->id;
         $unit = $cart[$p->id] ?? 0;
         ?>
         <div class="product-card">
-            <?php if ($unit): ?>
-            <div class="cart-indicator">✅ In Cart</div>
-            <?php endif; ?>
-
-            <img src="/products/<?= $p->photo ?>"
-                 alt="<?= encode($p->name) ?>"
-                 class="product-image"
-                 data-get="/product/detail.php?id=<?= $p->id ?>">
-
-            <div class="product-info">
-                <div class="product-name"><?= encode($p->name) ?></div>
-
+            <a href="detail.php?id=<?= $p->id ?>">
+                <img src="/products/<?= encode($p->photo) ?>" alt="<?= encode($p->name) ?>">
+            </a>
+            <div class="info">
+                <div class="name"><?= encode($p->name) ?></div>
                 <?php if ($p->rating): ?>
-                <div class="product-rating">
-                    <?= str_repeat('★', round($p->rating)) ?>
-                    <?= number_format($p->rating, 1) ?>
-                </div>
+                <div class="rating"><?= str_repeat('★', round($p->rating)) ?> <?= number_format($p->rating, 1) ?></div>
                 <?php endif; ?>
-
-                <div class="product-price">RM <?= number_format($p->price, 2) ?></div>
-                <div class="product-stock">Stock: <?= $p->stock ?></div>
+                <div class="price">RM <?= number_format($p->price, 2) ?></div>
+                <div>Stock: <?= $p->stock ?></div>
 
                 <?php if ($_user?->role == 'Member'): ?>
-                <form method="post" class="product-actions">
+                <form method="post">
                     <?= html_hidden('id') ?>
-                    <?= html_select('unit', $_units, $unit ? $unit : '') ?>
+                    <?= html_select('unit', $_units, $unit ?: '') ?>
                     <button type="submit">Add</button>
                 </form>
                 <?php else: ?>
-                <div class="product-actions">
-                    <a href="/login.php" style="font-size: 13px; color: var(--red);">Login to order</a>
-                </div>
+                <a href="<?= app_url('login.php') ?>">Login to order</a>
                 <?php endif; ?>
             </div>
         </div>
     <?php endforeach; ?>
 </div>
 
-<?= $pager->html(build_filter_query()) ?>
-
-<script>
-$(document).ready(function() {
-    // Auto-submit on select change
-    $('.filter-grid select').on('change', function(e) {
-        // Only auto-submit for sort and dir
-        if ($(this).attr('name') === 'sort' || $(this).attr('name') === 'dir') {
-            this.form.submit();
-        }
-    });
-});
-</script>
-
-<?php
-// Helper function to build query string with current filters
-function build_filter_query() {
-    $params = [];
-    $search = get('search', '');
-    $category_id = get('category_id', '');
-    $min_price = get('min_price', '');
-    $max_price = get('max_price', '');
-    $sort = get('sort', 'name');
-    $dir = get('dir', 'asc');
-
-    if ($search) $params[] = 'search=' . urlencode($search);
-    if ($category_id) $params[] = 'category_id=' . urlencode($category_id);
-    if ($min_price) $params[] = 'min_price=' . urlencode($min_price);
-    if ($max_price) $params[] = 'max_price=' . urlencode($max_price);
-    if ($sort) $params[] = 'sort=' . urlencode($sort);
-    if ($dir) $params[] = 'dir=' . urlencode($dir);
-
-    return implode('&', $params);
-}
-
-include '../_foot.php';
+<?php include '../_foot.php'; ?>
