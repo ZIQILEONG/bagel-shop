@@ -86,16 +86,31 @@ include '../_head.php';
         <?php endif ?>
     </div>
 
-    <p>Subtotal: RM <?= number_format($total, 2) ?></p>
+    <div style="margin-top:15px; border:1px solid #ccc; padding:10px; max-width:350px;">
+        <div>Subtotal: RM <span id="subtotal-display"><?= number_format($total, 2) ?></span></div>
+        <div id="delivery-fee-row" style="display:none;">Delivery Fee: RM <span id="delivery-fee-display">7.00</span></div>
+        <div><b>Total: RM <span id="total-display"><?= number_format($total, 2) ?></span></b></div>
+    </div>
 
     <button>Continue to Payment</button>
 </form>
 
 <script>
+let baseSubtotal = <?= $total ?>;
+
 function toggleAddress() {
     let isDelivery = $('input[name="delivery_method"]:checked').val() == 'Delivery';
     $('#address-section').toggle(isDelivery);
+
+    if (isDelivery) {
+        $('#delivery-fee-row').show();
+        $('#total-display').text((baseSubtotal + 7).toFixed(2));
+    } else {
+        $('#delivery-fee-row').hide();
+        $('#total-display').text(baseSubtotal.toFixed(2));
+    }
 }
+
 $('form').on('submit', function(e) {
     let method = $('input[name="delivery_method"]:checked').val();
     if (method === 'Delivery') {
