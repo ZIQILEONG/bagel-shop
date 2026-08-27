@@ -100,21 +100,58 @@ try {
     $mail->addAddress($_user->email, $_user->name);
     $mail->Subject = "Your Bagel Shop Receipt - Order #$order_id";
 
-    $body = "Hi {$_user->name},\n\nThank You for your order!\n\n";
-    $body .= "Order #: $order_id\n";
-    $body .= "Total Paid: RM " . number_format($o->total, 2) . "\n";
-    if ($o->voucher_code) {
-        $body .= "Voucher Used: {$o->voucher_code} (- RM " . number_format($o->discount, 2) . ")\n";
-    }
-    $body .= "Payment Method: $method\n\n";
-    $body .= "Items:\n";
+    $body = "Hi {$_user->name},\n\n";
+    $body .= "Thank you for your order! Here is your receipt.\n\n";
+    $body .= "========================================\n";
+    $body .= "ORDER #$order_id\n";
+    $body .= "Date: {$o->datetime}\n";
+    $body .= "========================================\n\n";
 
+    $body .= "ITEMS:\n";
     foreach ($items as $item) {
         $stm = $_db->prepare("SELECT name FROM product WHERE id = ?");
         $stm->execute([$item->product_id]);
         $p = $stm->fetch();
         $body .= "- {$p->name} x{$item->unit} = RM " . number_format($item->subtotal, 2) . "\n";
     }
+
+    $body .= "\n----------------------------------------\n";
+    $body .= "Subtotal: RM " . number_format($o->total - $o->delivery_fee + $o->discount + ($o->points_used / 100), 2) . "\n";
+
+    if ($o->voucher_code) {
+        $body .= "Voucher ({$o->voucher_code}): - RM " . number_format($o->discount, 2) . "\n";
+    }
+    if ($o->points_used > 0) {
+        $body .= "Points Used ({$o->points_used} pts): - RM " . number_format($o->points_used / 100, 2) . "\n";
+    }
+    if ($o->delivery_fee > 0) {
+        $body .= "Delivery Fee: RM " . number_format($o->delivery_fee, 2) . "\n";
+    }
+
+    $body .= "----------------------------------------\n";
+    $body .= "TOTAL PAID: RM " . number_format($o->total, 2) . "\n";
+    $body .= "Payment Method: $method\n";
+    $body .= "Points Earned: +$points_earned points\n";
+    $body .= "----------------------------------------\n\n";
+
+    $body .= "DELIVERY:\n";
+    $body .= "Method: {$o->delivery_method}\n";
+
+    if ($o->delivery_method == 'Delivery' && $o->address_id) {
+        $stm = $_db->prepare("SELECT * FROM shipping_address WHERE id = ?");
+        $stm->execute([$o->address_id]);
+        $addr = $stm->fetch();
+        if ($addr) {
+            $body .= "Deliver to: {$addr->recipient_name} ({$addr->phone})\n";
+            $body .= "{$addr->address_line1} {$addr->address_line2}\n";
+            $body .= "{$addr->city}, {$addr->state} {$addr->postcode}, {$addr->country}\n";
+        }
+    }
+
+    $body .= "\n========================================\n\n";
+    $body .= "Already have an account? Sign in anytime at:\n";
+    $body .= SITE_URL . "/login.php\n\n";
+    $body .= "Thank you for shopping with Pululu Bagel Shop!\n";
 
     $mail->Body = $body;
     $mail->send();

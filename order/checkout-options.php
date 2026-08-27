@@ -36,14 +36,30 @@ if (is_post()) {
     }
 }
 
-// Calculate a quick subtotal preview for this page
-$total = 0;
+// Calculate the full preview: subtotal -> voucher -> points -> (delivery added via JS)
+$subtotal = 0;
 foreach ($cart as $product_id => $unit) {
     $stm = $_db->prepare("SELECT price FROM product WHERE id = ?");
     $stm->execute([$product_id]);
     $p = $stm->fetch();
-    $total += $p->price * $unit;
+    $subtotal += $p->price * $unit;
 }
+
+$voucher = $_SESSION['voucher'] ?? null;
+$voucher_discount = 0;
+if ($voucher) {
+    $voucher_discount = round($subtotal * $voucher['percent'] / 100, 2);
+}
+$after_voucher = $subtotal - $voucher_discount;
+
+$use_points = $_SESSION['use_points'] ?? false;
+$points_discount = 0;
+if ($use_points && $_user->points > 0) {
+    $points_value_available = $_user->points / 100;
+    $points_discount = min($points_value_available, $after_voucher);
+    $points_discount = round($points_discount, 2);
+}
+$after_points = $after_voucher - $points_discount;
 
 $stm = $_db->prepare("SELECT * FROM shipping_address WHERE user_id = ? ORDER BY is_default DESC, id DESC");
 $stm->execute([$_user->id]);
@@ -87,16 +103,22 @@ include '../_head.php';
     </div>
 
     <div style="margin-top:15px; border:1px solid #ccc; padding:10px; max-width:350px;">
-        <div>Subtotal: RM <span id="subtotal-display"><?= number_format($total, 2) ?></span></div>
+        <div>Subtotal: RM <?= number_format($subtotal, 2) ?></div>
+        <?php if ($voucher): ?>
+        <div>Voucher (<?= $voucher['percent'] ?>%): - RM <?= number_format($voucher_discount, 2) ?></div>
+        <?php endif ?>
+        <?php if ($points_discount > 0): ?>
+        <div>Points Used: - RM <?= number_format($points_discount, 2) ?></div>
+        <?php endif ?>
         <div id="delivery-fee-row" style="display:none;">Delivery Fee: RM <span id="delivery-fee-display">7.00</span></div>
-        <div><b>Total: RM <span id="total-display"><?= number_format($total, 2) ?></span></b></div>
+        <div><b>Total: RM <span id="total-display"><?= number_format($after_points, 2) ?></span></b></div>
     </div>
 
-    <button>Continue to Payment</button>
+    <p><button>Continue to Payment</button></p>
 </form>
 
 <script>
-let baseSubtotal = <?= $total ?>;
+let baseTotal = <?= $after_points ?>;
 
 function toggleAddress() {
     let isDelivery = $('input[name="delivery_method"]:checked').val() == 'Delivery';
@@ -104,10 +126,10 @@ function toggleAddress() {
 
     if (isDelivery) {
         $('#delivery-fee-row').show();
-        $('#total-display').text((baseSubtotal + 7).toFixed(2));
+        $('#total-display').text((baseTotal + 7).toFixed(2));
     } else {
         $('#delivery-fee-row').hide();
-        $('#total-display').text(baseSubtotal.toFixed(2));
+        $('#total-display').text(baseTotal.toFixed(2));
     }
 }
 

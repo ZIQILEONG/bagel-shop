@@ -139,6 +139,12 @@ include '../_head.php';
     <br>
     <?php endif ?>
 
+    <?php if ($o->points_used > 0): ?>
+    <label>Points Used</label>
+    <div><?= $o->points_used ?> points (- RM <?= number_format($o->points_used / 100, 2) ?>)</div>
+    <br>
+    <?php endif ?>
+
     <label>Delivery Method</label>
     <div><?= $o->delivery_method ?><?= $o->delivery_fee > 0 ? ' (+RM ' . number_format($o->delivery_fee, 2) . ')' : '' ?></div>
     <br>
