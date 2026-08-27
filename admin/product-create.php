@@ -33,7 +33,7 @@ if (is_post() && req('btn') == 'create') {
 
     $f = get_file('photo');
     if ($f && !getimagesize($f->tmp_name)) {
-        $_err['photo'] = 'Invalid image file uploaded';
+        $_err['photo'] = 'Invalid main image file uploaded';
     }
 
     if (!$_err) {
@@ -42,37 +42,40 @@ if (is_post() && req('btn') == 'create') {
             mkdir($dir, 0755, true);
         }
 
+        // 1. Save Main Photo
         if ($f) {
             $photo = save_photo($f, $dir);
         }
 
-        // Generate ID
+        // 2. Generate Product ID
         $max   = $_db->query("SELECT MAX(id) FROM product")->fetchColumn();
         $num   = $max ? ((int) substr($max, 1) + 1) : 1;
         $newId = 'P' . str_pad($num, 3, '0', STR_PAD_LEFT);
 
+        // 3. Insert Product
         $stm = $_db->prepare("INSERT INTO product (id, name, category_id, price, photo, stock, description, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stm->execute([$newId, $name, $category_id, $price, $photo, $stock, $description, $video_url]);
 
-        // Upload detail gallery photos if provided
-        $files = $_FILES['detail_photos'] ?? null;
-        if ($files && is_array($files['tmp_name'])) {
+        // 4. Batch Upload Multiple Detail Photos (1 Product = Multiple Photos)
+        $detailFiles = $_FILES['detail_photos'] ?? null;
+        if ($detailFiles && is_array($detailFiles['tmp_name'])) {
             $sort = 1;
-            foreach ($files['tmp_name'] as $i => $tmp) {
-                if ($files['error'][$i] == UPLOAD_ERR_OK && getimagesize($tmp)) {
+            foreach ($detailFiles['tmp_name'] as $i => $tmp) {
+                if ($detailFiles['error'][$i] === UPLOAD_ERR_OK && getimagesize($tmp)) {
                     $fakeFile = (object)[
                         'tmp_name' => $tmp,
-                        'name'     => $files['name'][$i],
-                        'error'    => $files['error'][$i],
+                        'name'     => $detailFiles['name'][$i],
+                        'error'    => $detailFiles['error'][$i],
                     ];
-                    $detailPhoto = save_photo($fakeFile, $dir);
-                    $dStm = $_db->prepare("INSERT INTO product_photo (product_id, photo, sort_order) VALUES (?, ?, ?)");
-                    $dStm->execute([$newId, $detailPhoto, $sort++]);
+                    $savedDetailPhoto = save_photo($fakeFile, $dir);
+                    
+                    $pStm = $_db->prepare("INSERT INTO product_photo (product_id, photo, sort_order) VALUES (?, ?, ?)");
+                    $pStm->execute([$newId, $savedDetailPhoto, $sort++]);
                 }
             }
         }
 
-        temp('info', 'Product created successfully.');
+        temp('info', 'Product and detail photos created successfully.');
         redirect('product-detail.php?id=' . $newId);
     }
 }
@@ -90,7 +93,7 @@ include '../_head.php';
 
 <style>
 /* =========================================================
-   PULULU ADD NEW PRODUCT UI/UX
+   PULULU ADD NEW PRODUCT UI/UX & MULTI-PHOTO GALLERY
    ========================================================= */
 :root {
     --pd-primary: #d9825a;
@@ -102,6 +105,7 @@ include '../_head.php';
     --pd-border-focus: #d9825a;
     --pd-bg-input: #ffffff;
     --pd-red: #d65c4f;
+    --pd-red-hover: #b33a2d;
 }
 
 body {
@@ -172,7 +176,7 @@ body {
     margin-bottom: 24px;
 }
 
-/* Left Image Box */
+/* Left: Main Product Photo */
 .pd-image-column {
     display: flex;
     flex-direction: column;
@@ -181,13 +185,14 @@ body {
     position: relative;
     border-radius: 16px;
     overflow: hidden;
-    border: 1px solid var(--pd-border);
+    border: 1.5px solid var(--pd-border);
     background: #fdfbf9;
     aspect-ratio: 1 / 1;
     display: flex;
     align-items: center;
     justify-content: center;
     box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    transition: all 0.2s ease;
 }
 .pd-main-photo-card img {
     width: 100%;
@@ -315,7 +320,9 @@ body {
     font-weight: 600;
 }
 
-/* Detail Photos Box */
+/* =========================================================
+   MULTIPLE DETAIL PHOTOS BOX
+   ========================================================= */
 .pdp-box {
     border: 1.5px solid #f3e8e2;
     border-radius: 16px;
@@ -345,12 +352,73 @@ body {
     color: var(--pd-brown-dark);
 }
 
-/* Upload Container */
+/* Grid for dynamic previews + add box */
 .pdp-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
     gap: 16px;
 }
+
+.pdp-card {
+    border: 1px solid #ebdcd5;
+    border-radius: 14px;
+    background: #fff;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 2px 6px rgba(67, 40, 24, 0.03);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.pdp-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(67, 40, 24, 0.06);
+}
+.pdp-img-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
+    background: #fdfbf9;
+}
+.pdp-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.pdp-card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #fff;
+    border-top: 1px solid #f8eee8;
+}
+.pdp-filename {
+    font-size: 11px;
+    color: #8a7366;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.pdp-delete-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: var(--pd-red);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s ease, color 0.15s ease;
+}
+.pdp-delete-btn:hover {
+    transform: scale(1.15);
+    color: var(--pd-red-hover);
+}
+
+/* Dashed Add Photo Drop Area */
 .pdp-add-box {
     border: 1.5px dashed #d8c2b5;
     border-radius: 14px;
@@ -473,9 +541,9 @@ body {
         <!-- Create Form -->
         <form method="post" enctype="multipart/form-data" id="createProductForm">
             <div class="pd-main-grid">
-                <!-- Left: Main Photo -->
+                <!-- Left: Main Product Photo -->
                 <div class="pd-image-column">
-                    <div class="pd-main-photo-card">
+                    <div class="pd-main-photo-card" id="mainPhotoCard">
                         <img id="mainProductImage" src="/products/default.jpg" alt="Product Thumbnail">
                         <label for="productPhotoInput" class="pd-change-photo-btn">
                             📷 Upload Photo
@@ -544,7 +612,7 @@ body {
                 </div>
             </div>
 
-            <!-- Detail Photos Tile (Allows selecting multiple images during creation) -->
+            <!-- Detail Photos Tile (Multiple Photo Upload) -->
             <div class="pdp-box">
                 <div class="pdp-header">
                     <div class="pdp-header-icon">
@@ -554,11 +622,12 @@ body {
                             <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                         </svg>
                     </div>
-                    <div class="pdp-header-title">Product Detail Photos</div>
+                    <div class="pdp-header-title">Product Detail Photos (Multiple)</div>
                 </div>
 
                 <div class="pdp-grid" id="detailPhotosGrid">
-                    <label for="pdpDetailInput" class="pdp-add-box">
+                    <!-- Dynamic preview cards will be injected here -->
+                    <label for="pdpDetailInput" class="pdp-add-box" id="addBoxLabel">
                         <div class="pdp-add-icon">＋</div>
                         <div class="pdp-add-title">Add Photos</div>
                         <div class="pdp-add-sub">Upload up to 10 photos<br>JPG, PNG (Max 5MB)</div>
@@ -582,51 +651,147 @@ body {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const photoInput = document.getElementById('productPhotoInput');
-    const mainImage = document.getElementById('mainProductImage');
+    // -------------------------------------------------------------
+    // 1. MAIN PHOTO: FILE SELECT & DRAG-AND-DROP
+    // -------------------------------------------------------------
+    const photoInput    = document.getElementById('productPhotoInput');
+    const mainImage     = document.getElementById('mainProductImage');
+    const mainPhotoCard = document.getElementById('mainPhotoCard');
 
-    if (photoInput && mainImage) {
+    function updateMainPreview(file) {
+        if (file && file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = (e) => mainImage.src = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    }
+
+    if (photoInput) {
         photoInput.addEventListener('change', function () {
-            const file = this.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    mainImage.src = e.target.result;
-                };
-                reader.readAsDataURL(file);
+            if (this.files.length > 0) {
+                updateMainPreview(this.files[0]);
             }
         });
     }
 
-    // Detail photos preview on upload
+    if (mainPhotoCard && photoInput) {
+        ['dragenter', 'dragover'].forEach(eName => {
+            mainPhotoCard.addEventListener(eName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                mainPhotoCard.style.borderColor = 'var(--pd-primary)';
+                mainPhotoCard.style.boxShadow = '0 0 0 3px rgba(217, 130, 90, 0.2)';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eName => {
+            mainPhotoCard.addEventListener(eName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                mainPhotoCard.style.borderColor = 'var(--pd-border)';
+                mainPhotoCard.style.boxShadow = 'none';
+            });
+        });
+
+        mainPhotoCard.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                photoInput.files = files;
+                updateMainPreview(files[0]);
+            }
+        });
+    }
+
+    // -------------------------------------------------------------
+    // 2. MULTI-PHOTO DETAIL GALLERY: FILE SELECT, DRAG-AND-DROP & REMOVAL
+    // -------------------------------------------------------------
     const detailInput = document.getElementById('pdpDetailInput');
-    const detailGrid = document.getElementById('detailPhotosGrid');
+    const detailGrid  = document.getElementById('detailPhotosGrid');
+    const addBoxLabel = document.getElementById('addBoxLabel');
+    const dt          = new DataTransfer();
+
+    function renderDetailPreviews() {
+        // Remove existing preview cards
+        detailGrid.querySelectorAll('.pdp-temp-card').forEach(el => el.remove());
+
+        Array.from(dt.files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const card = document.createElement('div');
+                card.className = 'pdp-card pdp-temp-card';
+                card.innerHTML = `
+                    <div class="pdp-img-wrap">
+                        <img src="${e.target.result}" alt="Detail Preview">
+                    </div>
+                    <div class="pdp-card-footer">
+                        <span class="pdp-filename" title="${file.name}">${file.name}</span>
+                        <button type="button" class="pdp-delete-btn" onclick="removeDetailFile(${index})" title="Remove photo">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                            </svg>
+                        </button>
+                    </div>
+                `;
+                detailGrid.insertBefore(card, addBoxLabel);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+
+    function addDetailFiles(filesList) {
+        Array.from(filesList).forEach(file => {
+            if (file.type.startsWith('image/')) {
+                dt.items.add(file);
+            }
+        });
+        detailInput.files = dt.files;
+        renderDetailPreviews();
+    }
 
     if (detailInput) {
         detailInput.addEventListener('change', function () {
-            // Keep the add button and remove old previews
-            const addBtn = detailGrid.querySelector('.pdp-add-box');
-            detailGrid.querySelectorAll('.temp-preview').forEach(el => el.remove());
-
-            Array.from(this.files).forEach(file => {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const card = document.createElement('div');
-                    card.className = 'pdp-card temp-preview';
-                    card.innerHTML = `
-                        <div class="pdp-img-wrap">
-                            <img src="${e.target.result}" alt="Preview">
-                        </div>
-                        <div class="pdp-card-footer">
-                            <span class="pdp-filename">${file.name}</span>
-                        </div>
-                    `;
-                    detailGrid.insertBefore(card, addBtn);
-                };
-                reader.readAsDataURL(file);
-            });
+            addDetailFiles(this.files);
         });
     }
+
+    if (addBoxLabel) {
+        ['dragenter', 'dragover'].forEach(eName => {
+            addBoxLabel.addEventListener(eName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addBoxLabel.style.borderColor = 'var(--pd-primary)';
+                addBoxLabel.style.background = '#fff8f5';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eName => {
+            addBoxLabel.addEventListener(eName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                addBoxLabel.style.borderColor = '#d8c2b5';
+                addBoxLabel.style.background = '#fffdfc';
+            });
+        });
+
+        addBoxLabel.addEventListener('drop', (e) => {
+            if (e.dataTransfer.files.length > 0) {
+                addDetailFiles(e.dataTransfer.files);
+            }
+        });
+    }
+
+    window.removeDetailFile = function(index) {
+        const newDt = new DataTransfer();
+        Array.from(dt.files).forEach((file, i) => {
+            if (i !== index) newDt.items.add(file);
+        });
+        
+        dt.items.clear();
+        Array.from(newDt.files).forEach(file => dt.items.add(file));
+        detailInput.files = dt.files;
+        
+        renderDetailPreviews();
+    };
 });
 </script>
 
