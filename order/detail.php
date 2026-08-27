@@ -58,6 +58,12 @@ include '../_head.php';
     <br>
     <?php endif ?>
 
+    <?php if ($o->points_used > 0): ?>
+    <label>Points Used</label>
+    <div><?= $o->points_used ?> points (- RM <?= number_format($o->points_used / 100, 2) ?>)</div>
+    <br>
+    <?php endif ?>
+
     <label>Points Earned</label>
     <div>+<?= $o->points_earned ?> points</div>
     <br>
