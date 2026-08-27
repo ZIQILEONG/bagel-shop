@@ -138,7 +138,7 @@ $photoStm = $_db->prepare("
     WHERE product_id = ?
     ORDER BY sort_order
 ");
-$photoStm->execute([$p->id]);
+$photoStm->execute([$p->id ?? '']);
 $photos = $photoStm->fetchAll();
 
 // ----------------------------------------------------------------------------
@@ -146,63 +146,151 @@ $_title = $p ? 'Product | Detail (Admin)' : 'Product | Create (Admin)';
 include '../_head.php';
 ?>
 <style>
-.detail-photos {
-    grid-column: 1 / -1;
-    margin-top: 20px;
-    width: 100%;
+.pd-wrap {
+    max-width: 960px;
+    margin: 0 auto;
 }
-
-.photo-header {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
+.pd-card {
+    background: #fff;
+    border: 1px solid #ead5ca;
+    border-radius: 14px;
+    padding: 28px 30px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
 }
-
-.photo-header div {
-    background: #f9e5db;
-    padding: 14px;
-    border-radius: 8px;
+.pd-breadcrumb {
+    font-size: 13px;
+    color: #a97c5d;
+    margin-bottom: 14px;
+}
+.pd-breadcrumb a { color: #a97c5d; text-decoration: none; }
+.pd-breadcrumb a:hover { text-decoration: underline; }
+.pd-title {
+    font-size: 22px;
     font-weight: bold;
+    color: #5c3820;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.pd-title .pd-badge {
+    font-size: 13px;
+    background: #f9e5db;
+    color: #914e2b;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: normal;
 }
 
-.photo-row {
+.form-field {
+    margin-bottom: 18px;
+}
+.form-field label {
+    display: block;
+    font-weight: bold;
+    color: #914e2b;
+    margin-bottom: 6px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+.form-field input[type="text"],
+.form-field input[type="number"],
+.form-field select,
+.form-field textarea {
+    width: 100%;
+    padding: 11px 13px;
+    border: 1px solid #ead5ca;
+    border-radius: 9px;
+    background: #fffaf7;
+    box-sizing: border-box;
+    font-size: 14px;
+    transition: border-color 0.15s, box-shadow 0.15s;
+}
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+    outline: none;
+    border-color: #d9825a;
+    box-shadow: 0 0 0 3px rgba(217,130,90,0.15);
+}
+.form-field input:disabled {
+    background: #f2efec;
+    color: #999;
+}
+.form-two-col {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px 24px;
+}
+@media (max-width: 640px) {
+    .form-two-col { grid-template-columns: 1fr; }
+}
+.err {
+    color: #c0392b;
+    font-size: 12px;
+    display: block;
+    margin-top: 4px;
+}
+.pd-hint {
+    font-size: 12px;
+    color: #a89484;
+    margin-top: 4px;
+}
 
-    padding: 16px;
-    margin-bottom: 16px;
+.photo-upload-preview {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+.photo-upload-preview img {
+    width: 96px;
+    height: 96px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ead5ca;
+}
 
+.pd-section-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #5c3820;
+    margin: 30px 0 12px;
+    padding-top: 20px;
+    border-top: 1px solid #f0e4da;
+}
+
+.photo-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+}
+.photo-card {
     background: #fffaf7;
     border: 1px solid #ead5ca;
     border-radius: 10px;
+    overflow: hidden;
+    text-align: center;
+    transition: box-shadow 0.15s, transform 0.15s;
 }
-
-.photo-row div {
-    background: #f9e5db;
-    padding: 14px;
-    border-radius: 8px;
-    font-weight: bold;
+.photo-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transform: translateY(-2px);
 }
-
 .photo-box {
     width: 100%;
-    height: 100px;
+    height: 110px;
     overflow: hidden;
-    border-radius: 8px;
     background: #eee;
 }
-
 .photo-box img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    cursor: pointer;
-    transition: transform 0.3s ease;
+    cursor: zoom-in;
 }
-
 .photo-box img.enlarged {
     position: fixed;
     top: 50%;
@@ -218,6 +306,71 @@ include '../_head.php';
     padding: 10px;
     border-radius: 10px;
     box-shadow: 0 0 30px rgba(0,0,0,0.4);
+    cursor: zoom-out;
+}
+.photo-card .photo-name {
+    padding: 9px 8px;
+    font-size: 11px;
+    color: #85705f;
+    word-break: break-all;
+}
+
+.pd-actions {
+    max-width: 960px;
+    margin: 20px auto 0;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.pd-actions button, .pd-actions a button {
+    padding: 11px 22px;
+    border-radius: 9px;
+    border: none;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 14px;
+}
+.btn-save { background: #d9825a; color: #fff; }
+.btn-save:hover { background: #c66f47; }
+.btn-danger { background: #fff; color: #c0392b; border: 1px solid #f0c4bc !important; }
+.btn-danger:hover { background: #fdf1ef; }
+.btn-secondary { background: #f2efec; color: #5c3820; }
+.btn-secondary:hover { background: #e8e2db; }
+
+.pd-batch {
+    max-width: 960px;
+    margin: 24px auto 0;
+    background: #fbf3e8;
+    border: 1px solid #f0e2d0;
+    border-radius: 14px;
+    padding: 22px 26px;
+}
+
+.photo-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 9998;
+}
+.photo-backdrop.active { display: block; }
+
+.photo-box img.enlarged {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    max-width: 85vw;
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    transform: translate(-50%, -50%);
+    z-index: 9999;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 0 40px rgba(0,0,0,0.5);
+    cursor: zoom-out;
 }
 </style>
 
@@ -227,124 +380,125 @@ function enlargePhoto(img) {
 }
 </script>
 
-<form method="post" enctype="multipart/form-data" class="form" style="grid: auto / 1fr 2fr 1fr !important;>
-    <?php if ($p): ?>
-    <label>Id</label>
-    <input type="text" value="<?= $p->id ?>" disabled>
-    <?php endif ?>
-    <label for="name">Name</label>
-    <?= html_text('name', 'maxlength="100" style="width:100%;"') ?>
-    <?= err('name') ?>
-    <label>Category</label>
-    <select name="category_id" style="width:100%;padding:6px;" required>
-        <option value="">-- Select Category --</option>
-        <?php
-        $catStm = $_db->query("SELECT id, name FROM category ORDER BY name");
-        while ($cat = $catStm->fetch()) {
-            $selected = ($p -> category_id == $cat -> id) ? 'selected' : '';
-            echo "<option value=\"{$cat -> id}\" $selected>{$cat -> name}</option>";
-        }
-        ?>
-    </select>
-    <?= err('category_id') ?>
-    <label for="price">Price (RM)</label>
-    <?= html_text('price', 'maxlength="10" style="width:100%;"') ?>
-    <?= err('price') ?>
-    <label for="stock">Stock</label>
-    <?= html_text('stock', 'maxlength="10" style="width:100%;"') ?>
-    <?= err('stock') ?>
-    <label for="description">Description</label>
-    <textarea name="description" id="description" rows="4" style="width:100%;"><?= htmlspecialchars(trim($p->description)) ?></textarea>
-    <br>
-    <label for="video_url">Product Video Url:</label>
-    <?= html_text('video_url', 'placeholder="https://www.youtube.com/watch?v=example" style="width:100%;"') ?>
-    <?= err('video_url') ?>
-    <label>Product Photo:</label>
-    <label class="upload" for="photo">
-        <img src="/products/<?= $p->photo ?? 'default.jpg' ?>">
-        <?= html_file('photo', 'image/*') ?>
-    </label>
-    <?= err('photo') ?>
+<div class="pd-wrap">
+    <div class="pd-breadcrumb">
+        <a href="product-listing.php">Manage Products</a> / <?= $p ? 'Edit Product' : 'New Product' ?>
+    </div>
 
-    <!-- Display product detail photos if available -->
-    <div class="detail-photos">
-        <div class="photo-header">
-            <div>Product Detail Photo</div>
+    <div class="pd-card">
+        <div class="pd-title">
+            🥯 <?= $p ? htmlspecialchars($p->name) : 'Create New Product' ?>
+            <?php if ($p): ?><span class="pd-badge"><?= htmlspecialchars($p->id) ?></span><?php endif; ?>
         </div>
 
-        <div class="photo-row">
-            <div>Order</div>
-            <div>Photo Name</div>
-            <div>Photo</div>
+        <form method="post" enctype="multipart/form-data" id="productForm">
 
-            <?php foreach ($photos as $photo): ?>
-                <div class="photo-order">
-                    <input
-                        type="number"
-                        name="sort_order[<?= $photo->id ?>]"
-                        value="<?= $photo->sort_order ?>"
-                        style="width:100%;height:100%;"
-                        min="1" 
-                    >
+            <?php if ($p): ?>
+            <div class="form-field">
+                <label>Id</label>
+                <input type="text" value="<?= $p->id ?>" disabled>
+            </div>
+            <?php endif ?>
+
+            <div class="form-two-col">
+                <div class="form-field">
+                    <label for="name">Name</label>
+                    <?= html_text('name', 'maxlength="100"') ?>
+                    <?= err('name') ?>
                 </div>
 
-                <div class="photo-name">
-                    <?= htmlspecialchars($photo->photo) ?>
+                <div class="form-field">
+                    <label>Category</label>
+                    <select name="category_id" required>
+                        <option value="">-- Select Category --</option>
+                        <?php
+                        $catStm = $_db->query("SELECT id, name FROM category ORDER BY name");
+                        while ($cat = $catStm->fetch()) {
+                            $selected = (($p->category_id ?? '') == $cat->id) ? 'selected' : '';
+                            echo "<option value=\"{$cat->id}\" $selected>{$cat->name}</option>";
+                        }
+                        ?>
+                    </select>
+                    <?= err('category_id') ?>
                 </div>
 
+                <div class="form-field">
+                    <label for="price">Price (RM)</label>
+                    <?= html_text('price', 'maxlength="10"') ?>
+                    <?= err('price') ?>
+                </div>
+
+                <div class="form-field">
+                    <label for="stock">Stock</label>
+                    <?= html_text('stock', 'maxlength="10"') ?>
+                    <?= err('stock') ?>
+                </div>
+            </div>
+
+            <div class="form-field">
+                <label for="description">Description</label>
+                <textarea name="description" id="description" rows="4"><?= htmlspecialchars(trim($p->description ?? '')) ?></textarea>
+            </div>
+
+            <div class="form-field">
+                <label for="video_url">Product Video Url</label>
+                <?= html_text('video_url', 'placeholder="https://www.youtube.com/watch?v=example"') ?>
+                <?= err('video_url') ?>
+                <div class="pd-hint">Optional — paste a YouTube link to show a product video.</div>
+            </div>
+
+            <div class="form-field">
+                <label>Product Photo</label>
+                <div class="photo-upload-preview">
+                    <img src="/products/<?= $p->photo ?? 'default.jpg' ?>">
+                    <?= html_file('photo', 'image/*') ?>
+                </div>
+                <?= err('photo') ?>
+            </div>
+
+            <?php if ($p): ?>
+            <div class="pd-section-title">Product Detail Photos</div>
+            <div class="photo-cards">
+                <?php foreach ($photos as $photo): ?>
+                <div class="photo-card">
+                    <div class="photo-box">
+                        <img src="/products/<?= htmlspecialchars($photo->photo) ?>"
+                             alt="Product Detail Photo"
+                             onclick="enlargePhoto(this)">
                     </div>
-</div>
+                    <div class="photo-name"><?= htmlspecialchars($photo->photo) ?></div>
+                    <input type="hidden" name="sort_order[<?= $photo->id ?>]" value="<?= $photo->sort_order ?>">
+                </div>
+                <?php endforeach; ?>
+                <?php if (!$photos): ?>
+                <div class="pd-hint">No detail photos uploaded yet.</div>
+                <?php endif; ?>
+            </div>
+            <?php endif; ?>
 
-<!-- === NEW: Image edit (rotate/flip) section === -->
-<div class="detail-photos" style="margin-top:20px;">
-    <div class="photo-header"><div>Edit Photos (Rotate / Flip)</div></div>
-    <div class="photo-row" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
-        <?php if ($p && $p->photo): ?>
-        <div>
-            <div class="photo-box"><img src="/products/<?= encode($p->photo) ?>"></div>
-            <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=rotate_left">⟲</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=rotate_right">⟳</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=flip_h">⇋</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=&action=flip_v">⇅</button>
+        </form>
+    </div>
+
+    <?php if (!$p): ?>
+    <div class="pd-batch">
+        <form method="post">
+            <div class="form-field" style="margin-bottom:12px;">
+                <label for="batch_data">Batch Add (one per line: name,price,stock)</label>
+                <?= html_textarea('batch_data', 'rows="6" placeholder="Plain Bagel,3.50,50&#10;Sesame Bagel,3.80,40" style="width:100%;"') ?>
             </div>
-        </div>
-        <?php endif; ?>
-        <?php foreach ($photos as $photo): ?>
-        <div>
-            <div class="photo-box"><img src="/products/<?= encode($photo->photo) ?>"></div>
-            <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=rotate_left">⟲</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=rotate_right">⟳</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=flip_h">⇋</button>
-                <button type="button" data-post="image-edit.php?id=<?= $p->id ?>&photo_id=<?= $photo->id ?>&action=flip_v">⇅</button>
-            </div>
-        </div>
-        <?php endforeach; ?>
+            <button class="btn-secondary" name="btn" value="batch">Import</button>
+        </form>
+    </div>
+    <?php endif ?>
+
+    <div class="pd-actions">
+        <button type="submit" form="productForm" class="btn-save">Save</button>
+        <?php if ($p): ?>
+        <button class="btn-danger" data-post="product-detail.php?id=<?= $p->id ?>&btn=delete" data-confirm>Delete Product</button>
+        <?php endif ?>
+        <button class="btn-secondary" data-get="product-listing.php">Back to Listing</button>
     </div>
 </div>
-<!-- === END NEW section === -->
 
-    <section>
-        <button>Save</button>
-    </section>
-</form>
-<?php if (!$p): ?>
-<form method="post" class="form">
-    <label for="batch_data">Batch Add (one per line: name,price,stock)</label>
-    <?= html_textarea('batch_data', 'rows="6" placeholder="Plain Bagel,3.50,50&#10;Sesame Bagel,3.80,40"') ?>
-    <section>
-        <button name="btn" value="batch">Import</button>
-    </section>
-</form>
-<?php endif ?>
-<?php if ($p): ?>
-<p>
-    <button data-post="product-detail.php?id=<?= $p->id ?>&btn=delete" data-confirm>Delete Product</button>
-</p>
-<?php endif ?>
-<p>
-    <button data-get="product-listing.php">Back to Listing</button>
-</p>
 <?php
 include '../_foot.php';
