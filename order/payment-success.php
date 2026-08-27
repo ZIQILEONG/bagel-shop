@@ -153,13 +153,6 @@ try {
     $body .= SITE_URL . "/login.php\n\n";
     $body .= "Thank you for shopping with Pululu Bagel Shop!\n";
 
-    foreach ($items as $item) {
-        $stm = $_db->prepare("SELECT name FROM product WHERE id = ?");
-        $stm->execute([$item->product_id]);
-        $p = $stm->fetch();
-        $body .= "- {$p->name} x{$item->unit} = RM " . number_format($item->subtotal, 2) . "\n";
-    }
-
     $mail->Body = $body;
     $mail->send();
 }
