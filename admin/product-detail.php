@@ -191,21 +191,16 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU COMPLETE PAGE UI/UX STYLING
-   ========================================================= */
 :root {
-    --pd-primary: #cf7953;
-    --pd-primary-hover: #b86440;
+    --pd-primary: #d9825a;
+    --pd-primary-hover: #c66f47;
     --pd-brown-dark: #3e2619;
     --pd-text: #4a3b32;
     --pd-muted: #968377;
     --pd-border: #ebdcd5;
-    --pd-border-focus: #cf7953;
-    --pd-bg-input: #fffdfc;
+    --pd-border-focus: #d9825a;
+    --pd-bg-input: #ffffff;
     --pd-bg-disabled: #f7f2ef;
-    --pd-green: #3b8a4f;
-    --pd-green-bg: #eaf5ec;
     --pd-red: #d65c4f;
     --pd-red-hover: #b33a2d;
 }
@@ -216,7 +211,7 @@ body {
 }
 
 .pd-wrap {
-    max-width: 1060px;
+    max-width: 1040px;
     margin: 24px auto 60px;
     padding: 0 20px;
     box-sizing: border-box;
@@ -252,7 +247,6 @@ body {
 /* Header */
 .pd-header {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     margin-bottom: 28px;
 }
@@ -280,30 +274,13 @@ body {
     margin-left: 8px;
     border: 1px solid #f7dfd3;
 }
-.pd-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    background: var(--pd-green-bg);
-    color: var(--pd-green);
-    font-size: 12.5px;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 20px;
-}
-.pd-status-dot {
-    width: 6px;
-    height: 6px;
-    background: var(--pd-green);
-    border-radius: 50%;
-}
 
 /* Top Section Split Grid (Left Photo, Right Form) */
 .pd-main-grid {
     display: grid;
     grid-template-columns: 260px 1fr;
     gap: 32px;
-    margin-bottom: 28px;
+    margin-bottom: 24px;
 }
 
 /* Left: Main Product Photo Box */
@@ -356,7 +333,7 @@ body {
 .pd-form-column {
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 16px;
 }
 .form-field {
     display: flex;
@@ -398,7 +375,7 @@ body {
 .form-field select:focus,
 .form-field textarea:focus {
     border-color: var(--pd-border-focus);
-    box-shadow: 0 0 0 3px rgba(207, 121, 83, 0.12);
+    box-shadow: 0 0 0 3px rgba(217, 130, 90, 0.12);
 }
 .pd-input:disabled {
     background: var(--pd-bg-disabled);
@@ -447,11 +424,6 @@ body {
     padding-left: 36px;
 }
 
-.pd-hint {
-    font-size: 11px;
-    color: var(--pd-muted);
-    margin-top: 5px;
-}
 .err {
     font-size: 11px;
     color: var(--pd-red);
@@ -460,14 +432,14 @@ body {
 }
 
 /* =========================================================
-   DETAIL PHOTOS SECTION (MATCHES EXACT REFERENCE UI)
+   DETAIL PHOTOS GALLERY
    ========================================================= */
 .pdp-box {
     border: 1.5px solid #f3e8e2;
     border-radius: 16px;
     padding: 24px;
     background: #fff;
-    margin-top: 26px;
+    margin-top: 24px;
 }
 
 .pdp-header {
@@ -494,9 +466,8 @@ body {
 
 .pdp-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
     gap: 16px;
-    margin-bottom: 18px;
 }
 .pdp-card {
     border: 1px solid #ebdcd5;
@@ -526,22 +497,6 @@ body {
     cursor: zoom-in;
 }
 
-.pdp-sort-handle {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 26px;
-    height: 26px;
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(4px);
-    border-radius: 7px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: #8c7365;
-    border: 1px solid #f0e3dc;
-    pointer-events: none;
-}
 .pdp-card-footer {
     display: flex;
     align-items: center;
@@ -553,7 +508,7 @@ body {
 .pdp-filename {
     font-size: 11px;
     color: #8a7366;
-    max-width: 105px;
+    max-width: 100px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -617,47 +572,6 @@ body {
     line-height: 1.35;
 }
 
-.pdp-bottom-bar {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 18px;
-    border: 1px solid #f0e3dc;
-    border-radius: 12px;
-    background: #fdfaf8;
-}
-.pdp-bottom-label {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--pd-brown-dark);
-}
-.pdp-custom-file-btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 7px 16px;
-    background: #fff;
-    border: 1px solid #e2d1c7;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    color: var(--pd-brown-dark);
-    cursor: pointer;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
-    transition: all 0.15s ease;
-}
-.pdp-custom-file-btn:hover {
-    background: #fcf7f4;
-    border-color: var(--pd-primary);
-}
-.pdp-file-status {
-    font-size: 11.5px;
-    color: var(--pd-muted);
-}
-
 /* =========================================================
    BOTTOM ACTION BUTTONS
    ========================================================= */
@@ -681,22 +595,26 @@ body {
 .btn-save-main:hover {
     background: var(--pd-primary-hover);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(207, 121, 83, 0.25);
+    box-shadow: 0 4px 12px rgba(217, 130, 90, 0.25);
 }
+
 .btn-delete-link {
-    background: none;
-    border: none;
+    background: #fff;
+    border: 1.5px solid #f5cfca;
     color: var(--pd-red);
     font-size: 13px;
     font-weight: 700;
     cursor: pointer;
-    padding: 10px 16px;
-    transition: color 0.15s ease;
+    padding: 10px 18px;
+    border-radius: 10px;
+    transition: all 0.2s ease;
 }
 .btn-delete-link:hover {
-    color: var(--pd-red-hover);
-    text-decoration: underline;
+    background: var(--pd-red);
+    border-color: var(--pd-red);
+    color: #ffffff !important;
 }
+
 .btn-back-outline {
     background: #ffffff;
     color: var(--pd-brown-dark);
@@ -795,11 +713,6 @@ body {
                     <?php endif; ?>
                 </div>
             </div>
-            <?php if ($p): ?>
-                <div class="pd-status-badge">
-                    <span class="pd-status-dot"></span> Active
-                </div>
-            <?php endif; ?>
         </div>
 
         <!-- Main Product Form -->
@@ -813,9 +726,7 @@ body {
                             📷 Change Photo
                         </label>
                     </div>
-                    <div style="display:none;">
-                        <?= html_file('photo', 'image/* id="productPhotoInput"') ?>
-                    </div>
+                    <input type="file" name="photo" id="productPhotoInput" accept="image/*" style="display:none;">
                     <?= err('photo') ?>
                 </div>
 
@@ -823,7 +734,7 @@ body {
                 <div class="pd-form-column">
                     <?php if ($p): ?>
                         <div class="form-field">
-                            <label>ID (SKU)</label>
+                            <label>ID</label>
                             <input type="text" class="pd-input" value="<?= htmlspecialchars($p->id) ?>" disabled>
                         </div>
                     <?php endif; ?>
@@ -858,14 +769,12 @@ body {
                                 <span class="pd-input-prefix">RM</span>
                                 <?= html_text('price', 'maxlength="10" id="price" class="pd-input" placeholder="0.00"') ?>
                             </div>
-                            <span class="pd-hint">Set a competitive price for your product.</span>
                             <?= err('price') ?>
                         </div>
 
                         <div class="form-field">
                             <label for="stock">Stock Quantity</label>
                             <?= html_text('stock', 'maxlength="10" id="stock" class="pd-input" placeholder="0"') ?>
-                            <span class="pd-hint">Current available stock.</span>
                             <?= err('stock') ?>
                         </div>
                     </div>
@@ -873,7 +782,6 @@ body {
                     <div class="form-field">
                         <label for="description">Description</label>
                         <textarea name="description" id="description" rows="3" placeholder="A soft and chewy plain bagel with a golden crust. Perfect on its own or with your favorite spread."><?= htmlspecialchars(trim($description)) ?></textarea>
-                        <span class="pd-hint">Briefly describe your product to help customers know more.</span>
                         <?= err('description') ?>
                     </div>
 
@@ -883,7 +791,6 @@ body {
                             <span class="pd-input-icon">🔗</span>
                             <?= html_text('video_url', 'id="video_url" class="pd-input" placeholder="https://www.youtube.com/watch?v=example"') ?>
                         </div>
-                        <span class="pd-hint">Paste a YouTube link to showcase your product video.</span>
                         <?= err('video_url') ?>
                     </div>
                 </div>
@@ -908,13 +815,6 @@ body {
                             <div class="pdp-card">
                                 <div class="pdp-img-wrap">
                                     <img src="/products/<?= htmlspecialchars($photo->photo) ?>" alt="Product detail" onclick="enlargePhoto(this)">
-                                    <div class="pdp-sort-handle">
-                                        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-                                            <circle cx="9" cy="5" r="1.5"/><circle cx="15" cy="5" r="1.5"/>
-                                            <circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/>
-                                            <circle cx="9" cy="19" r="1.5"/><circle cx="15" cy="19" r="1.5"/>
-                                        </svg>
-                                    </div>
                                 </div>
                                 <div class="pdp-card-footer">
                                     <span class="pdp-filename" title="<?= htmlspecialchars($photo->photo) ?>">
@@ -936,27 +836,6 @@ body {
                             <div class="pdp-add-title">Add Photo</div>
                             <div class="pdp-add-sub">Upload up to 10 photos<br>JPG, PNG (Max 5MB)</div>
                         </label>
-                    </div>
-
-                    <!-- Bottom Upload Bar -->
-                    <div class="pdp-bottom-bar">
-                        <div class="pdp-bottom-label">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            <span>Add More Photos</span>
-                        </div>
-                        <label for="pdpDetailInput" class="pdp-custom-file-btn">
-                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
-                            </svg>
-                            Choose Files
-                        </label>
-                        <span id="pdpFileStatus" class="pdp-file-status">No file chosen</span>
                     </div>
                 </div>
             <?php endif; ?>
@@ -1024,16 +903,9 @@ function closePhoto() {
 }
 
 function handleDetailFilesSelect(input) {
-    const status = document.getElementById('pdpFileStatus');
     const submitBtn = document.getElementById('pdpSubmitUploadBtn');
-    
     if (input.files && input.files.length > 0) {
-        status.textContent = input.files.length === 1 
-            ? input.files[0].name 
-            : input.files.length + ' files selected';
         submitBtn.click();
-    } else {
-        status.textContent = 'No file chosen';
     }
 }
 
