@@ -2,198 +2,86 @@
 include '../_base.php';
 auth();
 $user = $_user;
-// =========================================================
-// UPDATE PROFILE
-// =========================================================
+
 if (is_post()) {
     $name     = post('name');
     $email    = post('email');
     $phone_no = post('phone_no');
-    // Keep old photo if user does not upload a new photo
     $photo = $user->photo;
-    // =====================================================
-    // UPLOAD PHOTO
-    // =====================================================
+
     if (isset($_FILES['photo']) && $_FILES['photo']['error'] == 0) {
         $file = $_FILES['photo'];
-        // Get file extension
-        $ext = strtolower(
-            pathinfo($file['name'], PATHINFO_EXTENSION)
-        );
-        // Allowed image types
-        $allowed = [
-            'jpg',
-            'jpeg',
-            'png',
-            'gif'
-        ];
-        // Check file type
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif'];
         if (in_array($ext, $allowed)) {
-            // Create a unique file name
             $photo = uniqid() . "." . $ext;
-            // IMPORTANT:
-            // Your photo folder is "images"
-            // NOT "image"
-            $image_path = __DIR__ . "/../images";
-            // Create images folder if it does not exist
+            $image_path = __DIR__ . "/image";
             if (!is_dir($image_path)) {
                 mkdir($image_path, 0777, true);
             }
-            // Save uploaded image
-            move_uploaded_file(
-                $file['tmp_name'],
-                $image_path . "/" . $photo
-            );
+            move_uploaded_file($file['tmp_name'], $image_path . "/" . $photo);
         }
     }
-    // =====================================================
-    // UPDATE DATABASE
-    // =====================================================
-    $stm = $_db->prepare("
-        UPDATE user
-        SET
-            name = ?,
-            email = ?,
-            phone_no = ?,
-            photo = ?
-        WHERE id = ?
-    ");
-    $stm->execute([
-        $name,
-        $email,
-        $phone_no,
-        $photo,
-        $user->id
-    ]);
-    // =====================================================
-    // RELOAD USER DATA
-    // =====================================================
-    $stm = $_db->prepare("
-        SELECT *
-        FROM user
-        WHERE id = ?
-    ");
-    $stm->execute([
-        $user->id
-    ]);
-    $user = $stm->fetch();
-    echo "Profile updated successfully!";
+
+    $stm = $_db->prepare("UPDATE user SET name=?,email=?,phone_no=?,photo=? WHERE id=?");
+    $stm->execute([$name,$email,$phone_no,$photo,$user->id]);
+
+    // 🔴Key point: After updating the database, re-query the user; do not continue using the old `$user`.
+    $stm = $_db->prepare("SELECT * FROM user WHERE id = ?");
+    $stm->execute([$user->id]);
+    $_SESSION['user'] = $stm->fetch(); // Refresh the user data in the session!
+    temp('info', 'Profile updated successfully!');
+    redirect('profile.php');
 }
-// =========================================================
-// PAGE
-// =========================================================
+
+// Retrieve the latest user from the session on the page.
+$user = $_SESSION['user'];
+
 $_title = 'User | Profile';
 include '../_head.php';
 ?>
-<!-- =====================================================
-     USER PROFILE FORM
-     ===================================================== -->
-<form
-    method="post"
-    class="form profile-form"
-    enctype="multipart/form-data"
->
-    <!-- =================================================
-         PHOTO
-         ================================================= -->
-    <label>
-        Photo
-    </label>
+<form method="post" class="form profile-form" enctype="multipart/form-data">
+    <label>Photo</label>
     <div>
-        <!-- Add an ID to the img tag to make it easier for JS to access -->
-        <img
-            id="avatarImg"
-            src="../images/<?= encode($user->photo ?: 'photo.jpg') ?>"
-            width="150"
-            height="150"
-            style="object-fit: cover; border-radius: 60%;"
-        >
+        <?php
+        // Avatar path; singular 'image' folder
+        $avatarFile = !empty($user->photo) ? $user->photo : 'photo.jpg';
+        ?>
+        <img id="avatarImg" src="image/<?=encode($avatarFile)?>" width="180" height="180" style="object‑fit:cover;border‑radius:60%;">
         <br><br>
-        <!-- file input add id -->
-        <input
-            id="photoInput"
-            type="file"
-            name="photo"
-            accept="image/jpeg,image/png,image/gif"
-        >
+        <input id="photoInput" type="file" name="photo" accept="image/jpeg,image/png,image/gif">
     </div>
-    <!-- =================================================
-         NAME
-         ================================================= -->
-    <label>
-        Name
-    </label>
-    <input
-        type="text"
-        name="name"
-        maxlength="50"
-        value="<?= encode($user->name) ?>"
-    >
-    <!-- =================================================
-         EMAIL
-         ================================================= -->
-    <label>
-        Email
-    </label>
-    <input
-        type="email"
-        name="email"
-        maxlength="100"
-        value="<?= encode($user->email) ?>"
-    >
-    <!-- =================================================
-         PHONE NUMBER
-         ================================================= -->
-    <label>
-        Phone Number
-    </label>
-    <input
-        type="text"
-        name="phone_no"
-        maxlength="20"
-        value="<?= encode($user->phone_no) ?>"
-    >
-    <!-- =================================================
-         ROLE
-         ================================================= -->
-    <label>
-        Role
-    </label>
+
+    <label>Name</label>
+    <input type="text" name="name" maxlength="50" value="<?=encode($user->name)?>">
+
+    <label>Email</label>
+    <input type="email" name="email" maxlength="100" value="<?=encode($user->email)?>">
+
+    <label>Phone Number</label>
+    <input type="text" name="phone_no" maxlength="20" value="<?=encode($user->phone_no)?>">
+
+    <label>Role</label>
+    <p><?=encode($user->role)?></p>
+
+    <label>Shipping Address</label>
     <p>
-        <?= encode($user->role) ?>
-    </p>
-    <!-- =================================================
-         SHIPPING ADDRESS
-         ================================================= -->
-    <label>
-        Shipping Address
-    </label>
-    <p>
-        <a href="address-list.php" 
-           style="text-decoration:none; color:inherit; cursor:pointer;"
-           onmouseover="this.style.color='#0000cc'"
-           onmouseout="this.style.color='inherit'">
+        <a href="address‑list.php" style="text‑decoration:none;color:inherit;" onmouseover="this.style.color='#0000cc'" onmouseout="this.style.color='inherit'">
             📦 Manage My Shipping Address
         </a>
     </p>
 
-    <!-- =================================================
-         UPDATE BUTTON
-         ================================================= -->
     <section>
-        <button type="submit">
-            Update Profile
-        </button>
+        <button type="submit">Update Profile</button>
     </section>
 </form>
-<!-- ✅ Added JS: Instant preview upon image selection -->
+
 <script>
     const avatarImg = document.getElementById('avatarImg');
     const photoInput = document.getElementById('photoInput');
     photoInput.addEventListener('change', function () {
         const file = this.files[0];
         if (!file) return;
-       // Preview images locally in real‑time; no need to upload to the backend.
         const reader = new FileReader();
         reader.onload = function (e) {
             avatarImg.src = e.target.result;

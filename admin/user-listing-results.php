@@ -15,7 +15,14 @@
     <?php foreach ($arr as $u): ?>
     <tr>
         <td><input type="checkbox" name="ids[]" value="<?= $u->id ?>" <?= $u->id == $_user->id ? 'disabled' : '' ?>></td>
-        <td><img src="/photos/<?= $u->photo ?>" width="50" height="50"></td>
+        <td>
+            <?php if (!empty($u->photo)): ?>
+                <!-- admin文件夹，回退到根目录 ../images/，数据库只存文件名 -->
+                <img src="../images/<?= encode($u->photo) ?>" width="50" height="50" style="object-fit: cover;">
+            <?php else: ?>
+                <img src="../images/photo.jpg" width="50" height="50" style="object-fit: cover;">
+            <?php endif; ?>
+        </td>
         <td><?= $u->id ?></td>
         <td><?= $u->name ?></td>
         <td><?= $u->email ?></td>
@@ -25,6 +32,6 @@
     </tr>
     <?php endforeach ?>
 </table>
-<button name="btn" value="delete_selected" data-confirm="Delete selected members?">Delete Selected</button>
+<button name="btn" value="delete_selected" data-confirm="Delete selected members?">Delete selected members?</button>
 </form>
 <?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>
