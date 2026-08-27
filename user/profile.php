@@ -66,7 +66,7 @@ include '../_head.php';
 
     <label>Shipping Address</label>
     <p>
-        <a href="address‑list.php" style="text‑decoration:none;color:inherit;" onmouseover="this.style.color='#0000cc'" onmouseout="this.style.color='inherit'">
+        <a href="address-list.php" style="text-decoration:none;color:inherit;" onmouseover="this.style.color='#0000cc'" onmouseout="this.style.color='inherit'">
             📦 Manage My Shipping Address
         </a>
     </p>
