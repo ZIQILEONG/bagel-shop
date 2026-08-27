@@ -133,6 +133,12 @@ include '../_head.php';
     <div>RM <?= $o->total ?></div>
     <br>
 
+    <?php if ($o->voucher_code): ?>
+    <label>Voucher Used</label>
+    <div><?= $o->voucher_code ?> (- RM <?= number_format($o->discount, 2) ?>)</div>
+    <br>
+    <?php endif ?>
+
     <label>Delivery Method</label>
     <div><?= $o->delivery_method ?><?= $o->delivery_fee > 0 ? ' (+RM ' . number_format($o->delivery_fee, 2) . ')' : '' ?></div>
     <br>

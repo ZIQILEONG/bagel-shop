@@ -13,7 +13,7 @@ if (is_post() && req('btn') == 'delete_selected') {
         $stm->execute(array_values($ids));
         temp('info', count($ids) . ' member(s) deactivated.');
     }
-    
+     
     else if ($before > 0) {
         temp('info', 'No members deactivated — you cannot deactivate your own account.');
     }

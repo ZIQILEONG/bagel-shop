@@ -52,6 +52,12 @@ include '../_head.php';
     <div>RM <?= $o->total ?></div>
     <br>
 
+    <?php if ($o->voucher_code): ?>
+    <label>Voucher Used</label>
+    <div><?= $o->voucher_code ?> (- RM <?= number_format($o->discount, 2) ?>)</div>
+    <br>
+    <?php endif ?>
+
     <label>Points Earned</label>
     <div>+<?= $o->points_earned ?> points</div>
     <br>

@@ -103,6 +103,9 @@ try {
     $body = "Hi {$_user->name},\n\nThank You for your order!\n\n";
     $body .= "Order #: $order_id\n";
     $body .= "Total Paid: RM " . number_format($o->total, 2) . "\n";
+    if ($o->voucher_code) {
+        $body .= "Voucher Used: {$o->voucher_code} (- RM " . number_format($o->discount, 2) . ")\n";
+    }
     $body .= "Payment Method: $method\n\n";
     $body .= "Items:\n";
 

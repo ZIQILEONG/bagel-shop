@@ -96,6 +96,16 @@ function toggleAddress() {
     let isDelivery = $('input[name="delivery_method"]:checked').val() == 'Delivery';
     $('#address-section').toggle(isDelivery);
 }
+$('form').on('submit', function(e) {
+    let method = $('input[name="delivery_method"]:checked').val();
+    if (method === 'Delivery') {
+        let addressSelected = $('input[name="address_id"]:checked').length > 0;
+        if (!addressSelected) {
+            e.preventDefault();
+            alert('Please select a shipping address before proceeding.');
+        }
+    }
+});
 </script>
 
 <?php
