@@ -2,18 +2,55 @@
 include '../_base.php';
 auth('Member');
 $error = '';
+
+// Telephone numbering rules by country (key = country name; min, max = local number digit lengths)
+$phoneRules = [
+    'Malaysia'    => ['min' =>9, 'max'=>10],
+    'Singapore'   => ['min' =>8, 'max'=>8],
+    'Thailand'    => ['min' =>9, 'max'=>9],
+    'Indonesia'   => ['min' =>9, 'max'=>12],
+    'Brunei'      => ['min' =>7, 'max'=>7],
+    'Philippines' => ['min' =>9, 'max'=>10],
+    'Vietnam'     => ['min' =>9, 'max'=>10],
+];
+
 if(is_post()){
-    $recipient_name = req('recipient_name');
-    $phone = req('phone');
-    $address_line1 = req('address_line1');
-    $address_line2 = req('address_line2');
-    $city = req('city');
-    $state = req('state');
-    $postcode = req('postcode');
+    $recipient_name = trim(req('recipient_name'));
+    $phone_country_code = trim(req('phone_country_code'));
+    $phone = trim(req('phone'));
+    $address_line1 = trim(req('address_line1'));
+    $address_line2 = trim(req('address_line2'));
+    $city = trim(req('city'));
+    $state = trim(req('state'));
+    $postcode = trim(req('postcode'));
     $country = req('country');
-    $stm = $_db->prepare("INSERT INTO shipping_address(user_id,recipient_name,phone,address_line1,address_line2,city,state,postcode,country) VALUES (?,?,?,?,?,?,?,?,?)");
-    $stm->execute([$_user->id,$recipient_name,$phone,$address_line1,$address_line2,$city,$state,$postcode,$country]);
-    redirect('address-list.php');
+
+    // 1. address line1 
+    if ($address_line1 === '') {
+        $error = "Address Line 1 cannot be empty! Please fill in house number and street name.";
+    }
+
+    // 2. Phone number validation: Only digits allowed.
+    if($error === ''){
+        if(!ctype_digit($phone)){
+            $error = "Phone number only accept digits.";
+        }else{
+            // Retrieve the number length rules for this country.
+            $rule = $phoneRules[$phone_country_code] ?? null;
+            if($rule){
+                $len = strlen($phone);
+                if($len < $rule['min'] || $len > $rule['max']){
+                    $error = "{$phone_country_code} phone number must be {$rule['min']}‑{$rule['max']} digits.";
+                }
+            }
+        }
+    }
+
+    if ($error === '') {
+        $stm = $_db->prepare("INSERT INTO shipping_address(user_id,recipient_name,phone_country_code,phone,address_line1,address_line2,city,state,postcode,country) VALUES (?,?,?,?,?,?,?,?,?,?)");
+        $stm->execute([$_user->id,$recipient_name,$phone_country_code,$phone,$address_line1,$address_line2,$city,$state,$postcode,$country]);
+        redirect('address-list.php');
+    }
 }
 $_title = "Add New Address";
 include '../_head.php';
@@ -28,7 +65,6 @@ include '../_head.php';
     border-radius:4px;
     margin-bottom:10px;
 }
-/* Custom button control overlaid on the map */
 .leaflet-control-mybutton {
     background:#d1603d;
     color:white;
@@ -67,48 +103,80 @@ include '../_head.php';
 .btn-cancel:hover{
     background:#f3f3f3;
 }
+.phone-row{
+    display:flex;
+    gap:8px;
+}
+.phone-code-select{
+    width:160px;
+    padding:6px;
+}
+.phone-input{
+    flex‑grow:1;
+    padding:6px;
+}
 </style>
 <h2>Add New Shipping Address</h2>
-<form method="post">
+<?php if ($error): ?>
+    <div style="color:red; border:1px solid red; padding:10px; margin:10px 0;">
+        <?= $error ?>
+    </div>
+<?php endif ?>
+<p style="font-size:13px; color:#666;">*Note: Auto‑location may not detect house number, please double‑check your full address before saving.</p>
+<form method="post" id="addressForm">
     <div id="map"></div>
     <div>
         <label>Recipient Name</label><br>
-        <input type="text" name="recipient_name" required style="width:100%;padding:6px;">
+        <input type="text" name="recipient_name" required style="width:100%;padding:6px;" value="<?= post('recipient_name','') ?>">
+    </div>
+
+    <div style="margin-top:8px;">
+        <label>Phone Number</label><br>
+        <div class="phone-row">
+            <select name="phone_country_code" id="phoneCountryCode" class="phone-code-select">
+                <option value="Malaysia" <?= post('phone_country_code','Malaysia')==='Malaysia'?'selected':'' ?>>Malaysia (+60)</option>
+                <option value="Singapore" <?= post('phone_country_code')==='Singapore'?'selected':'' ?>>Singapore (+65)</option>
+                <option value="Thailand" <?= post('phone_country_code')==='Thailand'?'selected':'' ?>>Thailand (+66)</option>
+                <option value="Indonesia" <?= post('phone_country_code')==='Indonesia'?'selected':'' ?>>Indonesia (+62)</option>
+                <option value="Brunei" <?= post('phone_country_code')==='Brunei'?'selected':'' ?>>Brunei (+673)</option>
+                <option value="Philippines" <?= post('phone_country_code')==='Philippines'?'selected':'' ?>>Philippines (+63)</option>
+                <option value="Vietnam" <?= post('phone_country_code')==='Vietnam'?'selected':'' ?>>Vietnam (+84)</option>
+            </select>
+            <input type="tel" name="phone" id="phoneNumber" class="phone-input" required value="<?= post('phone','') ?>" placeholder="Enter local phone number">
+        </div>
+        <small id="phoneHint" style="color:#666"></small>
+    </div>
+
+    <div style="margin-top:8px;">
+        <label>Address Line 1 <small>(House No. & Street, REQUIRED)</small></label><br>
+        <input type="text" name="address_line1" required style="width:100%;padding:6px;" value="<?= post('address_line1','') ?>">
     </div>
     <div style="margin-top:8px;">
-        <label>Phone</label><br>
-        <input type="text" name="phone" required style="width:100%;padding:6px;">
-    </div>
-    <div style="margin-top:8px;">
-        <label>Address Line 1</label><br>
-        <input type="text" name="address_line1" required style="width:100%;padding:6px;">
-    </div>
-    <div style="margin-top:8px;">
-        <label>Address Line 2</label><br>
-        <input type="text" name="address_line2" style="width:100%;padding:6px;">
+        <label>Address Line 2 <small>(Apartment / Block / Unit, OPTIONAL‑can leave blank)</small></label><br>
+        <input type="text" name="address_line2" style="width:100%;padding:6px;" value="<?= post('address_line2','') ?>">
     </div>
     <div style="margin-top:8px;">
         <label>City</label><br>
-        <input type="text" name="city" required style="width:100%;padding:6px;">
+        <input type="text" name="city" required style="width:100%;padding:6px;" value="<?= post('city','') ?>">
     </div>
     <div style="margin-top:8px;">
         <label>State</label><br>
-        <input type="text" name="state" required style="width:100%;padding:6px;">
+        <input type="text" name="state" required style="width:100%;padding:6px;" value="<?= post('state','') ?>">
     </div>
     <div style="margin-top:8px;">
         <label>Postcode</label><br>
-        <input type="text" name="postcode" required style="width:100%;padding:6px;">
+        <input type="text" name="postcode" required style="width:100%;padding:6px;" value="<?= post('postcode','') ?>">
     </div>
     <div style="margin-top:8px;">
         <label>Country</label><br>
-        <select name="country" style="width:100%;padding:6px;">
-            <option value="Malaysia" selected>Malaysia</option>
-            <option value="Singapore">Singapore</option>
-            <option value="Thailand">Thailand</option>
-            <option value="Indonesia">Indonesia</option>
-            <option value="Brunei">Brunei</option>
-            <option value="Philippines">Philippines</option>
-            <option value="Vietnam">Vietnam</option>
+        <select name="country" id="addressCountry" style="width:100%;padding:6px;">
+            <option value="Malaysia" <?= post('country','Malaysia')==='Malaysia'?'selected':'' ?>>Malaysia</option>
+            <option value="Singapore" <?= post('country')==='Singapore'?'selected':'' ?>>Singapore</option>
+            <option value="Thailand" <?= post('country')==='Thailand'?'selected':'' ?>>Thailand</option>
+            <option value="Indonesia" <?= post('country')==='Indonesia'?'selected':'' ?>>Indonesia</option>
+            <option value="Brunei" <?= post('country')==='Brunei'?'selected':'' ?>>Brunei</option>
+            <option value="Philippines" <?= post('country')==='Philippines'?'selected':'' ?>>Philippines</option>
+            <option value="Vietnam" <?= post('country')==='Vietnam'?'selected':'' ?>>Vietnam</option>
         </select>
     </div>
     <div style="margin-top:12px;">
@@ -116,8 +184,60 @@ include '../_head.php';
         <a href="address-list.php" class="btn-cancel">Cancel</a>
     </div>
 </form>
+
 <script>
-const map = L.map('map', {
+// The front-end phone number validation rules are consistent with the PHP implementation.
+const phoneRuleMap = {
+    'Malaysia':    {min:9, max:10},
+    'Singapore':   {min:8, max:8},
+    'Thailand':    {min:9, max:9},
+    'Indonesia':   {min:9, max:12},
+    'Brunei':      {min:7, max:7},
+    'Philippines': {min:9, max:10},
+    'Vietnam':     {min:9, max:10},
+};
+
+const phoneCountrySel = document.getElementById('phoneCountryCode');
+const phoneInput = document.getElementById('phoneNumber');
+const phoneHint = document.getElementById('phoneHint');
+const addressCountrySel = document.getElementById('addressCountry');
+const form = document.getElementById('addressForm');
+
+// Update address country; synchronize phone country.
+addressCountrySel.addEventListener('change',function(){
+    phoneCountrySel.value = this.value;
+    updatePhonePlaceholder();
+});
+phoneCountrySel.addEventListener('change',updatePhonePlaceholder);
+
+function updatePhonePlaceholder(){
+    const c = phoneCountrySel.value;
+    const rule = phoneRuleMap[c];
+    phoneInput.placeholder = `Local phone number (${rule.min}-${rule.max} digits)`;
+    phoneHint.textContent = `Requires ${rule.min}‑${rule.max} digits for ${c}`;
+}
+updatePhonePlaceholder();
+
+// Form submission validation
+form.addEventListener('submit',function(e){
+    const num = phoneInput.value.trim();
+    const country = phoneCountrySel.value;
+    const rule = phoneRuleMap[country];
+// Allow only numbers
+    if(!/^\d+$/.test(num)){
+        alert("Phone number only accept digits.");
+        e.preventDefault();
+        return;
+    }
+    const len = num.length;
+    if(len < rule.min || len > rule.max){
+        alert(`${country} phone number must be ${rule.min}‑${rule.max} digits.`);
+        e.preventDefault();
+        return;
+    }
+});
+
+// ========== Map Section (Fixes for state=region and street number logic; preserves all original functionality) ==========const map = L.map('map', {
     worldCopyJump: false,
     inertia: false,
     minZoom:3,
@@ -127,7 +247,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors',
     noWrap:true
 }).addTo(map);
-
 const locationBtn = L.control({position:'topleft'});
 locationBtn.onAdd = function(map) {
     const div = L.DomUtil.create('div','leaflet-control');
@@ -140,15 +259,12 @@ locationBtn.onAdd = function(map) {
     return div;
 }
 locationBtn.addTo(map);
-
 map.on('drag',function(){
     let c = map.getCenter();
     c.lat = Math.max(-84, Math.min(84, c.lat));
     map.setCenter(c,{animate:false});
 })
-
 let locationMarker = null;
-
 function getCurrentLocation(){
     if (!navigator.geolocation) {
         alert("Your browser does not support geolocation");
@@ -165,32 +281,37 @@ function getCurrentLocation(){
                 locationMarker = L.marker([lat,lng]).addTo(map);
             }
             try{
-                // Remove countrycodes=my to support multi-country geolocation.
-                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en`);
+                const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=en&zoom=14`);
                 const data = await res.json();
                 const adr = data.address;
 
-                // Address Line 1: House/Building Number + Street Name
-                let line1 = `${adr.house_number??''} ${adr.road??''}`.trim();
+                let parts = [];
+                if(adr.house_number) parts.push(adr.house_number);
+                if(adr.road) parts.push(adr.road);
+                let line1 = parts.join(' ').trim();
                 document.querySelector('[name="address_line1"]').value = line1;
 
-                // Address Line2: suburb / neighborhood community
                 let line2 = `${adr.suburb??''} ${adr.neighbourhood??''}`.trim();
                 document.querySelector('[name="address_line2"]').value = line2;
 
-                // city / town / village
                 document.querySelector('[name="city"]').value = adr.city ?? adr.town ?? adr.village ?? '';
-                document.querySelector('[name="state"]').value = adr.state ?? '';
+                document.querySelector('[name="state"]').value = adr.state ?? adr.region ?? '';
                 document.querySelector('[name="postcode"]').value = adr.postcode ?? '';
 
-                // Automatically match the country dropdown list.
                 const countrySelect = document.querySelector('[name="country"]');
                 const countryName = adr.country;
                 for(let opt of countrySelect.options){
                     if(opt.textContent === countryName){
                         countrySelect.value = opt.value;
+                        // Synchronously update the country for the phone number
+                        phoneCountrySel.value = opt.value;
+                        updatePhonePlaceholder();
                         break;
                     }
+                }
+
+                if(!adr.house_number){
+                    alert("Location loaded successfully.\n⚠️ House number could not be detected automatically.\nPlease manually fill in your house number in Address Line 1.");
                 }
 
             }catch(err){
