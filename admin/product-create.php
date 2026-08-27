@@ -123,7 +123,47 @@ include '../_head.php';
     </div>
     <div style="margin-bottom:12px;">
         <label>Product Detail Photo:</label>
-        <input type="file" name="photos[]" multiple accept="image/*">
+        <div id="dropZone" style="border:3px dashed #ddb99c;border-radius:8px;padding:25px;text-align:center;background:#fbf3e8;cursor:pointer;">
+    <p>📁 Drag & Drop photos here or click to select</p>
+    <input type="file" name="photos[]" id="photosInput" multiple accept="image/*" style="display:none;">
+</div>
+<div id="photoPreview" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;"></div>
+
+<script>
+(function() {
+    const dz = document.getElementById('dropZone');
+    const input = document.getElementById('photosInput');
+    const preview = document.getElementById('photoPreview');
+
+    dz.addEventListener('click', () => input.click());
+
+    ['dragenter','dragover','dragleave','drop'].forEach(ev =>
+        dz.addEventListener(ev, e => { e.preventDefault(); e.stopPropagation(); })
+    );
+
+    dz.addEventListener('drop', e => {
+        input.files = e.dataTransfer.files;
+        showPreview(input.files);
+    });
+
+    input.addEventListener('change', () => showPreview(input.files));
+
+    function showPreview(files) {
+        preview.innerHTML = '';
+        [...files].forEach(file => {
+            if (!file.type.startsWith('image/')) return;
+            const reader = new FileReader();
+            reader.onload = e => {
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.style = 'width:80px;height:80px;object-fit:cover;border-radius:6px;';
+                preview.appendChild(img);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+})();
+</script>
     </div>
     <div>
         <button type="submit" style="padding:8px 16px;">Save Product</button>
