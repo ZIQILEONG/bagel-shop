@@ -70,15 +70,15 @@ function get_file($key) {
     return null;
 }
 
-// Crop, resize and save photo
-function save_photo($f, $folder, $width = 200, $height = 200) {
+// Crop, resize and save photo with high resolution (800x800) and 95% quality
+function save_photo($f, $folder, $width = 800, $height = 800) {
     $photo = uniqid() . '.jpg';
     
     require_once 'lib/SimpleImage.php';
     $img = new SimpleImage();
     $img->fromFile($f->tmp_name)
         ->thumbnail($width, $height)
-        ->toFile("$folder/$photo", 'image/jpeg');
+        ->toFile("$folder/$photo", 'image/jpeg', 95);
 
     return $photo;
 }
@@ -94,7 +94,7 @@ function save_product_photos($files, $product_id, $folder) {
             $img = new SimpleImage();
             $img->fromFile($file['tmp_name'])
                 ->thumbnail(800, 800)
-                ->toFile("$folder/$photo", 'image/jpeg',92); //// 92% JPEG quality preserves crispness
+                ->toFile("$folder/$photo", 'image/jpeg',); 
 
             // Save to database
             global $_db;

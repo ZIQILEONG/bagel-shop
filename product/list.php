@@ -228,6 +228,7 @@ body {
     height: 100%;
     object-fit: cover;
     display: block;
+    image-rendering: auto;
     transition: transform 0.3s ease;
 }
 .product-card:hover img {
