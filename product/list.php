@@ -46,7 +46,7 @@ switch ($sort) {
         $orderBy = 'p.price DESC, p.name ASC';
         break;
     case 'rating_desc':
-        $orderBy = 'p.rating DESC, p.name ASC';
+        $orderBy = 'live_rating DESC, p.name ASC';
         break;
     case 'name_desc':
         $orderBy = 'p.name DESC';
@@ -57,11 +57,17 @@ switch ($sort) {
         break;
 }
 
-$sql = 'SELECT p.*, c.name AS category_name FROM product p LEFT JOIN category c ON p.category_id = c.id';
+$sql = 'SELECT p.*, c.name AS category_name, 
+               COALESCE(AVG(r.rating), 0) AS live_rating, 
+               COUNT(r.id) AS review_count 
+        FROM product p 
+        LEFT JOIN category c ON p.category_id = c.id 
+        LEFT JOIN product_review r ON p.id = r.product_id';
+
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
-$sql .= ' ORDER BY ' . $orderBy;
+$sql .= ' GROUP BY p.id ORDER BY ' . $orderBy;
 
 // SimplePager: 8 items per page for a clean 4-column grid
 $pager    = new SimplePager($sql, $params, 8, $page);
@@ -265,6 +271,9 @@ body {
     align-items: center;
     gap: 4px;
 }
+.product-card .rating span:first-child {
+    letter-spacing: 1px;
+}
 .product-card .price {
     font-size: 15.5px;
     font-weight: 800;
@@ -346,9 +355,7 @@ body {
     margin: 0;
 }
 
-/* =========================================================
-   PAGINATION
-   ========================================================= */
+/* Pagination */
 .pl-pagination-wrap,
 .pager {
     display: flex !important;
@@ -508,6 +515,11 @@ body {
                 $cartEntry = $cart[$p->id] ?? 0;
                 $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
                 $maxStockLimit = min(10, max(1, (int)$p->stock));
+
+                // Direct live rating computation
+                $revCount    = (int)($p->review_count ?? 0);
+                $liveRating  = $revCount > 0 ? (float)$p->live_rating : 0.0;
+                $filledStars = $revCount > 0 ? (int)round($liveRating) : 0;
                 ?>
                 <div class="product-card">
                     <a href="detail.php?id=<?= $p->id ?>" class="img-wrap">
@@ -518,8 +530,8 @@ body {
                         <div class="name"><?= encode($p->name) ?></div>
 
                         <div class="rating">
-                            <span><?= str_repeat('★', (int)round($p->rating ?? 5)) ?><?= str_repeat('☆', 5 - (int)round($p->rating ?? 5)) ?></span>
-                            <span><?= number_format($p->rating ?? 5.0, 1) ?></span>
+                            <span><?= str_repeat('★', $filledStars) ?><?= str_repeat('☆', 5 - $filledStars) ?></span>
+                            <span><?= $revCount > 0 ? number_format($liveRating, 1) : '0.0' ?></span>
                         </div>
 
                         <div class="price">RM <?= number_format($p->price, 2) ?></div>
