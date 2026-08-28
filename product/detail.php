@@ -70,39 +70,38 @@ foreach ($reviews as $r) {
 }
 
 // ==========================================
-// 🛒 HANDLE ADD TO CART (IDENTICAL TO LIST.PHP)
+// 🛒 HANDLE ADD TO CART (MAX 10 PER ITEM)
 // ==========================================
 if (is_post() && req('action') === 'add_to_cart') {
-    // Check if user is logged in
     if (!isset($_user) || $_user->role !== 'Member') {
         temp('info', 'Please log in to add items to your cart.');
         redirect('/user/login.php');
     }
 
     $unit = (int)req('unit', 1);
+    $cart = get_cart();
+    $currentUnit = (int)($cart[$p->id] ?? 0);
+    $totalUnit = $currentUnit + $unit;
 
-    if ($unit > 0 && $unit <= (int)$p->stock) {
-        // Read current cart and accumulate
-        $cart = get_cart();
-        $currentUnit = (int)($cart[$p->id] ?? 0);
-        $totalUnit = $currentUnit + $unit;
-
-        $max_allowed = min((int)$p->stock, 10);
-
-        if ($totalUnit > $max_allowed) {
-            $totalUnit = $max_allowed;
-        }
-        update_cart($p->id, $totalUnit);
-
-        // update_cart sets the exact item quantity in session
-        update_cart($p->id, $totalUnit);
-
-        temp('info', "Added {$unit} item(s) to your cart!");
-        redirect("detail.php?id={$p->id}");
-    } else {
-        temp('error', 'Invalid quantity requested or item out of stock.');
+    if ($unit < 1) {
+        temp('error', 'Please select at least 1 item.');
         redirect("detail.php?id={$p->id}");
     }
+
+    // 🔒 Limit to maximum 10 items
+    if ($totalUnit > 10) {
+        temp('error', "Maximum order limit is 10 per bagel. You already have {$currentUnit} in your cart.");
+        redirect("detail.php?id={$p->id}");
+    }
+
+    if ($totalUnit > (int)$p->stock) {
+        temp('error', 'Sorry, not enough stock available.');
+        redirect("detail.php?id={$p->id}");
+    }
+
+    update_cart($p->id, $totalUnit);
+    temp('info', "Added {$unit} item(s) to your cart!");
+    redirect("detail.php?id={$p->id}");
 }
 
 // ==========================================
@@ -711,6 +710,36 @@ body {
     color: var(--primary-orange);
 }
 
+/* Floating Toast Notification if the items more that 10*/
+/* Centered Top Floating Toast Notification */
+.pl-toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translate(-50%, -20px) scale(0.95);
+    background: #3e2619;
+    color: #fff;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(62, 38, 25, 0.25);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 99999;
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+    border-bottom: 3px solid #cf7953;
+}
+
+.pl-toast.show {
+    opacity: 1;
+    transform: translate(-50%, 0) scale(1);
+    pointer-events: auto;
+}
+
 @media (max-width: 860px) {
     .pdp-main-card {
         grid-template-columns: 1fr;
@@ -798,7 +827,7 @@ body {
                     <div class="pdp-action-box">
                         <div class="pdp-qty-stepper">
                             <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
-                            <input type="number" name="unit" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="<?= (int)$p->stock ?>" readonly>
+                            <input type="number" name="unit" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="10" readonly>
                             <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
                         </div>
 
@@ -936,6 +965,12 @@ body {
     </div>
 </div>
 
+<!-- Floating Toast Element -->
+<div id="plToast" class="pl-toast">
+    <span class="pl-toast-icon">⚠️</span>
+    <span id="plToastMsg">Maximum order limit is 10 items per bagel.</span>
+</div>
+
 <script>
 // Carousel Logic
 let currentSlide = 0;
@@ -957,20 +992,42 @@ function changeSlide(direction) {
     goToSlide(currentSlide + direction);
 }
 
-// Stepper Quantity & Dynamic Total
+// Stepper Quantity & Toast Notification (Capped at 10 items)
 const unitPrice = <?= (float)$p->price ?>;
-const maxStock = <?= (int)$p->stock ?>;
+const maxStock = Math.min(10, <?= (int)$p->stock ?>);
+let toastTimer = null;
+
+function showToast(message) {
+    const toast = document.getElementById('plToast');
+    const toastMsg = document.getElementById('plToastMsg');
+    if (!toast || !toastMsg) return;
+
+    toastMsg.textContent = message;
+    toast.classList.add('show');
+
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        toast.classList.remove('show');
+    }, 3000);
+}
 
 function stepQty(amount) {
     const input = document.getElementById('qtyInput');
     const totalText = document.getElementById('btnTotalText');
     if (!input) return;
 
-    let val = parseInt(input.value) + amount;
+    let currentVal = parseInt(input.value) || 1;
+    let nextVal = currentVal + amount;
 
-    if (val >= 1 && val <= maxStock) {
-        input.value = val;
-        if (totalText) totalText.textContent = (val * unitPrice).toFixed(2);
+    // Toast triggered when trying to exceed 10 items
+    if (amount > 0 && currentVal >= 10) {
+        showToast('Maximum order limit is 10 items per bagel.');
+        return;
+    }
+
+    if (nextVal >= 1 && nextVal <= maxStock) {
+        input.value = nextVal;
+        if (totalText) totalText.textContent = (nextVal * unitPrice).toFixed(2);
     }
 }
 
