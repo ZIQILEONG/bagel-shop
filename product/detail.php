@@ -87,9 +87,12 @@ if (is_post() && req('action') === 'add_to_cart') {
         $currentUnit = (int)($cart[$p->id] ?? 0);
         $totalUnit = $currentUnit + $unit;
 
-        if ($totalUnit > (int)$p->stock) {
-            $totalUnit = (int)$p->stock;
+        $max_allowed = min((int)$p->stock, 10);
+
+        if ($totalUnit > $max_allowed) {
+            $totalUnit = $max_allowed;
         }
+        update_cart($p->id, $totalUnit);
 
         // update_cart sets the exact item quantity in session
         update_cart($p->id, $totalUnit);
