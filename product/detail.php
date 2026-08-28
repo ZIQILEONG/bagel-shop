@@ -31,21 +31,6 @@ function get_youtube_embed_url($url) {
 $rawVideoUrl   = $p->video_url ?? $p->video ?? $p->youtube_url ?? '';
 $embedVideoUrl = get_youtube_embed_url($rawVideoUrl);
 
-// Check if this product is a 5-Bagel Set bundle
-$isSet5 = (stripos($p->name, '5 Bagel') !== false || stripos($p->name, '5-Pack') !== false || stripos($p->name, '5') !== false);
-
-// 8 Available Bagel Flavours
-$flavours = [
-    'Blueberry Bagel',
-    'Cinnamon Raisin Bagel',
-    'Cream Cheese Bagel',
-    'Everything Bagel',
-    'Garlic Bagel',
-    'Plain Bagel',
-    'Sesame Bagel',
-    'Whole Wheat Bagel'
-];
-
 // Fetch Detail Photos
 $photoStm = $_db->prepare("
     SELECT photo 
@@ -84,44 +69,33 @@ foreach ($reviews as $r) {
     if (isset($ratingCounts[$rt])) $ratingCounts[$rt]++;
 }
 
-// Handle Add to Cart
-if (is_post() && req('action') == 'add_to_cart') {
+// ==========================================
+// 🛒 HANDLE ADD TO CART
+// ==========================================
+if (is_post() && req('action') === 'add_to_cart') {
     $qty = (int)req('qty', 1);
-    $selectedFlavours = req('flavours', []);
 
-    if ($isSet5) {
-        $totalSelected = 0;
-        if (is_array($selectedFlavours)) {
-            foreach ($selectedFlavours as $fQty) {
-                $totalSelected += (int)$fQty;
-            }
+    if ($qty > 0 && $qty <= (int)$p->stock) {
+        if (function_exists('update_cart')) {
+            update_cart($p->id, $qty);
+        } else {
+            $cart = get_cart();
+            $cart[$p->id] = ($cart[$p->id] ?? 0) + $qty;
+            set_cart($cart);
         }
-        if ($totalSelected !== 5) {
-            temp('error', 'Please select exactly 5 bagels for this bundle.');
-            redirect("product-detail.php?id={$p->id}");
-        }
-    }
-
-    if ($qty > 0 && $qty <= $p->stock) {
-        $cartItemKey = $isSet5 ? $p->id . '_' . md5(json_encode($selectedFlavours)) : $p->id;
-        $_SESSION['cart'][$cartItemKey] = [
-            'id'       => $p->id,
-            'name'     => $p->name,
-            'price'    => $p->price,
-            'qty'      => ($_SESSION['cart'][$cartItemKey]['qty'] ?? 0) + $qty,
-            'flavours' => $isSet5 ? array_filter($selectedFlavours) : null
-        ];
 
         temp('info', "Added {$qty} item(s) to your cart!");
-        redirect('/index.php');
+        redirect("detail.php?id={$p->id}");
     } else {
-        temp('error', 'Invalid quantity requested.');
-        redirect("product-detail.php?id={$p->id}");
+        temp('error', 'Invalid quantity requested or item out of stock.');
+        redirect("detail.php?id={$p->id}");
     }
 }
 
-// Handle Review Submission
-if (is_post() && req('action') == 'submit_review') {
+// ==========================================
+// ⭐ HANDLE REVIEW SUBMISSION
+// ==========================================
+if (is_post() && req('action') === 'submit_review') {
     auth();
     $rating = (int)req('rating');
     $review_text = trim(req('review_text'));
@@ -130,7 +104,7 @@ if (is_post() && req('action') == 'submit_review') {
         $ins = $_db->prepare("INSERT INTO product_review (product_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())");
         $ins->execute([$p->id, $_user->id, $rating, $review_text]);
         temp('info', 'Thank you for your review!');
-        redirect("product-detail.php?id={$p->id}");
+        redirect("detail.php?id={$p->id}");
     } else {
         temp('error', 'Please select a star rating.');
     }
@@ -157,12 +131,10 @@ include '../_head.php';
     --border-subtle: #f5ebe4;
     --gold-star: #e99e28;
     --green-stock: #2b7a4b;
-    --red-alert: #d04632;
     --radius-lg: 24px;
     --radius-md: 16px;
     --radius-sm: 10px;
     --shadow-soft: 0 6px 24px rgba(67, 43, 30, 0.05);
-    --shadow-hover: 0 10px 30px rgba(67, 43, 30, 0.09);
 }
 
 body {
@@ -205,9 +177,7 @@ body {
     font-weight: 600;
 }
 
-/* -------------------------------------------------------------
-   1. MAIN SHOWCASE CARD
-   ------------------------------------------------------------- */
+/* 1. Main Showcase Card */
 .pdp-main-card {
     background: var(--card-bg);
     border-radius: var(--radius-lg);
@@ -220,7 +190,7 @@ body {
     margin-bottom: 36px;
 }
 
-/* Gallery / Carousel */
+/* Carousel */
 .pdp-gallery-wrap {
     display: flex;
     flex-direction: column;
@@ -272,13 +242,12 @@ body {
     color: var(--primary-brown);
     cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s ease;
 }
 .pdp-nav-btn:hover {
     background: #ffffff;
     color: var(--primary-orange);
     transform: translateY(-50%) scale(1.1);
-    box-shadow: 0 6px 16px rgba(207, 115, 73, 0.2);
 }
 .pdp-nav-prev { left: 14px; }
 .pdp-nav-next { right: 14px; }
@@ -288,7 +257,6 @@ body {
     gap: 12px;
     overflow-x: auto;
     padding-bottom: 6px;
-    scrollbar-width: thin;
 }
 .pdp-thumb {
     width: 72px;
@@ -308,16 +276,13 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 4px 10px rgba(207, 115, 73, 0.2);
 }
-.pdp-thumb:hover {
-    opacity: 0.9;
-}
 .pdp-thumb img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
 
-/* Product Info */
+/* Info */
 .pdp-info-wrap {
     display: flex;
     flex-direction: column;
@@ -341,7 +306,6 @@ body {
     color: var(--primary-brown);
     margin: 0 0 10px;
     line-height: 1.2;
-    letter-spacing: -0.02em;
 }
 
 .pdp-rating-summary {
@@ -355,7 +319,6 @@ body {
 .pdp-stars {
     color: var(--gold-star);
     letter-spacing: 2px;
-    font-size: 15px;
 }
 .pdp-rating-num {
     font-weight: 700;
@@ -365,14 +328,12 @@ body {
 .pdp-price-row {
     display: flex;
     align-items: baseline;
-    gap: 10px;
     margin-bottom: 18px;
 }
 .pdp-price {
     font-size: 30px;
     font-weight: 800;
     color: var(--primary-orange);
-    letter-spacing: -0.01em;
 }
 
 .pdp-description {
@@ -384,110 +345,7 @@ body {
     border-bottom: 1px solid var(--border-subtle);
 }
 
-/* 5-Bagel Flavour Selector */
-.flavour-selector-card {
-    background: var(--accent-cream);
-    border: 1.5px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 20px 22px;
-    margin-bottom: 24px;
-}
-.flavour-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 14px;
-    border-bottom: 1px solid #eedfd6;
-    margin-bottom: 16px;
-}
-.flavour-title {
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--primary-brown);
-}
-.flavour-subtitle {
-    font-size: 12px;
-    color: var(--text-muted);
-    margin-top: 3px;
-}
-.flavour-badge-counter {
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--red-alert);
-    background: #fff;
-    padding: 4px 10px;
-    border-radius: 20px;
-    border: 1px solid #f4cfc7;
-}
-.flavour-badge-counter.ready {
-    color: var(--green-stock);
-    border-color: #cde6d5;
-    background: #f0f9f3;
-}
-
-.flavour-list {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-.flavour-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #ffffff;
-    padding: 8px 14px;
-    border-radius: var(--radius-sm);
-    border: 1px solid var(--border-subtle);
-}
-.flavour-name {
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--primary-brown);
-}
-.flavour-stepper {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-}
-.flavour-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    border: 1.5px solid #e2d2c8;
-    background: #ffffff;
-    color: #7b6255;
-    font-size: 16px;
-    font-weight: 700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.flavour-btn:hover:not(:disabled) {
-    border-color: var(--primary-orange);
-    color: var(--primary-orange);
-    background: #fff6f1;
-}
-.flavour-btn:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-    border-color: #eddcd3;
-}
-.flavour-qty-box {
-    width: 32px;
-    height: 28px;
-    border: 1px solid #ebdcd5;
-    border-radius: 6px;
-    text-align: center;
-    font-size: 13px;
-    font-weight: 700;
-    color: var(--primary-brown);
-    background: #fff;
-    outline: none;
-}
-
-/* Quantity & CTA Button */
+/* Quantity & Add to Cart */
 .pdp-action-box {
     display: flex;
     align-items: center;
@@ -537,23 +395,17 @@ body {
     font-size: 15px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 10px;
     box-shadow: 0 4px 14px rgba(207, 115, 73, 0.25);
 }
-.pdp-btn-add-cart:hover:not(:disabled) {
+.pdp-btn-add-cart:hover {
     background: var(--primary-orange-hover);
     transform: translateY(-1px);
     box-shadow: 0 6px 18px rgba(207, 115, 73, 0.35);
-}
-.pdp-btn-add-cart:disabled {
-    background: #dbcdc4;
-    cursor: not-allowed;
-    box-shadow: none;
-    transform: none;
 }
 
 .pdp-stock-status {
@@ -570,7 +422,6 @@ body {
     height: 8px;
     background: var(--green-stock);
     border-radius: 50%;
-    box-shadow: 0 0 0 3px rgba(43, 122, 75, 0.15);
 }
 
 .pdp-features {
@@ -591,9 +442,7 @@ body {
     color: var(--primary-brown);
 }
 
-/* -------------------------------------------------------------
-   2. YOUTUBE VIDEO SHOWCASE CARD
-   ------------------------------------------------------------- */
+/* 2. YouTube Video Card */
 .pdp-video-card {
     background: var(--card-bg);
     border-radius: var(--radius-lg);
@@ -622,12 +471,11 @@ body {
 .pdp-video-responsive {
     position: relative;
     width: 100%;
-    padding-bottom: 56.25%; /* 16:9 Aspect Ratio */
+    padding-bottom: 56.25%;
     height: 0;
     overflow: hidden;
     border-radius: var(--radius-md);
     background: #000;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 .pdp-video-responsive iframe {
     position: absolute;
@@ -638,9 +486,7 @@ body {
     border: 0;
 }
 
-/* -------------------------------------------------------------
-   3. RATINGS & REVIEWS SECTION
-   ------------------------------------------------------------- */
+/* 3. Reviews Container */
 .pdp-reviews-container {
     background: var(--card-bg);
     border-radius: var(--radius-lg);
@@ -662,7 +508,6 @@ body {
     color: var(--primary-brown);
 }
 
-/* Rating Overview Grid */
 .pdp-rating-overview {
     display: grid;
     grid-template-columns: 200px 1fr;
@@ -718,14 +563,12 @@ body {
     border-radius: 999px;
 }
 
-/* Submit Review Card */
 .pdp-review-form-card {
     background: #ffffff;
     border: 1.5px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 24px;
     margin-bottom: 36px;
-    box-shadow: 0 2px 8px rgba(67, 43, 30, 0.03);
 }
 .pdp-star-rating-select {
     display: flex;
@@ -759,7 +602,6 @@ body {
     outline: none;
     margin-bottom: 14px;
     font-family: inherit;
-    transition: all 0.2s ease;
 }
 .pdp-review-textarea:focus {
     background: #ffffff;
@@ -775,14 +617,11 @@ body {
     font-size: 13.5px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.2s;
 }
 .pdp-btn-submit-review:hover {
     background: var(--primary-orange-hover);
-    transform: translateY(-1px);
 }
 
-/* Reviews List */
 .pdp-reviews-list {
     display: flex;
     flex-direction: column;
@@ -793,7 +632,6 @@ body {
     border-radius: var(--radius-sm);
     border: 1px solid var(--border-color);
     background: #ffffff;
-    box-shadow: 0 2px 6px rgba(67, 43, 30, 0.02);
 }
 .pdp-review-user {
     display: flex;
@@ -812,7 +650,6 @@ body {
     border-radius: 50%;
     object-fit: cover;
     background: #efe4dc;
-    border: 1px solid var(--border-color);
 }
 .pdp-user-name {
     font-size: 14px;
@@ -937,51 +774,25 @@ body {
                 <?= nl2br(htmlspecialchars($p->description)) ?>
             </div>
 
+            <!-- ADD TO CART FORM -->
             <form method="post" id="addToCartForm">
                 <input type="hidden" name="action" value="add_to_cart">
+                <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>">
 
-                <!-- CHOICE OF BAGEL (FOR 5-BAGEL SET) -->
-                <?php if ($isSet5): ?>
-                    <div class="flavour-selector-card">
-                        <div class="flavour-header">
-                            <div>
-                                <div class="flavour-title">Choice of Bagel</div>
-                                <div class="flavour-subtitle">Select exactly 5 bagels for your bundle</div>
-                            </div>
-                            <div class="flavour-badge-counter" id="selectedCountBadge">
-                                <span id="selectedCountText">0</span>/5 selected
-                            </div>
-                        </div>
-
-                        <div class="flavour-list">
-                            <?php foreach ($flavours as $flavour): ?>
-                                <div class="flavour-row">
-                                    <span class="flavour-name"><?= htmlspecialchars($flavour) ?></span>
-                                    <div class="flavour-stepper">
-                                        <button type="button" class="flavour-btn btn-minus" onclick="updateFlavourQty('<?= htmlspecialchars($flavour) ?>', -1)">−</button>
-                                        <input type="text" name="flavours[<?= htmlspecialchars($flavour) ?>]" class="flavour-qty-box" value="0" readonly>
-                                        <button type="button" class="flavour-btn btn-plus" onclick="updateFlavourQty('<?= htmlspecialchars($flavour) ?>', 1)">+</button>
-                                    </div>
-                                </div>
-                            <?php endforeach; ?>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Quantity and Add to Cart -->
+                <!-- Stepper & Submit Button -->
                 <div class="pdp-action-box">
                     <div class="pdp-qty-stepper">
                         <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
-                        <input type="number" name="qty" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="<?= $p->stock ?>" readonly>
+                        <input type="number" name="qty" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="<?= (int)$p->stock ?>" readonly>
                         <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
                     </div>
 
-                    <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn" <?= $isSet5 ? 'disabled' : '' ?>>
+                    <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
                             <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
                         </svg>
-                        <span id="btnLabelText"><?= $isSet5 ? 'Select 5 Bagels to Add' : 'Add to Cart' ?> &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
+                        <span id="btnLabelText">Add to Cart &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
                     </button>
                 </div>
             </form>
@@ -1125,10 +936,9 @@ function changeSlide(direction) {
     goToSlide(currentSlide + direction);
 }
 
-// Stepper Quantity & Total
+// Stepper Quantity & Dynamic Total
 const unitPrice = <?= (float)$p->price ?>;
 const maxStock = <?= (int)$p->stock ?>;
-const isSet5 = <?= $isSet5 ? 'true' : 'false' ?>;
 
 function stepQty(amount) {
     const input = document.getElementById('qtyInput');
@@ -1138,67 +948,6 @@ function stepQty(amount) {
     if (val >= 1 && val <= maxStock) {
         input.value = val;
         if (totalText) totalText.textContent = (val * unitPrice).toFixed(2);
-    }
-}
-
-// 5-Bagel Set Selection Logic
-const maxSelection = 5;
-
-function updateFlavourQty(flavourName, delta) {
-    const row = Array.from(document.querySelectorAll('.flavour-row')).find(r => 
-        r.querySelector('.flavour-name').textContent.trim() === flavourName
-    );
-    if (!row) return;
-
-    const input = row.querySelector('.flavour-qty-box');
-    let currentQty = parseInt(input.value) || 0;
-    let totalSelected = getTotalSelectedFlavours();
-
-    if (delta > 0 && totalSelected >= maxSelection) return;
-    if (delta < 0 && currentQty <= 0) return;
-
-    input.value = Math.max(0, currentQty + delta);
-    syncFlavourState();
-}
-
-function getTotalSelectedFlavours() {
-    let sum = 0;
-    document.querySelectorAll('.flavour-qty-box').forEach(inp => {
-        sum += parseInt(inp.value) || 0;
-    });
-    return sum;
-}
-
-function syncFlavourState() {
-    if (!isSet5) return;
-
-    const total = getTotalSelectedFlavours();
-    const countText = document.getElementById('selectedCountText');
-    const countBadge = document.getElementById('selectedCountBadge');
-    const addBtn = document.getElementById('addToCartBtn');
-    const btnLabel = document.getElementById('btnLabelText');
-
-    if (countText) countText.textContent = total;
-
-    document.querySelectorAll('.btn-plus').forEach(btn => {
-        btn.disabled = (total >= maxSelection);
-    });
-
-    document.querySelectorAll('.flavour-qty-box').forEach(inp => {
-        const row = inp.closest('.flavour-row');
-        const minusBtn = row.querySelector('.btn-minus');
-        minusBtn.disabled = (parseInt(inp.value) <= 0);
-    });
-
-    if (total === maxSelection) {
-        countBadge.classList.add('ready');
-        addBtn.disabled = false;
-        const currentQty = parseInt(document.getElementById('qtyInput').value) || 1;
-        btnLabel.innerHTML = `Add to Cart &bull; RM <span id="btnTotalText">${(currentQty * unitPrice).toFixed(2)}</span>`;
-    } else {
-        countBadge.classList.remove('ready');
-        addBtn.disabled = true;
-        btnLabel.innerHTML = `Select 5 Bagels to Add (${total}/5)`;
     }
 }
 
@@ -1227,10 +976,6 @@ function setRating(val) {
         star.classList.toggle('active', idx < val);
     });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-    syncFlavourState();
-});
 </script>
 
 <?php

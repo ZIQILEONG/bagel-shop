@@ -63,7 +63,7 @@ if ($where) {
 }
 $sql .= ' ORDER BY ' . $orderBy;
 
-// SimplePager: 8 or 12 items per page for a clean 4-column grid
+// SimplePager: 8 items per page for a clean 4-column grid
 $pager    = new SimplePager($sql, $params, 8, $page);
 $products = $pager->result;
 
@@ -286,10 +286,16 @@ body {
     width: 58px;
     padding: 7px;
     border-radius: 8px;
-    border: 1px solid var(--pl-border);
+    border: 1.5px solid var(--pl-border);
     background: #fff;
     font-size: 13px;
+    font-weight: 600;
+    color: var(--pl-brown-dark);
     outline: none;
+    cursor: pointer;
+}
+.cart-form-row select:focus {
+    border-color: var(--pl-primary);
 }
 .btn-card-add {
     flex: 1;
@@ -370,7 +376,6 @@ body {
     list-style: none !important;
 }
 
-/* Default state for all buttons: auto-width pill */
 .pl-pagination-wrap a,
 .pl-pagination-wrap span,
 .pager a,
@@ -380,11 +385,11 @@ body {
     justify-content: center !important;
     height: 38px !important;
     min-height: 38px !important;
-    padding: 0 16px !important;                /* Plenty of space for text */
+    padding: 0 16px !important;
     min-width: 38px !important;
-    width: auto !important;                     /* Expands naturally to fit words */
-    white-space: nowrap !important;             /* Prevents text break */
-    border-radius: 9999px !important;           /* Smooth rounded pill */
+    width: auto !important;
+    white-space: nowrap !important;
+    border-radius: 9999px !important;
     border: 1px solid #ebdcd5 !important;
     background: #ffffff !important;
     color: #3e2619 !important;
@@ -396,20 +401,6 @@ body {
     transition: all 0.15s ease !important;
 }
 
-/* Specific wide pill for Previous and First to guarantee zero overflow */
-.pl-pagination-wrap a:has-text,
-.pager a, .pager span {
-    padding-left: 18px !important;
-    padding-right: 18px !important;
-}
-
-/* Numbers only: perfect circles (applies to items with short width) */
-.pl-pagination-wrap a:not(:empty),
-.pager a, .pager span {
-    aspect-ratio: auto;
-}
-
-/* Hover state */
 .pl-pagination-wrap a:hover,
 .pager a:hover {
     background: #fff8f5 !important;
@@ -417,7 +408,6 @@ body {
     color: #cf7953 !important;
 }
 
-/* Active / Current Page (Terracotta pill/circle with white text) */
 .pl-pagination-wrap .active,
 .pl-pagination-wrap .current,
 .pl-pagination-wrap span.current,
@@ -432,7 +422,6 @@ body {
     box-shadow: 0 2px 6px rgba(157, 72, 43, 0.25) !important;
 }
 
-/* Disabled items */
 .pl-pagination-wrap .disabled,
 .pager .disabled {
     opacity: 0.4 !important;
@@ -535,6 +524,7 @@ body {
                 $cartEntry = $cart[$p->id] ?? 0;
                 $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
                 $isSet5 = (stripos($p->name, '5 Bagel') !== false || stripos($p->name, '5-Pack') !== false || stripos($p->name, '5') !== false);
+                $maxStockLimit = min(10, max(1, (int)$p->stock));
                 ?>
                 <div class="product-card">
                     <a href="detail.php?id=<?= $p->id ?>" class="img-wrap">
@@ -559,7 +549,11 @@ body {
                             <?php elseif (isset($_user) && $_user->role == 'Member'): ?>
                                 <form method="post" class="cart-form-row">
                                     <input type="hidden" name="id" value="<?= encode($p->id) ?>">
-                                    <?= html_select('unit', $_units ?? [1=>1, 2=>2, 3=>3, 4=>4, 5=>5], $unit > 0 ? (string)$unit : '1') ?>
+                                    <select name="unit">
+                                        <?php for ($i = 1; $i <= $maxStockLimit; $i++): ?>
+                                            <option value="<?= $i ?>" <?= ($unit == $i || ($unit <= 0 && $i == 1)) ? 'selected' : '' ?>><?= $i ?></option>
+                                        <?php endfor; ?>
+                                    </select>
                                     <button type="submit" class="btn-card-add">Add</button>
                                 </form>
                             <?php else: ?>
