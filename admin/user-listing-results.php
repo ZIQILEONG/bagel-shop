@@ -8,8 +8,7 @@
     <tr>
         <th></th>
         <th>Photo</th>
-        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'email' => 'Email', 'role' => 'Role'], $sort, $dir, 'search=' . encode($search)) ?>
-        <th>Phone No</th>
+        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'email' => 'Email', 'role' => 'Role', 'phone_no' => 'Phone No'], $sort, $dir, 'search=' . encode($search)) ?>
         <th></th>
     </tr>
     <?php foreach ($arr as $u): ?>
@@ -17,7 +16,6 @@
         <td><input type="checkbox" name="ids[]" value="<?= $u->id ?>" <?= $u->id == $_user->id ? 'disabled' : '' ?>></td>
         <td>
             <?php if (!empty($u->photo)): ?>
-                <!-- admin文件夹，回退到根目录 ../images/，数据库只存文件名 -->
                 <img src="../images/<?= encode($u->photo) ?>" width="50" height="50" style="object-fit: cover;">
             <?php else: ?>
                 <img src="../images/photo.jpg" width="50" height="50" style="object-fit: cover;">

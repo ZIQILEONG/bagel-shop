@@ -1,5 +1,6 @@
 <?php
 include '../_base.php';
+require '../lib/SimplePager.php';
 // ----------------------------------------------------------------------------
 auth('Member');
 // Handle reorder request
@@ -25,17 +26,14 @@ if (is_post() && req('btn') == 'reorder') {
     $added = 0;
     $skipped = [];
     foreach ($items as $item) {
-        // Product may have been deleted since the original order
         if (!$item->name) {
             $skipped[] = "Product #{$item->product_id} (no longer available)";
             continue;
         }
-        // Product may now be out of stock
         if ($item->stock <= 0) {
             $skipped[] = "{$item->name} (out of stock)";
             continue;
         }
-        // Cap the reordered quantity to whatever is currently in stock (and the 1-10 cart limit)
         $cart = get_cart();
         $existing_unit = $cart[$item->product_id] ?? 0;
         $unit_to_add = min($item->unit, $item->stock, 10);
@@ -60,22 +58,27 @@ if (is_post() && req('btn') == 'reorder') {
         redirect('history.php');
     }
 }
-$stm = $_db->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY id DESC");
-$stm->execute([$_user->id]);
-$arr = $stm->fetchAll();
+// ---------------- Pagination ----------------
+$sort = get('sort', 'id');
+$dir  = get('dir', 'desc') == 'asc' ? 'asc' : 'desc';
+$page = get('page', '1');
+$sorts = ['id', 'datetime', 'count', 'total', 'status'];
+if (!in_array($sort, $sorts)) {
+    $sort = 'id';
+}
+$query  = "SELECT * FROM orders WHERE user_id = ? ORDER BY $sort $dir";
+$params = [$_user->id];
+$pager  = new SimplePager($query, $params, '10', $page);
+$arr    = $pager->result;
 // ----------------------------------------------------------------------------
 $_title = 'Order | History';
 include '../_head.php';
 ?>
 <?php if ($arr): ?>
-<p><?= count($arr) ?> record(s)</p>
+<p><?= $pager->item_count ?> record(s)</p>
 <table class="table">
     <tr>
-        <th>Id</th>
-        <th>Datetime</th>
-        <th>Count</th>
-        <th>Total (RM)</th>
-        <th>Status</th>
+    <?= table_headers(['id' => 'Id', 'datetime' => 'Datetime', 'count' => 'Count', 'total' => 'Total (RM)', 'status' => 'Status'], $sort, $dir) ?>
         <th></th>
     </tr>
     <?php foreach ($arr as $o): ?>
@@ -94,6 +97,7 @@ include '../_head.php';
     </tr>
     <?php endforeach ?>
 </table>
+<?= $pager->html('sort=' . $sort . '&dir=' . $dir) ?>
 <?php else: ?>
 <p>📦 No orders found yet. <a href="/product/list.php">Start shopping</a>!</p>
 <?php endif ?>

@@ -25,7 +25,8 @@ $sort   = get('sort', 'id');
 $dir    = get('dir', 'asc') == 'desc' ? 'desc' : 'asc';
 $page   = get('page', '1');
 
-$sorts = ['id', 'name', 'email', 'role'];
+
+$sorts = ['id', 'name', 'email', 'role', 'phone_no'];
 if (!in_array($sort, $sorts)) {
     $sort = 'id';
 }
