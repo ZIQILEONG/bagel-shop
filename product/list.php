@@ -312,23 +312,6 @@ body {
 .btn-card-add:hover {
     background: var(--pl-primary-hover);
 }
-.btn-view-bundle {
-    display: block;
-    text-align: center;
-    background: #fdf2eb;
-    color: var(--pl-primary);
-    border: 1px solid #f7dfd3;
-    padding: 8px 12px;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 700;
-    text-decoration: none;
-    transition: all 0.15s ease;
-}
-.btn-view-bundle:hover {
-    background: var(--pl-primary);
-    color: #fff;
-}
 .login-hint-btn {
     display: block;
     text-align: center;
@@ -363,7 +346,7 @@ body {
 }
 
 /* =========================================================
-   PULULU EXACT SMART PAGINATION (FIXES TEXT OVERFLOW)
+   PAGINATION
    ========================================================= */
 .pl-pagination-wrap,
 .pager {
@@ -523,7 +506,6 @@ body {
                 $cart = get_cart();
                 $cartEntry = $cart[$p->id] ?? 0;
                 $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
-                $isSet5 = (stripos($p->name, '5 Bagel') !== false || stripos($p->name, '5-Pack') !== false || stripos($p->name, '5') !== false);
                 $maxStockLimit = min(10, max(1, (int)$p->stock));
                 ?>
                 <div class="product-card">
@@ -542,11 +524,7 @@ body {
                         <div class="price">RM <?= number_format($p->price, 2) ?></div>
 
                         <div class="card-action-wrap">
-                            <?php if ($isSet5): ?>
-                                <a href="detail.php?id=<?= $p->id ?>" class="btn-view-bundle">
-                                    Choose Flavours &rarr;
-                                </a>
-                            <?php elseif (isset($_user) && $_user->role == 'Member'): ?>
+                            <?php if (isset($_user) && $_user->role == 'Member'): ?>
                                 <form method="post" class="cart-form-row">
                                     <input type="hidden" name="id" value="<?= encode($p->id) ?>">
                                     <select name="unit">
@@ -567,10 +545,7 @@ body {
 
         <!-- Pagination Bar -->
         <div class="pl-pagination-wrap">
-            <?php
-            // SimplePager HTML Output
-            $pager->html();
-            ?>
+            <?php $pager->html(); ?>
         </div>
 
     <?php else: ?>
@@ -583,7 +558,6 @@ body {
 </div>
 
 <script>
-// Auto-submit filter form when category or sort order changes
 document.addEventListener('DOMContentLoaded', function() {
     const categorySelect = document.querySelector('select[name="category_id"]');
     const sortSelect = document.querySelector('select[name="sort"]');
