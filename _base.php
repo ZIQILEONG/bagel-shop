@@ -94,7 +94,7 @@ function save_product_photos($files, $product_id, $folder) {
             $img = new SimpleImage();
             $img->fromFile($file['tmp_name'])
                 ->thumbnail(800, 800)
-                ->toFile("$folder/$photo", 'image/jpeg');
+                ->toFile("$folder/$photo", 'image/jpeg',92); //// 92% JPEG quality preserves crispness
 
             // Save to database
             global $_db;
