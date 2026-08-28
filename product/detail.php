@@ -70,21 +70,31 @@ foreach ($reviews as $r) {
 }
 
 // ==========================================
-// 🛒 HANDLE ADD TO CART
+// 🛒 HANDLE ADD TO CART (IDENTICAL TO LIST.PHP)
 // ==========================================
 if (is_post() && req('action') === 'add_to_cart') {
-    $qty = (int)req('qty', 1);
+    // Check if user is logged in
+    if (!isset($_user) || $_user->role !== 'Member') {
+        temp('info', 'Please log in to add items to your cart.');
+        redirect('/user/login.php');
+    }
 
-    if ($qty > 0 && $qty <= (int)$p->stock) {
-        if (function_exists('update_cart')) {
-            update_cart($p->id, $qty);
-        } else {
-            $cart = get_cart();
-            $cart[$p->id] = ($cart[$p->id] ?? 0) + $qty;
-            set_cart($cart);
+    $unit = (int)req('unit', 1);
+
+    if ($unit > 0 && $unit <= (int)$p->stock) {
+        // Read current cart and accumulate
+        $cart = get_cart();
+        $currentUnit = (int)($cart[$p->id] ?? 0);
+        $totalUnit = $currentUnit + $unit;
+
+        if ($totalUnit > (int)$p->stock) {
+            $totalUnit = (int)$p->stock;
         }
 
-        temp('info', "Added {$qty} item(s) to your cart!");
+        // update_cart sets the exact item quantity in session
+        update_cart($p->id, $totalUnit);
+
+        temp('info', "Added {$unit} item(s) to your cart!");
         redirect("detail.php?id={$p->id}");
     } else {
         temp('error', 'Invalid quantity requested or item out of stock.');
@@ -96,7 +106,7 @@ if (is_post() && req('action') === 'add_to_cart') {
 // ⭐ HANDLE REVIEW SUBMISSION
 // ==========================================
 if (is_post() && req('action') === 'submit_review') {
-    auth();
+    auth('Member');
     $rating = (int)req('rating');
     $review_text = trim(req('review_text'));
 
@@ -401,6 +411,7 @@ body {
     justify-content: center;
     gap: 10px;
     box-shadow: 0 4px 14px rgba(207, 115, 73, 0.25);
+    text-decoration: none;
 }
 .pdp-btn-add-cart:hover {
     background: var(--primary-orange-hover);
@@ -774,28 +785,35 @@ body {
                 <?= nl2br(htmlspecialchars($p->description)) ?>
             </div>
 
-            <!-- ADD TO CART FORM -->
-            <form method="post" id="addToCartForm">
-                <input type="hidden" name="action" value="add_to_cart">
-                <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>">
+            <!-- ADD TO CART / LOGIN ACTION -->
+            <?php if (isset($_user) && $_user->role === 'Member'): ?>
+                <form method="post" id="addToCartForm">
+                    <input type="hidden" name="action" value="add_to_cart">
+                    <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>">
 
-                <!-- Stepper & Submit Button -->
-                <div class="pdp-action-box">
-                    <div class="pdp-qty-stepper">
-                        <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
-                        <input type="number" name="qty" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="<?= (int)$p->stock ?>" readonly>
-                        <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
+                    <div class="pdp-action-box">
+                        <div class="pdp-qty-stepper">
+                            <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
+                            <input type="number" name="unit" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="<?= (int)$p->stock ?>" readonly>
+                            <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
+                        </div>
+
+                        <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                            </svg>
+                            <span id="btnLabelText">Add to Cart &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
+                        </button>
                     </div>
-
-                    <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                        </svg>
-                        <span id="btnLabelText">Add to Cart &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
-                    </button>
+                </form>
+            <?php else: ?>
+                <div class="pdp-action-box">
+                    <a href="/user/login.php" class="pdp-btn-add-cart" style="text-decoration:none;">
+                        🔐 Login to Order &bull; RM <?= number_format($p->price, 2) ?>
+                    </a>
                 </div>
-            </form>
+            <?php endif; ?>
 
             <div class="pdp-stock-status">
                 <span class="pdp-stock-dot"></span>
@@ -836,7 +854,6 @@ body {
         </div>
 
         <?php if ($totalReviews > 0): ?>
-            <!-- Score Breakdown Overview -->
             <div class="pdp-rating-overview">
                 <div class="pdp-big-score">
                     <div class="pdp-big-number"><?= number_format($avgRating, 1) ?></div>
@@ -943,6 +960,8 @@ const maxStock = <?= (int)$p->stock ?>;
 function stepQty(amount) {
     const input = document.getElementById('qtyInput');
     const totalText = document.getElementById('btnTotalText');
+    if (!input) return;
+
     let val = parseInt(input.value) + amount;
 
     if (val >= 1 && val <= maxStock) {
