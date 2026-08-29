@@ -67,7 +67,7 @@ $delivery_fee = ($delivery_method === 'Delivery') ? 7.00 : 0.00;
 $total       += $delivery_fee;
 $points_earned = (int) floor(max(0, $total));
 
-// (A) Create order in Database (Exactly matches your database table schema)
+// (A) Create order in Database
 try {
     $_db->beginTransaction();
 
@@ -151,7 +151,7 @@ if ($total <= 0) {
     redirect("payment-success.php?free_order={$order_id}");
 }
 
-// (B) Connect to Stripe
+// (B) Connect to Stripe with Card + FPX Online Banking
 try {
     \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
@@ -160,7 +160,8 @@ try {
     $baseUrl  = $protocol . $host;
 
     $session = \Stripe\Checkout\Session::create([
-        'payment_method_types' => ['card'],
+        // Enables both Card (Credit/Debit) and FPX (Online Banking)
+        'payment_method_types' => ['card', 'fpx'],
         'line_items' => [[
             'price_data' => [
                 'currency'     => 'myr',

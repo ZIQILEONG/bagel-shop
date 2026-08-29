@@ -22,21 +22,35 @@ if (is_post()) {
     }
 
     if ($btn == 'apply_voucher') {
-        $code = trim(req('voucher_code'));
+        $code = strtoupper(trim(req('voucher_code')));
 
-        $stm = $_db->prepare("SELECT * FROM voucher WHERE code = ?");
+        if ($code === '') {
+            unset($_SESSION['voucher']);
+            temp('voucher_error', 'Please enter a promo voucher code.');
+            redirect('?');
+        }
+
+        $stm = $_db->prepare("SELECT * FROM voucher WHERE UPPER(code) = ?");
         $stm->execute([$code]);
         $v = $stm->fetch();
 
-        if ($v && $v->active == 1 && $v->expiry >= date('Y-m-d')) {
-            $_SESSION['voucher'] = [
-                'code' => $code,
-                'percent' => $v->percent
-            ];
-            temp('info', 'Voucher applied successfully!');
-        } else {
+        $today = date('Y-m-d');
+
+        if (!$v) {
             unset($_SESSION['voucher']);
-            temp('error', 'Invalid or expired voucher code.');
+            temp('voucher_error', "Promo code '{$code}' is invalid.");
+        } elseif ((int)$v->active !== 1) {
+            unset($_SESSION['voucher']);
+            temp('voucher_error', "Promo code '{$code}' is currently inactive.");
+        } elseif (!empty($v->expiry) && $v->expiry < $today) {
+            unset($_SESSION['voucher']);
+            temp('voucher_error', "Promo code '{$code}' expired on " . date('d M Y', strtotime($v->expiry)) . ".");
+        } else {
+            $_SESSION['voucher'] = [
+                'code'    => $v->code,
+                'percent' => (float)$v->percent
+            ];
+            temp('info', "Voucher '{$v->code}' applied! (" . (float)$v->percent . "% OFF)");
         }
 
         redirect('?');
@@ -76,6 +90,7 @@ include '../_head.php';
 
 $cart = get_cart();
 $voucher = $_SESSION['voucher'] ?? null;
+$voucher_err = temp('voucher_error');
 
 $cart_count = 0;
 foreach ($cart as $id => $u) {
@@ -464,6 +479,19 @@ body {
     align-items: center;
     gap: 6px;
 }
+.pl-voucher-error-tag {
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: var(--pl-red);
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #fdf2f2;
+    border: 1px solid #f5d6d6;
+    padding: 7px 11px;
+    border-radius: 8px;
+}
 
 /* Empty State Card */
 .pl-cart-empty-panel {
@@ -567,7 +595,7 @@ body {
                         <label class="pl-select-all-label">
                             <input type="checkbox" id="select-all" checked> Select All Items
                         </label>
-                        <button type="submit" name="btn" value="delete_selected" class="pl-btn-delete-bulk" onclick="return confirm('Remove selected bagels from cart?')">
+                        <button type="button" class="pl-btn-delete-bulk" onclick="confirmDeleteSelected()">
                             🗑️ Delete Selected
                         </button>
                     </div>
@@ -639,7 +667,13 @@ body {
                     </form>
                     <?php if ($voucher): ?>
                         <div class="pl-voucher-active-tag">
-                            <span>✅ Voucher applied: <b><?= htmlspecialchars($voucher['percent']) ?>% OFF</b></span>
+                            <span>✅ Voucher applied: <b><?= htmlspecialchars($voucher['code']) ?> (<?= htmlspecialchars($voucher['percent']) ?>% OFF)</b></span>
+                        </div>
+                    <?php endif ?>
+
+                    <?php if (!empty($voucher_err)): ?>
+                        <div class="pl-voucher-error-tag">
+                            <span>⚠️ <?= htmlspecialchars($voucher_err) ?></span>
                         </div>
                     <?php endif ?>
                 </div>
@@ -697,6 +731,49 @@ body {
         </div>
 
         <script>
+        function confirmDeleteSelected() {
+            let checkedCount = $('.item-checkbox:checked').length;
+            if (checkedCount === 0) {
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'info',
+                        title: 'No items selected',
+                        text: 'Please check at least one bagel item to remove.',
+                        confirmButtonColor: '#cf7953'
+                    });
+                } else {
+                    alert('Please select at least one item to remove.');
+                }
+                return;
+            }
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: 'Remove Bagels?',
+                    text: `Are you sure you want to remove ${checkedCount} selected item(s) from your cart?`,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#c0392b',
+                    cancelButtonColor: '#968377',
+                    confirmButtonText: 'Yes, remove',
+                    cancelButtonText: 'Keep items',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        let form = $('#cart-bulk-form');
+                        let hiddenBtn = $('<input>').attr({type: 'hidden', name: 'btn', value: 'delete_selected'});
+                        form.append(hiddenBtn).submit();
+                    }
+                });
+            } else {
+                if (confirm(`Remove ${checkedCount} selected item(s) from cart?`)) {
+                    let form = $('#cart-bulk-form');
+                    let hiddenBtn = $('<input>').attr({type: 'hidden', name: 'btn', value: 'delete_selected'});
+                    form.append(hiddenBtn).submit();
+                }
+            }
+        }
+
         $(document).ready(function() {
             // Select all items toggle
             $('#select-all').on('change', function() {
