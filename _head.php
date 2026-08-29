@@ -46,12 +46,16 @@ $header_active = static function (string $section) use ($header_path): string {
             </button>
             <div class="pululu-actions">
                 <details class="pululu-search">
-                    <summary aria-label="Search products">
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <circle cx="11" cy="11" r="7"></circle>
-                            <path d="m16.2 16.2 4.3 4.3"></path>
-                        </svg>
-                        <span>Search</span>
+                    <summary aria-label="Account menu">
+                        <?php if ($_user && !empty($_user->photo)): ?>
+                            <img class="pululu-avatar" src="<?= app_url('user/image/' . rawurlencode($_user->photo)) ?>" alt="">
+                        <?php else: ?>
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                                <circle cx="12" cy="8" r="4"></circle>
+                                <path d="M4.5 21c.7-4.1 3.2-6 7.5-6s6.8 1.9 7.5 6"></path>
+                            </svg>
+                        <?php endif ?>
+                        <span><?= $header_name ?></span>
                     </summary>
                     <form action="<?= app_url('product/list.php') ?>" method="get">
                         <label for="navSearch">Find your next bagel</label>
