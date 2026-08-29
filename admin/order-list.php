@@ -1,6 +1,6 @@
 <?php
 include '../_base.php';
-
+require '../lib/SimplePager.php';
 // ----------------------------------------------------------------------------
 
 // Authorization (admin)
@@ -11,6 +11,19 @@ $stm = $_db->prepare("SELECT o.*, u.name, u.is_deleted FROM orders o JOIN user u
 $stm->execute([]);
 $arr = $stm-> fetchAll();
 
+// ----------------------------------------------------------------------------
+// ---------------- Pagination ----------------
+$sort = get('sort', 'id');
+$dir  = get('dir', 'desc') == 'asc' ? 'asc' : 'desc';
+$page = get('page', '1');
+$sorts = ['id', 'datetime', 'count', 'total', 'status'];
+if (!in_array($sort, $sorts)) {
+    $sort = 'id';
+}
+$query  = "SELECT * FROM orders WHERE user_id = ? ORDER BY $sort $dir";
+$params = [$_user->id];
+$pager  = new SimplePager($query, $params, '10', $page);
+$arr    = $pager->result;
 // ----------------------------------------------------------------------------
 
 $_title = 'Order | Listing (Admin)';

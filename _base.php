@@ -550,6 +550,7 @@ function load_cart_fr_db($user_id) {
 // Global PDO object
 $_db = new PDO('mysql:dbname=db_bagel', 'root', '', [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
 ]);
 // Is unique?
 function is_unique($value, $table, $field) {

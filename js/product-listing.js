@@ -44,19 +44,19 @@ $(function () {
         const isDecrease = percent < 0;
 
         let rows = '';
-        $checked.each(function () {
-            const $tr      = $(this).closest('tr');
-            const name     = $tr.find('td').eq(3).text().trim();
-            const oldPrice = parseFloat($tr.find('td').eq(4).text().trim());
-            const newPrice = Math.round(oldPrice * (1 + percent / 100) * 100) / 100;
-            const changeColor = newPrice < oldPrice ? 'var(--green, #2e8b57)' : 'var(--red)';
-            rows += `
-                <tr>
-                    <td style="padding:6px 10px;text-align:left;">${name}</td>
-                    <td style="padding:6px 10px;text-align:right;">RM ${oldPrice.toFixed(2)}</td>
-                    <td style="padding:6px 10px;text-align:right;color:${changeColor};font-weight:bold;">RM ${newPrice.toFixed(2)}</td>
-                </tr>`;
-        });
+            $checked.each(function () {
+                const $tr      = $(this).closest('tr');
+                const name     = $tr.find('td').eq(4).text().trim();
+                const oldPrice = parseFloat($tr.find('td').eq(5).text().trim());
+                const newPrice = Math.round(oldPrice * (1 + percent / 100) * 100) / 100;
+                const changeColor = newPrice < oldPrice ? 'var(--green, #2e8b57)' : 'var(--red)';
+                rows += `
+                    <tr>
+                        <td style="padding:6px 10px;text-align:left;">${name}</td>
+                        <td style="padding:6px 10px;text-align:right;">RM ${oldPrice.toFixed(2)}</td>
+                        <td style="padding:6px 10px;text-align:right;color:${changeColor};font-weight:bold;">RM ${newPrice.toFixed(2)}</td>
+                    </tr>`;
+            });
 
         const html = `
             <p style="margin-bottom:10px;">This will ${isDecrease ? 'decrease' : 'increase'} the price of <b>${$checked.length}</b> product(s) by <b>${Math.abs(percent)}%</b>:</p>
