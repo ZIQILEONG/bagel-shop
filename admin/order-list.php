@@ -1,6 +1,6 @@
 <?php
 include '../_base.php';
-
+require '../lib/SimplePager.php';
 // ----------------------------------------------------------------------------
 
 // Authorization (admin)
