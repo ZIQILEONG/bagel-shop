@@ -83,7 +83,7 @@ $currentThisItemQty = is_array($cart[$p->id] ?? null) ? (int)($cart[$p->id]['qty
 if (is_post() && req('action') === 'add_to_cart') {
     if (!isset($_user) || $_user->role !== 'Member') {
         temp('info', 'Please log in to add items to your cart.');
-        redirect('/user/login.php');
+        redirect('/login.php');
     }
 
     $unit = (int)req('unit', 1);
@@ -876,7 +876,7 @@ body {
                 </form>
             <?php else: ?>
                 <div class="pdp-action-box">
-                    <a href="/user/login.php" class="pdp-btn-add-cart" style="text-decoration:none;">
+                    <a href="/login.php" class="pdp-btn-add-cart" style="text-decoration:none;">
                         🔐 Login to Order &bull; RM <?= number_format($p->price, 2) ?>
                     </a>
                 </div>
