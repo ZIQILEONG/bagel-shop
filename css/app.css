@@ -821,17 +821,6 @@ label.upload img {
     color: var(--white);
 }
 
-/* Demo accounts (index page) ---------------------------------------------- */
-
-.demo-accounts {
-    margin-top: 40px;
-}
-
-.demo-accounts h2 {
-    font-family: 'Lilita One', cursive;
-    color: var(--brown);
-    font-size: 20px;
-}
 
 /* Footer -------------------------------------------------------------------- */
 
@@ -883,7 +872,6 @@ footer b {
     align-items: center;
 }
 
-/* 左侧粉色标签栏 */
 .profile-form .form-label {
     background: var(--pink);
     padding:14px 16px;
@@ -893,7 +881,6 @@ footer b {
     text-align: right;
 }
 
-/* 头像特殊处理：跨两栏，居中 */
 .profile-form .avatar-row {
     grid-column: 1 / -1;
     text-align: center;
@@ -919,7 +906,6 @@ footer b {
     border-radius: var(--radius);
 }
 
-/* 按钮横跨全部两列，靠左/居左 */
 .profile-form .btn-row {
     grid-column:1 / -1;
     margin-top:12px;
@@ -1239,15 +1225,6 @@ footer b {
     color: var(--red);
 }
 
-/* ============================================================================
-   app-extra.css
-   Additional styles for: stylized pagination, batch actions, live search,
-   and DataTables theme integration.
-   Loaded AFTER css/app.css (see _head.php) so it can build on the same
-   CSS variables (--red, --brown, --pink, --cream, --border, etc.)
-   ============================================================================ */
-
-/* Pager (lib/SimplePager.php output) ---------------------------------------- */
 .pager {
     display: flex;
     flex-wrap: wrap;
@@ -1309,7 +1286,6 @@ footer b {
     display: inline-block;
 }
 
-/* Batch action panel (e.g. batch price increase) ----------------------------- */
 .batch-panel {
     display: flex;
     flex-wrap: wrap;
@@ -1904,34 +1880,6 @@ img {
     font-size: 14px;
     line-height: 1.8;
 }
-
-.demo-access {
-    width: min(920px, calc(100% - 56px));
-    margin: 0 auto 90px;
-    border: 1px solid var(--pululu-border);
-    border-radius: var(--pululu-radius-md);
-    background: var(--pululu-surface);
-    box-shadow: var(--pululu-shadow-sm);
-    overflow: hidden;
-}
-
-.demo-access > summary {
-    padding: 16px 20px;
-    color: var(--pululu-cocoa);
-    cursor: pointer;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.demo-access-content {
-    padding: 0 20px 20px;
-}
-
-.demo-access-content > p {
-    color: var(--pululu-muted);
-    font-size: 11px;
-}
-
 /* Product collection ------------------------------------------------------ */
 
 .pululu-shop-page main,
@@ -2528,6 +2476,13 @@ img {
     font-weight: 800;
 }
 
+.use-another-account {
+    margin-top: 10px;
+    background: transparent;
+    color: #8a1220;
+    border: 1px solid #8a1220;
+}
+
 /* Shared tables and forms ------------------------------------------------- */
 
 .table {
@@ -3073,7 +3028,6 @@ img {
     .home-promise,
     .home-section,
     .home-story,
-    .demo-access { width: calc(100% - 36px); }
     .home-promise { grid-template-columns: 1fr; }
     .home-story { grid-template-columns: 1fr; padding: 28px; }
     .featured-product-grid,
@@ -3126,4 +3080,98 @@ img {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
     }
+}
+
+.password-box {
+    position: relative;
+}
+
+.password-box input {
+    padding-right: 50px;
+}
+
+.login-form .password-box .toggle-password,
+.register-form .password-box .toggle-password {
+    position: absolute;
+    top: 27px;
+    right: 14px;
+
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+
+    color: #b5192b;
+    font-size: 18px;
+    cursor: pointer;
+}
+
+.login-form .password-box .toggle-password:hover,
+.register-form .password-box .toggle-password:hover {
+    background: transparent;
+    color: #b5192b;
+    transform: none;
+    box-shadow: none;
+}
+
+.login-form .password-box .toggle-password:focus,
+.register-form .password-box .toggle-password:focus {
+    outline: none;
+}
+
+.password-input {
+    position: relative;
+}
+
+.password-input input {
+    padding-right: 50px;
+}
+
+.login-form .password-input .toggle-password,
+.register-form .password-input .toggle-password {
+    position: absolute;
+    top: 50%;
+    right: 14px;
+
+    width: 30px;
+    height: 30px;
+    min-height: 0;
+
+    margin: 0;
+    padding: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+
+    color: #b5192b;
+    font-size: 18px;
+    cursor: pointer;
+
+    transform: translateY(-50%);
+}
+
+.login-form .password-input .toggle-password:hover,
+.register-form .password-input .toggle-password:hover {
+    background: transparent;
+    color: #b5192b;
+    transform: translateY(-50%);
+}
+
+.login-form .password-input .toggle-password:focus,
+.register-form .password-input .toggle-password:focus {
+    outline: none;
 }

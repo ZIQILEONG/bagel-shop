@@ -11,7 +11,6 @@ $captcha_path_html = encode(rtrim($captcha_web_path, '/'));
 ?>
 
 <link rel="stylesheet" href="<?= $captcha_path_html ?>/captcha-flow.css">
-
 <div id="turnstile-only" class="turnstile-only">
     <div class="cf-turnstile"
          data-sitekey="<?= $captcha_site_key ?>"
@@ -22,7 +21,6 @@ $captcha_path_html = encode(rtrim($captcha_web_path, '/'));
          data-expired-callback="formTurnstileExpired"
          data-error-callback="formTurnstileError">
     </div>
-
     <?= err('captcha') ?>
 </div>
 
@@ -34,29 +32,24 @@ $captcha_path_html = encode(rtrim($captcha_web_path, '/'));
 
     function updateButton() {
         const button = form ? form.querySelector('button[type="submit"]') : null;
-
         if (button) {
             button.disabled = !verified;
         }
     }
-
     window.formTurnstileSuccess = function () {
         verified = true;
         updateButton();
     };
-
     window.formTurnstileExpired = function () {
         verified = false;
         updateButton();
     };
-
     window.formTurnstileError = function () {
         verified = false;
         updateButton();
 
         return true;
     };
-
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', updateButton);
     }
