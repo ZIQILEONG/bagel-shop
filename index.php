@@ -131,21 +131,5 @@ include '_head.php';
 
 </section>
 
-<details class="demo-access">
-    <summary>Assignment demo access</summary>
-    <div class="demo-access-content">
-        <p>Use these accounts only when demonstrating the assignment locally.</p>
-        <div class="table-scroll">
-            <table class="table">
-                <thead><tr><th>Email</th><th>Password</th><th>Role</th></tr></thead>
-                <tbody>
-                    <tr><td>admin@bagel.com</td><td>123456</td><td>Admin</td></tr>
-                    <tr><td>member1@bagel.com</td><td>123456</td><td>Member</td></tr>
-                    <tr><td>member2@bagel.com</td><td>123456</td><td>Member</td></tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-</details>
 
 <?php include '_foot.php'; ?>

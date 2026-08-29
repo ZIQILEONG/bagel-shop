@@ -4,7 +4,12 @@ include '_base.php';
 include 'config.php';
 
 $email = '';
+if (is_post() && isset($_POST['cancel_remember'])) {
+    clear_remember_cookie();
+    unset($_SESSION['remember_pending_user_id']);
 
+    redirect('login.php');
+}
 if (is_post()) {
     $email = trim($_POST['email'] ?? '');
     $password_input = $_POST['password'] ?? '';
@@ -75,12 +80,28 @@ include '_head.php';
             <label for="email">E-mail</label>
             <?= err('email') ?>
         </div>
-
         <div class="input-group">
-            <?= html_password('password', 'maxlength="100" autocomplete="current-password" required placeholder="Password"') ?>
-            <label for="password">Password</label>
-            <?= err('password') ?>
+        <div class="password-input">
+            <?= html_password(
+                'password',
+                'maxlength="100"
+                autocomplete="current-password"
+                required
+                placeholder="Password"'
+            ) ?>
+            <label for="password">
+                Password
+            </label>
+            <button
+                type="button"
+                class="toggle-password"
+                onclick="togglePassword('password', this)"
+            >
+                👁
+            </button>
         </div>
+        <?= err('password') ?>
+    </div>
 
         <label>
             <input type="checkbox" name="remember" value="1"
@@ -108,5 +129,18 @@ include '_head.php';
     </p>
 
 </div>
+<script>
+function togglePassword(inputId, button) {
+    const input = document.getElementById(inputId);
 
+    if (input.type === 'password') {
+        input.type = 'text';
+        button.textContent = '🙈';
+    }
+    else {
+        input.type = 'password';
+        button.textContent = '👁';
+    }
+}
+</script>
 <?php include '_foot.php'; ?>

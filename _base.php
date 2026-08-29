@@ -70,15 +70,15 @@ function get_file($key) {
     return null;
 }
 
-// Crop, resize and save photo
-function save_photo($f, $folder, $width = 200, $height = 200) {
+// Crop, resize and save photo with high resolution (800x800) and 95% quality
+function save_photo($f, $folder, $width = 800, $height = 800) {
     $photo = uniqid() . '.jpg';
     
     require_once 'lib/SimpleImage.php';
     $img = new SimpleImage();
     $img->fromFile($f->tmp_name)
         ->thumbnail($width, $height)
-        ->toFile("$folder/$photo", 'image/jpeg');
+        ->toFile("$folder/$photo", 'image/jpeg', 95);
 
     return $photo;
 }
@@ -94,7 +94,7 @@ function save_product_photos($files, $product_id, $folder) {
             $img = new SimpleImage();
             $img->fromFile($file['tmp_name'])
                 ->thumbnail(800, 800)
-                ->toFile("$folder/$photo", 'image/jpeg');
+                ->toFile("$folder/$photo", 'image/jpeg',); 
 
             // Save to database
             global $_db;
@@ -465,21 +465,37 @@ function auth(...$roles) {
 // ============================================================================
 // Get shopping cart
 function get_cart() {
-    return $_SESSION['cart'] ?? [];
+    $cart = $_SESSION['cart'] ?? [];
+    $clean_cart = [];
+
+    // Normalize any legacy array items into clean integer quantities
+    foreach ($cart as $key => $val) {
+        if (is_array($val)) {
+            $clean_cart[$key] = (int)($val['qty'] ?? $val['quantity'] ?? 1);
+        } elseif (is_numeric($val)) {
+            $clean_cart[$key] = (int)$val;
+        }
+    }
+
+    return $clean_cart;
 }
+
 // Set shopping cart
 function set_cart($cart = []) {
     $_SESSION['cart'] = $cart;
 }
-// Update shopping cart
-// and save session cart to DB table --ziqi
+
+// Update shopping cart and save session cart to DB table
 function update_cart($id, $unit) {
     global $_user, $_db;
 
     $cart = get_cart();
+    $unit = (int)$unit;
 
     if ($unit >= 1 && $unit <= 10 && is_exists($id, 'product', 'id')) {
-        $existing_total = array_sum($cart) - ($cart[$id] ?? 0);
+        $current_item_qty = (int)($cart[$id] ?? 0);
+        $existing_total = array_sum($cart) - $current_item_qty;
+
         if ($existing_total + $unit > 100) {
             temp('info', 'Cart limit reached: maximum 100 items allowed.');
             return;
@@ -498,31 +514,31 @@ function update_cart($id, $unit) {
     }
 }
 
-// clear user's rows first, then re-insert current cart --ziqi
+// Clear user's rows first, then re-insert current cart
 function save_cart_to_db($user_id, $_db) {
     $stmt = $_db->prepare("DELETE FROM cart WHERE user_id = ?");
     $stmt->execute([$user_id]);
 
-    $cart = $_SESSION['cart'] ?? [];
-    // Insert all current items from session cart into DB
+    $cart = get_cart();
     foreach ($cart as $product_id => $quantity) {
-        if (!is_exists($product_id, 'product', 'id')) {
+        $qty = (int)$quantity;
+        if ($qty <= 0 || !is_exists($product_id, 'product', 'id')) {
             continue;
         }
 
         $stmt = $_db->prepare("INSERT INTO cart (user_id, product_id, quantity) VALUES (?, ?, ?)");
-        $stmt->execute([$user_id, $product_id, $quantity]);
+        $stmt->execute([$user_id, $product_id, $qty]);
     }
 }
 
-// Fetch the saved database items back into the session cart array (after logout & login) --ziqi
+// Fetch the saved database items back into the session cart array
 function load_cart_fr_db($user_id) {
     global $_db;
     $stmt = $_db->prepare("SELECT product_id, quantity FROM cart WHERE user_id = ?");
     $stmt->execute([$user_id]);
     $items = $stmt->fetchAll();
 
-    $_SESSION['cart'] = []; // fresh reset for the logged-in user
+    $_SESSION['cart'] = [];
     foreach ($items as $item) {
         $_SESSION['cart'][$item->product_id] = (int)$item->quantity;
     }
@@ -534,6 +550,7 @@ function load_cart_fr_db($user_id) {
 // Global PDO object
 $_db = new PDO('mysql:dbname=db_bagel', 'root', '', [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_OBJ,
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
 ]);
 // Is unique?
 function is_unique($value, $table, $field) {
