@@ -182,6 +182,9 @@ body {
     font-weight: 700;
     text-decoration: none;
     transition: all 0.15s ease;
+    border: none;
+    cursor: pointer;
+    background: transparent;
 }
 
 .pl-btn-edit {
@@ -309,9 +312,14 @@ body {
                         <a href="address-edit.php?id=<?= $addr->id ?>" class="pl-action-btn pl-btn-edit">
                             ✏️ Edit
                         </a>
-                        <a href="address-delete.php?id=<?= $addr->id ?>" class="pl-action-btn pl-btn-delete" onclick="return confirm('Are you sure you want to delete this address?')">
+                        
+                        <!-- SweetAlert2 Delete Trigger Button -->
+                        <button type="button" 
+                                class="pl-action-btn pl-btn-delete" 
+                                onclick="confirmDeleteAddress('<?= $addr->id ?>', '<?= htmlspecialchars(addslashes($addr->recipient_name)) ?>')">
                             🗑️ Delete
-                        </a>
+                        </button>
+
                         <?php if (!$addr->is_default): ?>
                             <a href="address-set-default.php?id=<?= $addr->id ?>" class="pl-action-btn pl-btn-set-default">
                                 Set as Default
@@ -323,5 +331,35 @@ body {
         </div>
     <?php endif; ?>
 </div>
+
+<script>
+function confirmDeleteAddress(addressId, recipientName) {
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({
+            title: 'Delete Address?',
+            text: `Are you sure you want to remove the address for "${recipientName}"?`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#c0392b',
+            cancelButtonColor: '#968377',
+            confirmButtonText: 'Yes, Delete',
+            cancelButtonText: 'Cancel',
+            reverseButtons: true,
+            background: '#ffffff',
+            customClass: {
+                popup: 'pl-swal-popup'
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                window.location.href = `address-delete.php?id=${addressId}`;
+            }
+        });
+    } else {
+        if (confirm('Are you sure you want to delete this address?')) {
+            window.location.href = `address-delete.php?id=${addressId}`;
+        }
+    }
+}
+</script>
 
 <?php include '../_foot.php'; ?>
