@@ -46,7 +46,7 @@ switch ($sort) {
         $orderBy = 'p.price DESC, p.name ASC';
         break;
     case 'rating_desc':
-        $orderBy = 'p.rating DESC, p.name ASC';
+        $orderBy = 'live_rating DESC, p.name ASC';
         break;
     case 'name_desc':
         $orderBy = 'p.name DESC';
@@ -57,8 +57,12 @@ switch ($sort) {
         break;
 }
 
-// Clean SQL so SimplePager counts pages accurately
-$sql = 'SELECT p.*, c.name AS category_name FROM product p LEFT JOIN category c ON p.category_id = c.id';
+// Subqueries for live ratings and review counts without GROUP BY
+$sql = 'SELECT p.*, c.name AS category_name,
+               (SELECT COALESCE(AVG(rating), 0) FROM product_review WHERE product_id = p.id) AS live_rating,
+               (SELECT COUNT(*) FROM product_review WHERE product_id = p.id) AS review_count
+        FROM product p 
+        LEFT JOIN category c ON p.category_id = c.id';
 
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
@@ -259,17 +263,24 @@ body {
     margin-bottom: 5px;
     line-height: 1.3;
 }
+
 .product-card .rating {
-    color: var(--pl-gold);
-    font-size: 11.5px;
+    font-size: 12px;
     margin-bottom: 6px;
     display: flex;
     align-items: center;
     gap: 4px;
 }
+.product-card .rating.has-reviews {
+    color: var(--pl-gold);
+}
+.product-card .rating.no-reviews {
+    color: var(--pl-muted);
+}
 .product-card .rating span:first-child {
     letter-spacing: 1px;
 }
+
 .product-card .price {
     font-size: 15.5px;
     font-weight: 800;
@@ -512,8 +523,9 @@ body {
                 $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
                 $maxStockLimit = min(10, max(1, (int)$p->stock));
 
-                $currentRating = (float)($p->rating ?? 0);
-                $filledStars   = $currentRating > 0 ? (int)round($currentRating) : 0;
+                $revCount    = (int)($p->review_count ?? 0);
+                $liveRating  = $revCount > 0 ? (float)$p->live_rating : 0.0;
+                $filledStars = $revCount > 0 ? (int)round($liveRating) : 0;
                 ?>
                 <div class="product-card">
                     <a href="detail.php?id=<?= $p->id ?>" class="img-wrap">
@@ -523,9 +535,14 @@ body {
                         <span class="category-badge"><?= encode($p->category_name ?? 'Bagel') ?></span>
                         <div class="name"><?= encode($p->name) ?></div>
 
-                        <div class="rating">
-                            <span><?= str_repeat('★', $filledStars) ?><?= str_repeat('☆', 5 - $filledStars) ?></span>
-                            <span><?= $currentRating > 0 ? number_format($currentRating, 1) : '0.0' ?></span>
+                        <div class="rating <?= $revCount > 0 ? 'has-reviews' : 'no-reviews' ?>">
+                            <?php if ($revCount > 0): ?>
+                                <span><?= str_repeat('★', $filledStars) ?><?= str_repeat('☆', 5 - $filledStars) ?></span>
+                                <span><?= number_format($liveRating, 1) ?> (<?= $revCount ?>)</span>
+                            <?php else: ?>
+                                <span><?= str_repeat('☆', 5) ?></span>
+                                <span style="font-size: 11px;">0.0 (0)</span>
+                            <?php endif; ?>
                         </div>
 
                         <div class="price">RM <?= number_format($p->price, 2) ?></div>
