@@ -1,0 +1,54 @@
+[33mc4d2bce[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m HEAD@{0}: commit: update
+[33m815efbe[m HEAD@{1}: commit: update
+[33mec0d2b3[m HEAD@{2}: pull --tags origin main: Fast-forward
+[33mc8177e1[m HEAD@{3}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33mb034598[m HEAD@{4}: commit: update
+[33m3bae0ba[m HEAD@{5}: commit: update the cart to 10 item only
+[33mef5505c[m HEAD@{6}: commit: update paging
+[33m6299487[m HEAD@{7}: pull --tags origin main: Fast-forward
+[33m6f3464b[m HEAD@{8}: commit: update
+[33mc5c9c5a[m HEAD@{9}: commit: update picture
+[33m3a678e4[m HEAD@{10}: commit: update picture
+[33m5b6bd14[m HEAD@{11}: commit: upadte higher resolution
+[33maf6908d[m HEAD@{12}: commit: add the photo sharpness
+[33m2f68a53[m HEAD@{13}: commit: update
+[33m4f8cd5d[m HEAD@{14}: commit: update shopping cart(array)
+[33m1b65e34[m HEAD@{15}: commit: update
+[33mb4e3340[m HEAD@{16}: commit: update
+[33m84b62ea[m HEAD@{17}: commit: update youtube
+[33m4674e25[m HEAD@{18}: commit: update drag-and-drop
+[33md4cad9a[m HEAD@{19}: commit: update
+[33m579a352[m HEAD@{20}: commit: update product img
+[33mdc8088f[m HEAD@{21}: commit: update image
+[33m31ce1e6[m HEAD@{22}: commit: update
+[33me90d810[m HEAD@{23}: pull --tags origin main: Fast-forward
+[33mc7d8477[m HEAD@{24}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m145102f[m HEAD@{25}: commit: update product-detail but havent finalize yet
+[33m6cf10a8[m HEAD@{26}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m4c15035[m HEAD@{27}: commit: update ui product-detail
+[33m7f7583e[m HEAD@{28}: commit: update
+[33m693951c[m HEAD@{29}: commit: update product drag-and-drop
+[33ma21d865[m HEAD@{30}: pull --tags origin main: Fast-forward
+[33m07c6049[m HEAD@{31}: commit (merge): Merge branch 'main' of https://github.com/ZIQILEONG/bagel-shop
+[33m946d155[m HEAD@{32}: commit: update
+[33m4fbea3a[m HEAD@{33}: pull --tags origin main: Fast-forward
+[33m47b8102[m HEAD@{34}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m16d41d4[m HEAD@{35}: commit: map location updated -zs
+[33m154270f[m HEAD@{36}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33mb2e9197[m HEAD@{37}: commit: forgotpwd updated_byzs
+[33m79dafb0[m HEAD@{38}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m185511c[m HEAD@{39}: commit: password validation -by zs
+[33m47a0462[m HEAD@{40}: commit: update
+[33mc20266a[m HEAD@{41}: commit: update
+[33m16b040b[m HEAD@{42}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m825867c[m HEAD@{43}: commit: update
+[33m59fa08a[m HEAD@{44}: pull --tags origin main: Merge made by the 'ort' strategy.
+[33m3cfbd34[m HEAD@{45}: commit: update
+[33mc69ebaa[m HEAD@{46}: commit: update
+[33mfe7ca5f[m HEAD@{47}: commit: update
+[33me9a0d94[m HEAD@{48}: commit: update
+[33m72bf460[m HEAD@{49}: commit (merge): Resolve merge conflicts
+[33m4f80811[m HEAD@{50}: commit: update
+[33m7d60b0e[m HEAD@{51}: pull --tags origin main: Fast-forward
+[33m124abe9[m HEAD@{52}: pull --tags origin main: Fast-forward
+[33md3175e2[m HEAD@{53}: clone: from https://github.com/ZIQILEONG/bagel-shop.git

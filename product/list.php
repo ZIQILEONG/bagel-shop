@@ -46,7 +46,7 @@ switch ($sort) {
         $orderBy = 'p.price DESC, p.name ASC';
         break;
     case 'rating_desc':
-        $orderBy = 'live_rating DESC, p.name ASC';
+        $orderBy = 'p.rating DESC, p.name ASC';
         break;
     case 'name_desc':
         $orderBy = 'p.name DESC';
@@ -57,19 +57,15 @@ switch ($sort) {
         break;
 }
 
-// Subqueries for live ratings and review counts without GROUP BY
-$sql = 'SELECT p.*, c.name AS category_name,
-               (SELECT COALESCE(AVG(rating), 0) FROM product_review WHERE product_id = p.id) AS live_rating,
-               (SELECT COUNT(*) FROM product_review WHERE product_id = p.id) AS review_count
-        FROM product p 
-        LEFT JOIN category c ON p.category_id = c.id';
+// Clean SQL structure so SimplePager calculates the total page count accurately
+$sql = 'SELECT p.*, c.name AS category_name FROM product p LEFT JOIN category c ON p.category_id = c.id';
 
 if ($where) {
     $sql .= ' WHERE ' . implode(' AND ', $where);
 }
 $sql .= ' ORDER BY ' . $orderBy;
 
-// SimplePager: 8 items per page
+// SimplePager: 8 items per page (17 items will generate 3 pages: 8 + 8 + 1)
 $pager    = new SimplePager($sql, $params, 8, $page);
 $products = $pager->result;
 
@@ -362,7 +358,7 @@ body {
     margin: 0;
 }
 
-/* Pagination */
+/* Pagination Bar Styling */
 .pl-pagination-wrap,
 .pager {
     display: flex !important;
@@ -523,8 +519,13 @@ body {
                 $unit = is_array($cartEntry) ? (int)($cartEntry['qty'] ?? 1) : (int)$cartEntry;
                 $maxStockLimit = min(10, max(1, (int)$p->stock));
 
-                $revCount    = (int)($p->review_count ?? 0);
-                $liveRating  = $revCount > 0 ? (float)$p->live_rating : 0.0;
+                // Read live rating and review count directly
+                $revStm = $_db->prepare("SELECT COUNT(*) AS total_count, COALESCE(AVG(rating), 0) AS avg_rating FROM product_review WHERE product_id = ?");
+                $revStm->execute([$p->id]);
+                $revData = $revStm->fetch();
+
+                $revCount    = (int)($revData->total_count ?? 0);
+                $liveRating  = $revCount > 0 ? (float)$revData->avg_rating : 0.0;
                 $filledStars = $revCount > 0 ? (int)round($liveRating) : 0;
                 ?>
                 <div class="product-card">
