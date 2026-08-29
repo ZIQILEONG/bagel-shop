@@ -63,8 +63,14 @@ $header_active = static function (string $section) use ($header_path): string {
                 </details>
                 <details class="pululu-account">
                     <summary aria-label="Account menu">
-                        <?php if ($_user && !empty($_user->photo)): ?>
-                            <img class="pululu-avatar" src="<?= app_url('photos/' . rawurlencode($_user->photo)) ?>" alt="">
+                        <?php if ($_user): ?>
+                            <?php 
+                            $userPhoto = !empty($_user->photo) ? $_user->photo : 'photo.jpg'; 
+                            ?>
+                            <img class="pululu-avatar" 
+                                 src="<?= app_url('user/image/' . rawurlencode($userPhoto)) ?>" 
+                                 alt="<?= $header_name ?>"
+                                 onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name=<?= urlencode($_user->name ?: 'User') ?>&background=f0dfd5&color=3e2619&size=64&bold=true';">
                         <?php else: ?>
                             <svg viewBox="0 0 24 24" aria-hidden="true">
                                 <circle cx="12" cy="8" r="4"></circle>
