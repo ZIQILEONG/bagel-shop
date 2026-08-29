@@ -6,7 +6,7 @@ $msg = '';
 $msgType = '';
 
 if (is_post()) {
-    // 获取上传的csv文件
+    // Retrieve the uploaded CSV file.
     $file = $_FILES['csv_file'] ?? null;
 
     if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
@@ -28,12 +28,12 @@ if (is_post()) {
                 $_db->beginTransaction();
                 try {
                     while (($row = fgetcsv($handle, 1000, ",")) !== false) {
-                        // 跳过第一行表头
+                        // Skip the first row (header)
                         if ($firstRow) {
                             $firstRow = false;
                             continue;
                         }
-                        // 字段顺序：id,name,price,photo,description,stock,category_id
+                        // Field order: id,name,price,photo,description,stock,category_id
                         [$id,$name,$price,$photo,$description,$stock,$category_id] = $row;
 
                         $stm = $_db->prepare("

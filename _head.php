@@ -62,17 +62,19 @@ $header_active = static function (string $section) use ($header_path): string {
                     </form>
                 </details>
                 <details class="pululu-account">
-                    <summary aria-label="Account menu">
-                        <?php if ($_user && !empty($_user->photo)): ?>
-                            <img class="pululu-avatar" src="<?= app_url('photos/' . rawurlencode($_user->photo)) ?>" alt="">
-                        <?php else: ?>
-                            <svg viewBox="0 0 24 24" aria-hidden="true">
-                                <circle cx="12" cy="8" r="4"></circle>
-                                <path d="M4.5 21c.7-4.1 3.2-6 7.5-6s6.8 1.9 7.5 6"></path>
-                            </svg>
-                        <?php endif ?>
-                        <span><?= $header_name ?></span>
-                    </summary>
+                <summary aria-label="Account menu">
+                <?php if ($_user && !empty($_user->photo)): ?>
+                <img class="pululu-avatar" src="<?= app_url('user/image/' . rawurlencode($_user->photo)) ?>" alt="">
+                <?php else: ?>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4.5 21c.7-4.1 3.2-6 7.5-6s6.8 1.9 7.5 6"></path>
+        </svg>
+    <?php endif ?>
+    <span><?= $header_name ?></span>
+</summary>
+
+
                     <div class="pululu-account-menu">
                         <?php if (!$_user): ?>
                             <strong>Welcome to Pululu</strong>
