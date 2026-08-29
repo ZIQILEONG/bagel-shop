@@ -88,7 +88,7 @@ if (is_post() && req('action') === 'add_to_cart') {
         redirect("detail.php?id={$p->id}");
     }
 
-    // 🔒 Limit to maximum 10 items
+    // Limit to maximum 10 items
     if ($totalUnit > 10) {
         temp('error', "Maximum order limit is 10 per bagel. You already have {$currentUnit} in your cart.");
         redirect("detail.php?id={$p->id}");
@@ -105,7 +105,7 @@ if (is_post() && req('action') === 'add_to_cart') {
 }
 
 // ==========================================
-// ⭐ HANDLE REVIEW SUBMISSION
+// ⭐ HANDLE REVIEW SUBMISSION (SAFE INSERT/UPDATE)
 // ==========================================
 if (is_post() && req('action') === 'submit_review') {
     auth('Member');
@@ -113,12 +113,27 @@ if (is_post() && req('action') === 'submit_review') {
     $review_text = trim(req('review_text'));
 
     if ($rating >= 1 && $rating <= 5) {
-        $ins = $_db->prepare("INSERT INTO product_review (product_id, user_id, rating, comment, created_at) VALUES (?, ?, ?, ?, NOW())");
-        $ins->execute([$p->id, $_user->id, $rating, $review_text]);
-        temp('info', 'Thank you for your review!');
-        redirect("detail.php?id={$p->id}");
+        try {
+            // Handles both normal insert and auto-updates if unique index is present
+            $ins = $_db->prepare("
+                INSERT INTO product_review (product_id, user_id, rating, comment, created_at) 
+                VALUES (?, ?, ?, ?, NOW())
+                ON DUPLICATE KEY UPDATE rating = VALUES(rating), comment = VALUES(comment), created_at = NOW()
+            ");
+            $ins->execute([$p->id, $_user->id, $rating, $review_text]);
+
+            // Recalculate and update the average rating
+            update_product_rating($p->id);
+
+            temp('info', 'Thank you for your review!');
+            redirect("detail.php?id={$p->id}");
+        } catch (PDOException $e) {
+            temp('error', 'Unable to submit review. Please try again.');
+            redirect("detail.php?id={$p->id}");
+        }
     } else {
-        temp('error', 'Please select a star rating.');
+        temp('error', 'Please select a valid star rating.');
+        redirect("detail.php?id={$p->id}");
     }
 }
 
@@ -710,7 +725,6 @@ body {
     color: var(--primary-orange);
 }
 
-/* Floating Toast Notification if the items more that 10*/
 /* Centered Top Floating Toast Notification */
 .pl-toast {
     position: fixed;
@@ -738,6 +752,9 @@ body {
     opacity: 1;
     transform: translate(-50%, 0) scale(1);
     pointer-events: auto;
+}
+.pl-toast-icon {
+    font-size: 16px;
 }
 
 @media (max-width: 860px) {
