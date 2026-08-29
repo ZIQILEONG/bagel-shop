@@ -34,10 +34,48 @@ if (($o->delivery_method ?? '') === 'Delivery' && !empty($o->address_id)) {
     $addr = $stm->fetch();
 }
 
-// Calculate raw subtotal from items
+// 1. Calculate raw items subtotal directly from line items
 $raw_items_subtotal = 0;
 foreach ($arr as $item) {
     $raw_items_subtotal += (float)$item->subtotal;
+}
+
+// 2. Fetch specific voucher discount percentage if a code was used
+$voucher_percent = 0;
+$voucher_discount_amount = 0.00;
+
+if (!empty($o->voucher_code)) {
+    $stm = $_db->prepare("SELECT percent FROM voucher WHERE code = ?");
+    $stm->execute([$o->voucher_code]);
+    $v_data = $stm->fetch();
+    
+    if ($v_data) {
+        $voucher_percent = (float)$v_data->percent;
+        $voucher_discount_amount = round($raw_items_subtotal * ($voucher_percent / 100), 2);
+    }
+}
+
+// 3. Separate points discount from voucher discount
+$points_used_count = 0;
+$points_discount_amount = 0.00;
+
+if (isset($o->points_used) && (int)$o->points_used > 0) {
+    $points_used_count = (int)$o->points_used;
+    $points_discount_amount = round($points_used_count / 100, 2);
+} elseif (!empty($o->discount)) {
+    // If voucher was present, the remainder of total discount is from points
+    $total_discount = (float)$o->discount;
+    if ($voucher_discount_amount > 0) {
+        $points_discount_amount = max(0, round($total_discount - $voucher_discount_amount, 2));
+    } else {
+        $points_discount_amount = $total_discount;
+    }
+    $points_used_count = (int)round($points_discount_amount * 100);
+}
+
+// If voucher discount couldn't be computed from percent, derive it directly
+if (!empty($o->voucher_code) && $voucher_discount_amount <= 0 && (float)$o->discount > $points_discount_amount) {
+    $voucher_discount_amount = round((float)$o->discount - $points_discount_amount, 2);
 }
 
 // ----------------------------------------------------------------------------
@@ -388,7 +426,7 @@ body {
         <div class="pl-order-title-group">
             <h1>Order #<?= htmlspecialchars($o->id) ?></h1>
             <div class="pl-order-meta-text">
-                <span>🗓️ <?= date('M d, Y', strtotime($o->datetime)) ?> &bull; <?= date('h:i A', strtotime($o->datetime)) ?></span><span>🗓️ <?= date('M d, Y', strtotime($o->datetime)) ?> &bull; <?= date('h:i A', strtotime($o->datetime)) ?></span>
+                <span>🗓️ <?= date('M d, Y', strtotime($o->datetime)) ?> &bull; <?= date('h:i A', strtotime($o->datetime)) ?></span>
                 <span>&bull;</span>
                 <span><?= (int)$o->count ?> total item(s)</span>
             </div>
@@ -462,24 +500,27 @@ body {
                     <span>RM <?= number_format($raw_items_subtotal, 2) ?></span>
                 </div>
 
-                <?php if (!empty($o->voucher_code)): ?>
+                <!-- 1. Dedicated Voucher Row -->
+                <?php if (!empty($o->voucher_code) && $voucher_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
-                        <span>Voucher (<?= htmlspecialchars($o->voucher_code) ?>)</span>
-                        <span>- RM <?= number_format((float)$o->discount, 2) ?></span>
+                        <span>Voucher (<?= htmlspecialchars($o->voucher_code) ?><?= $voucher_percent > 0 ? " &bull; {$voucher_percent}%" : '' ?>)</span>
+                        <span>- RM <?= number_format($voucher_discount_amount, 2) ?></span>
                     </div>
                 <?php endif; ?>
 
-                <?php if (!empty($o->points_used) && $o->points_used > 0): ?>
+                <!-- 2. Dedicated Points Used Row -->
+                <?php if ($points_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
-                        <span>Points Redeemed (<?= (int)$o->points_used ?> pts)</span>
-                        <span>- RM <?= number_format((float)$o->points_used / 100, 2) ?></span>
+                        <span>Points Redeemed (<?= number_format($points_used_count) ?> pts)</span>
+                        <span>- RM <?= number_format($points_discount_amount, 2) ?></span>
                     </div>
                 <?php endif; ?>
 
+                <!-- 3. Delivery Fee -->
                 <?php if (!empty($o->delivery_fee) && (float)$o->delivery_fee > 0): ?>
                     <div class="pl-summary-line">
                         <span>Delivery Fee</span>
-                        <span>RM <?= number_format((float)$o->delivery_fee, 2) ?></span>
+                        <span>+ RM <?= number_format((float)$o->delivery_fee, 2) ?></span>
                     </div>
                 <?php endif; ?>
 
