@@ -70,30 +70,168 @@ function send_order_status_email($order, $newStatus) {
     require_once '../PHPMailer-master/src/Exception.php';
     require_once '../config.php';
 
-    if (!defined('SMTP_USERNAME') || !defined('SMTP_PASSWORD')) {
+    $smtp_user = defined('SMTP_USERNAME') ? SMTP_USERNAME : (defined('MAIL_USERNAME') ? MAIL_USERNAME : null);
+    $smtp_pass = defined('SMTP_PASSWORD') ? SMTP_PASSWORD : (defined('MAIL_PASSWORD') ? MAIL_PASSWORD : null);
+    $smtp_host = defined('MAIL_HOST') ? MAIL_HOST : 'smtp.gmail.com';
+
+    if (!$smtp_user || !$smtp_pass) {
         return;
     }
 
+    $status_config = [
+        'Pending' => [
+            'color'   => '#c07a16',
+            'bg'      => '#fff7e6',
+            'border'  => '#fae0b8',
+            'message' => 'We have received your order and payment. Our bakers will begin preparing your bagels shortly.'
+        ],
+        'Preparing' => [
+            'color'   => '#d97706',
+            'bg'      => '#fdf3e7',
+            'border'  => '#fcd34d',
+            'message' => 'Great news! Your handcrafted bagels are currently being baked fresh in the oven.'
+        ],
+        'Ready' => [
+            'color'   => '#1d68cd',
+            'bg'      => '#eaf3ff',
+            'border'  => '#c8e0ff',
+            'message' => ($order->delivery_method === 'Delivery')
+                ? 'Your bagels are packed and waiting for courier collection for doorstep delivery.'
+                : 'Your fresh bagels are packed and ready for pickup at our bakery store!'
+        ],
+        'Completed' => [
+            'color'   => '#217d47',
+            'bg'      => '#eaf6ed',
+            'border'  => '#c6e9d0',
+            'message' => 'Your order is complete! We hope you enjoy your delicious bagels. See you again soon!'
+        ],
+        'Cancelled' => [
+            'color'   => '#c0392b',
+            'bg'      => '#fdf2f2',
+            'border'  => '#f8cfcf',
+            'message' => 'This order has been cancelled. If you believe this is an error, please reach out to our support.'
+        ],
+    ];
+
+    $cfg = $status_config[$newStatus] ?? [
+        'color'   => '#cf7953',
+        'bg'      => '#fbf5ef',
+        'border'  => '#ebdcd5',
+        'message' => 'Your order status has been updated.'
+    ];
+
+    $site_url = defined('SITE_URL') ? SITE_URL : 'http://localhost:8000';
+    $view_order_url = "{$site_url}/order/detail.php?id={$order->id}";
+
+    $html_body = "
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset='UTF-8'>
+        <title>Order #{$order->id} Status Update</title>
+    </head>
+    <body style='margin: 0; padding: 0; background-color: #faf5f0; font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;'>
+        <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: #faf5f0; padding: 30px 15px;'>
+            <tr>
+                <td align='center'>
+                    <table border='0' cellpadding='0' cellspacing='0' width='100%' style='max-width: 580px; background-color: #ffffff; border-radius: 20px; overflow: hidden; border: 1px solid #ebdcd5; box-shadow: 0 4px 20px rgba(62, 38, 25, 0.05);'>
+                        
+                        <!-- Header Banner -->
+                        <tr>
+                            <td style='background-color: #cf7953; padding: 28px 30px; text-align: center;'>
+                                <h1 style='color: #ffffff; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.01em;'>Pululu Bagel</h1>
+                                <p style='color: #fbf5ef; margin: 6px 0 0; font-size: 14px;'>Order Status Notification</p>
+                            </td>
+                        </tr>
+
+                        <!-- Body Content -->
+                        <tr>
+                            <td style='padding: 32px 30px;'>
+                                <div style='font-size: 16px; font-weight: bold; color: #3e2619; margin-bottom: 8px;'>
+                                    Hi " . htmlspecialchars($order->name) . ",
+                                </div>
+                                <p style='font-size: 14px; color: #6b584d; margin: 0 0 24px; line-height: 1.5;'>
+                                    Here is an update regarding your recent order <b>#{$order->id}</b>.
+                                </p>
+
+                                <!-- Status Highlight Box -->
+                                <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: {$cfg['bg']}; border: 1.5px solid {$cfg['border']}; border-radius: 14px; padding: 20px; margin-bottom: 24px; text-align: center;'>
+                                    <tr>
+                                        <td>
+                                            <div style='font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: #968377; margin-bottom: 6px;'>
+                                                Current Status
+                                            </div>
+                                            <div style='display: inline-block; font-size: 19px; font-weight: 800; color: {$cfg['color']}; margin-bottom: 10px;'>
+                                                {$newStatus}
+                                            </div>
+                                            <div style='font-size: 13.5px; color: #4a3b32; line-height: 1.5; max-width: 440px; margin: 0 auto;'>
+                                                {$cfg['message']}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </table>
+
+                                <!-- Order Summary Meta Box -->
+                                <table border='0' cellpadding='0' cellspacing='0' width='100%' style='background-color: #fdfaf7; border: 1px solid #ebdcd5; border-radius: 12px; padding: 14px 18px; margin-bottom: 26px;'>
+                                    <tr>
+                                        <td style='font-size: 13px; color: #968377;'>Order Reference:</td>
+                                        <td style='font-size: 13px; font-weight: 800; color: #3e2619; text-align: right;'>#{$order->id}</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-size: 13px; color: #968377; padding-top: 6px;'>Order Total:</td>
+                                        <td style='font-size: 13px; font-weight: 800; color: #cf7953; text-align: right;'>RM " . number_format($order->total, 2) . "</td>
+                                    </tr>
+                                    <tr>
+                                        <td style='font-size: 13px; color: #968377; padding-top: 6px;'>Fulfillment:</td>
+                                        <td style='font-size: 13px; font-weight: bold; color: #3e2619; text-align: right; padding-top: 6px;'>" . htmlspecialchars($order->delivery_method ?? 'Pickup') . "</td>
+                                    </tr>
+                                </table>
+
+                                <!-- CTA Button -->
+                                <div style='text-align: center; margin-top: 10px;'>
+                                    <a href='{$view_order_url}' 
+                                       style='display: inline-block; background-color: #cf7953; color: #ffffff; text-decoration: none; padding: 13px 30px; border-radius: 12px; font-size: 14px; font-weight: bold; box-shadow: 0 4px 14px rgba(207, 121, 83, 0.25);'>
+                                        View Full Order Details &rarr;
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Footer -->
+                        <tr>
+                            <td style='background-color: #3e2619; padding: 24px; text-align: center;'>
+                                <div style='font-size: 13px; color: #fbf5ef; font-weight: bold; margin-bottom: 4px;'>Pululu Bagel Bakery</div>
+                                <div style='font-size: 12px; color: #c4b5ac; line-height: 1.4;'>TAR UMT Block D, Kuala Lumpur, Malaysia</div>
+                                <div style='font-size: 11px; color: #968377; margin-top: 10px;'>You received this email because of your order at Pululu Bagel.</div>
+                            </td>
+                        </tr>
+
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </body>
+    </html>";
+
     try {
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
-
+        $mail->CharSet    = 'UTF-8';
+        $mail->Encoding   = 'base64';
         $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com';
-        $mail->SMTPAuth = true;
-        $mail->Username = SMTP_USERNAME;
-        $mail->Password = SMTP_PASSWORD;
+        $mail->Host       = $smtp_host;
+        $mail->SMTPAuth   = true;
+        $mail->Username   = $smtp_user;
+        $mail->Password   = $smtp_pass;
         $mail->SMTPSecure = PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
-        $mail->Port = 587;
+        $mail->Port       = 587;
 
-        $mail->setFrom('pululubagelshop@gmail.com', 'Pululu Bagel');
+        $mail->setFrom($smtp_user, 'Pululu Bagel');
         $mail->addAddress($order->email, $order->name);
 
-        $mail->Subject = "Order #{$order->id} Update - {$newStatus}";
-        $mail->Body =
-            "Dear {$order->name},\n\n" .
-            "Your order #{$order->id} status has been updated to: {$newStatus}\n\n" .
-            "Order Total: RM " . number_format($order->total, 2) . "\n\n" .
-            "Thank you for shopping with Pululu Bagel!\n";
+        $mail->Subject = "Order #{$order->id} Status: {$newStatus}";
+        $mail->isHTML(true);
+        $mail->Body    = $html_body;
+        $mail->AltBody = "Dear {$order->name},\n\nYour order #{$order->id} status has been updated to: {$newStatus}.\nOrder Total: RM " . number_format($order->total, 2) . "\n\nView details: {$view_order_url}";
 
         $mail->send();
     }
@@ -404,9 +542,6 @@ body {
     font-weight: 600;
     text-align: right;
 }
-.pl-info-val b {
-    color: var(--pl-brown-dark);
-}
 
 /* Summary Pricing Box */
 .pl-summary-line {
@@ -532,7 +667,7 @@ body {
 
             <!-- Itemized Table Card -->
             <div class="pl-admin-card">
-                <h2>🥯 Line Items (<?= count($arr) ?>)</h2>
+                <h2>Line Items (<?= count($arr) ?>)</h2>
                 <table class="pl-table-items">
                     <thead>
                         <tr>
