@@ -12,7 +12,7 @@ $stm->execute([$id, $_user->id]);
 $o = $stm->fetch();
 
 if (!$o) {
-    temp('error', 'Order not found.');
+    temp('info', 'Order not found.');
     redirect('history.php');
 }
 
@@ -508,10 +508,15 @@ body {
                     </div>
                 <?php endif; ?>
 
-                <!-- 2. Dedicated Points Used Row -->
+                <!-- 2. Points Used & Refund Note -->
                 <?php if ($points_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
-                        <span>Points Redeemed (<?= number_format($points_used_count) ?> pts)</span>
+                        <span>
+                            Points Redeemed (<?= number_format($points_used_count) ?> pts)
+                            <?php if ($o->status === 'Cancelled'): ?>
+                                <i style="font-size:11px;">(refunded)</i>
+                            <?php endif ?>
+                        </span>
                         <span>- RM <?= number_format($points_discount_amount, 2) ?></span>
                     </div>
                 <?php endif; ?>
@@ -536,6 +541,7 @@ body {
                         <span>⭐</span>
                         <span>Earned <b>+<?= (int)$o->points_earned ?> points</b> from this purchase</span>
                     </div>
+
                 <?php endif; ?>
 
                 <!-- Action Button Group -->

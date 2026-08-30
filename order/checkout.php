@@ -26,7 +26,7 @@ $total = 0.00;
 
 foreach ($cart as $product_id => $rawUnit) {
     $unit = is_array($rawUnit) ? (int)($rawUnit['qty'] ?? 1) : (int)$rawUnit;
-    
+
     $stm = $_db->prepare("SELECT * FROM product WHERE id = ?");
     $stm->execute([$product_id]);
     $product = $stm->fetch();
@@ -58,14 +58,13 @@ if ($use_points && ($_user->points ?? 0) > 0) {
     $points_value           = min($points_value_available, $total);
     $points_value           = round($points_value, 2);
     $points_used            = (int) round($points_value * 100);
-    $discount              += $points_value;
-    $total                 -= $points_value;
+    $discount               += $points_value;
+    $total                  -= $points_value;
 }
 
 // Delivery Fee (Added after voucher/points)
-$delivery_fee = ($delivery_method === 'Delivery') ? 7.00 : 0.00;
-$total       += $delivery_fee;
-$points_earned = (int) floor(max(0, $total));
+$delivery_fee  = ($delivery_method === 'Delivery') ? 7.00 : 0.00;
+$total        += $delivery_fee;
 
 // Create order in Database
 try {
@@ -73,12 +72,17 @@ try {
 
     // Lock and check stock before creating order
     $stock_check_stm = $_db->prepare("SELECT stock, name FROM product WHERE id = ? FOR UPDATE");
+
     foreach ($cart as $product_id => $rawUnit) {
         $unit = is_array($rawUnit) ? (int)($rawUnit['qty'] ?? 1) : (int)$rawUnit;
         $stock_check_stm->execute([$product_id]);
         $prod_stock = $stock_check_stm->fetch();
 
-        if (!$prod_stock || (int)$prod_stock->stock < 1) {
+        // Product no longer exists at all - stop here with a safe, generic message
+        if (!$prod_stock) {
+            throw new Exception("Sorry, one of the items in your cart is no longer available.");
+        }
+        if ((int)$prod_stock->stock < 1) {
             throw new Exception("Sorry, '{$prod_stock->name}' is currently out of stock.");
         }
         if ((int)$prod_stock->stock < $unit) {
@@ -87,9 +91,9 @@ try {
     }
 
     $stm = $_db->prepare("
-        INSERT INTO orders 
-        (datetime, count, total, voucher_code, discount, status, user_id, points_earned, delivery_method, delivery_fee, address_id) 
-        VALUES (NOW(), ?, ?, ?, ?, 'Awaiting Payment', ?, ?, ?, ?, ?)
+        INSERT INTO orders
+        (datetime, count, total, voucher_code, discount, status, user_id, points_earned, points_used, delivery_method, delivery_fee, address_id)
+        VALUES (NOW(), ?, ?, ?, ?, 'Awaiting Payment', ?, 0, ?, ?, ?, ?)
     ");
     $stm->execute([
         $count,
@@ -97,18 +101,18 @@ try {
         $voucher_code,
         $discount,
         $_user->id,
-        $points_earned,
+        $points_used,
         $delivery_method,
         $delivery_fee,
         $address_id ?: null
     ]);
-    
+
     $order_id = (int)$_db->lastInsertId();
 
     // Insert line items
     foreach ($cart as $product_id => $rawUnit) {
         $unit = is_array($rawUnit) ? (int)($rawUnit['qty'] ?? 1) : (int)$rawUnit;
-        
+
         $stm = $_db->prepare("SELECT price FROM product WHERE id = ?");
         $stm->execute([$product_id]);
         $prod = $stm->fetch();
@@ -116,7 +120,7 @@ try {
         if ($prod) {
             $itemSubtotal = (float)$prod->price * $unit;
             $itemStm = $_db->prepare("
-                INSERT INTO order_item (order_id, product_id, price, unit, subtotal) 
+                INSERT INTO order_item (order_id, product_id, price, unit, subtotal)
                 VALUES (?, ?, ?, ?, ?)
             ");
             $itemStm->execute([$order_id, $product_id, $prod->price, $unit, $itemSubtotal]);
@@ -137,7 +141,7 @@ try {
     if ($_db->inTransaction()) {
         $_db->rollBack();
     }
-    temp('error', 'Checkout failed: ' . $e->getMessage());
+    temp('info', 'Checkout failed: ' . $e->getMessage());
     redirect('cart.php');
 }
 
@@ -175,7 +179,6 @@ try {
     $baseUrl  = $protocol . $host;
 
     $session = \Stripe\Checkout\Session::create([
-        // Enables both Card (Credit/Debit) and FPX (Online Banking)
         'payment_method_types' => ['card', 'fpx'],
         'line_items' => [[
             'price_data' => [
@@ -200,6 +203,6 @@ try {
     redirect($session->url);
 
 } catch (\Exception $e) {
-    temp('error', 'Stripe checkout error: ' . $e->getMessage());
+    temp('info', 'Stripe checkout error: ' . $e->getMessage());
     redirect('cart.php');
 }

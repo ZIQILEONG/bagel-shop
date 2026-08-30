@@ -60,9 +60,11 @@ $_db->beginTransaction();
 // Mark order as paid, award points earned on final amount paid
 $points_earned = floor($o->total);
 
+// update order status and set the earned points
 $stm = $_db->prepare("UPDATE orders SET status = 'Pending', points_earned = ? WHERE id = ?");
 $stm->execute([$points_earned, $order_id]);
 
+// add points to user acc
 $stm = $_db->prepare("UPDATE user SET points = points + ? WHERE id = ?");
 $stm->execute([$points_earned, $_user->id]);
 
