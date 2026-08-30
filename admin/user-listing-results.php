@@ -15,13 +15,7 @@
     <?php foreach ($arr as $u): ?>
     <tr>
         <td><input type="checkbox" name="ids[]" value="<?= $u->id ?>" <?= $u->id == $_user->id ? 'disabled' : '' ?>></td>
-        <td>
-            <?php if (!empty($u->photo)): ?>
-<!-- admin folder; navigate back to the root directory ../images/; the database stores only the filename -->                <img src="../images/<?= encode($u->photo) ?>" width="50" height="50" style="object-fit: cover;">
-            <?php else: ?>
-                <img src="../images/photo.jpg" width="50" height="50" style="object-fit: cover;">
-            <?php endif; ?>
-        </td>
+        <td><img src="<?= app_url('photos/' . rawurlencode($u->photo)) ?>" width="50" height="50"></td> 
         <td><?= $u->id ?></td>
         <td><?= $u->name ?></td>
         <td><?= $u->email ?></td>
