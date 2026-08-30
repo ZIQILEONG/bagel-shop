@@ -8,8 +8,7 @@
     <tr>
         <th></th>
         <th>Photo</th>
-        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'email' => 'Email', 'role' => 'Role'], $sort, $dir, 'search=' . encode($search)) ?>
-        <th>Phone No</th>
+        <?= table_headers(['id' => 'Id', 'name' => 'Name', 'email' => 'Email', 'role' => 'Role', 'phone_no' => 'Phone No'], $sort, $dir, 'search=' . encode($search)) ?>
         <th></th>
     </tr>
     <?php foreach ($arr as $u): ?>

@@ -60,6 +60,7 @@ include '../_head.php';
 <div id="resultsWrap">
 <?php include 'user-listing-results.php'; ?>
 </div>
+
 <script>
 $(function () {
     let timer = null;
