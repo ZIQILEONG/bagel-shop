@@ -20,7 +20,7 @@ if (!$delivery_method) {
     redirect('checkout-options.php');
 }
 
-// 1. Calculate items & base total
+// Calculate items & base total
 $count = 0;
 $total = 0.00;
 
@@ -38,7 +38,7 @@ foreach ($cart as $product_id => $rawUnit) {
     }
 }
 
-// 2. Voucher Discount
+// Voucher Discount
 $voucher      = $_SESSION['voucher'] ?? null;
 $discount     = 0.00;
 $voucher_code = null;
@@ -49,7 +49,7 @@ if ($voucher) {
     $total       -= $discount;
 }
 
-// 3. Points Discount
+// Points Discount
 $use_points  = $_SESSION['use_points'] ?? false;
 $points_used = 0;
 
@@ -62,14 +62,29 @@ if ($use_points && ($_user->points ?? 0) > 0) {
     $total                 -= $points_value;
 }
 
-// 4. Delivery Fee (Added after voucher/points)
+// Delivery Fee (Added after voucher/points)
 $delivery_fee = ($delivery_method === 'Delivery') ? 7.00 : 0.00;
 $total       += $delivery_fee;
 $points_earned = (int) floor(max(0, $total));
 
-// (A) Create order in Database
+// Create order in Database
 try {
     $_db->beginTransaction();
+
+    // Lock and check stock before creating order
+    $stock_check_stm = $_db->prepare("SELECT stock, name FROM product WHERE id = ? FOR UPDATE");
+    foreach ($cart as $product_id => $rawUnit) {
+        $unit = is_array($rawUnit) ? (int)($rawUnit['qty'] ?? 1) : (int)$rawUnit;
+        $stock_check_stm->execute([$product_id]);
+        $prod_stock = $stock_check_stm->fetch();
+
+        if (!$prod_stock || (int)$prod_stock->stock < 1) {
+            throw new Exception("Sorry, '{$prod_stock->name}' is currently out of stock.");
+        }
+        if ((int)$prod_stock->stock < $unit) {
+            throw new Exception("Sorry, '{$prod_stock->name}' only has {$prod_stock->stock} item(s) left in stock.");
+        }
+    }
 
     $stm = $_db->prepare("
         INSERT INTO orders 
@@ -151,7 +166,7 @@ if ($total <= 0) {
     redirect("payment-success.php?free_order={$order_id}");
 }
 
-// (B) Connect to Stripe with Card + FPX Online Banking
+// Connect to Stripe with Card + FPX Online Banking
 try {
     \Stripe\Stripe::setApiKey(STRIPE_SECRET_KEY);
 
