@@ -71,9 +71,10 @@ $stm = $_db->prepare("SELECT * FROM order_item WHERE order_id = ?");
 $stm->execute([$order_id]);
 $items = $stm->fetchAll();
 
+// Prevent stock from going below 0 and prevent variable collision
+$update_stock_stm = $_db->prepare("UPDATE product SET stock = GREATEST(0, stock - ?) WHERE id = ?");
 foreach ($items as $item) {
-    $stm = $_db->prepare("UPDATE product SET stock = stock - ? WHERE id = ?");
-    $stm->execute([$item->unit, $item->product_id]);
+    $update_stock_stm->execute([$item->unit, $item->product_id]);
 }
 
 // Record payment
