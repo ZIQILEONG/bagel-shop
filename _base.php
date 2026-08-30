@@ -492,7 +492,29 @@ function update_cart($id, $unit) {
     $cart = get_cart();
     $unit = (int)$unit;
 
-    if ($unit >= 1 && $unit <= 10 && is_exists($id, 'product', 'id')) {
+    // Fetch live stock quantity directly from the database
+    $stm = $_db->prepare("SELECT stock FROM product WHERE id = ?");
+    $stm->execute([$id]);
+    $product = $stm->fetch();
+
+    // Check if product exists and has stock available
+    if (!$product || (int)$product->stock <= 0) {
+        unset($cart[$id]);
+        set_cart($cart);
+        temp('info', 'This item is currently out of stock.');
+        if ($_user && $_db) {
+            save_cart_to_db($_user->id, $_db);
+        }
+        return;
+    }
+
+    // Cap requested units to the maximum available stock
+    if ($unit > (int)$product->stock) {
+        $unit = (int)$product->stock;
+        temp('info', 'Requested quantity adjusted to maximum available stock.');
+    }
+
+    if ($unit >= 1 && $unit <= 10) {
         $current_item_qty = (int)($cart[$id] ?? 0);
         $existing_total = array_sum($cart) - $current_item_qty;
 

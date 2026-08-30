@@ -627,31 +627,41 @@ body {
                             $p = $stm->fetch();
                             if (!$p) continue;
                             $subtotal = ($p->price ?? 0) * $unit;
-                            $maxStockLimit = min(10, max(1, (int)$p->stock));
+                            $stock = (int)$p->stock;
+                            $isOutOfStock = ($stock <= 0);
+                            $maxStockLimit = min(10, max(0, $stock));
                         ?>
                             <div class="pl-cart-row">
-                                <!-- Checkbox -->
-                                <input type="checkbox" name="checked_items[]" value="<?= htmlspecialchars($p->id) ?>" class="item-checkbox pl-item-cb" data-subtotal="<?= $subtotal ?>" data-qty="<?= $unit ?>" checked>
+                                
+                            <!-- Checkbox (Disabled if Out of Stock) -->
+                            <input type="checkbox" name="checked_items[]" value="<?= htmlspecialchars($p->id) ?>" class="item-checkbox pl-item-cb" data-subtotal="<?= $subtotal ?>" data-qty="<?= $unit ?>" <?= $isOutOfStock ? 'disabled' : 'checked' ?>>
 
-                                <!-- Thumbnail -->
-                                <img src="/products/<?= htmlspecialchars($p->photo ?: 'default.jpg') ?>" class="pl-cart-thumb" alt="<?= htmlspecialchars($p->name) ?>" onerror="this.src='/products/default.jpg'">
+                            <!-- Thumbnail -->
+                            <img src="/products/<?= htmlspecialchars($p->photo ?: 'default.jpg') ?>" class="pl-cart-thumb" alt="<?= htmlspecialchars($p->name) ?>" onerror="this.src='/products/default.jpg'">
 
-                                <!-- Info -->
-                                <div class="pl-cart-item-info">
-                                    <span class="pl-cart-item-id"><?= htmlspecialchars($p->id) ?></span>
-                                    <a href="/product/detail.php?id=<?= htmlspecialchars($p->id) ?>" class="pl-cart-item-name"><?= htmlspecialchars($p->name) ?></a>
-                                    <span class="pl-cart-item-unitprice">RM <?= number_format($p->price, 2) ?> each</span>
-                                </div>
+                            <!-- Info -->
+                            <div class="pl-cart-item-info">
+                                <span class="pl-cart-item-id"><?= htmlspecialchars($p->id) ?></span>
+                                <a href="/product/detail.php?id=<?= htmlspecialchars($p->id) ?>" class="pl-cart-item-name"><?= htmlspecialchars($p->name) ?></a>
+                                <span class="pl-cart-item-unitprice">RM <?= number_format($p->price, 2) ?> each</span>
+                                <?php if ($isOutOfStock): ?>
+                                    <span style="color: var(--pl-red); font-size: 12px; font-weight: 700;">⚠️ Out of Stock</span>
+                                <?php endif; ?>
+                            </div>
 
-                                <!-- Stepper Unit -->
-                                <div>
-                                    <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>" class="row-id">
+                            <!-- Stepper Unit -->
+                            <div>
+                                <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>" class="row-id">
+                                <?php if ($isOutOfStock): ?>
+                                    <span style="font-size: 13px; color: var(--pl-muted); font-weight: 600;">0</span>
+                                <?php else: ?>
                                     <select name="unit" class="pl-cart-qty-select">
                                         <?php for ($i = 1; $i <= $maxStockLimit; $i++): ?>
                                             <option value="<?= $i ?>" <?= $unit == $i ? 'selected' : '' ?>><?= $i ?></option>
                                         <?php endfor; ?>
                                     </select>
-                                </div>
+                                <?php endif; ?>
+                            </div>
 
                                 <!-- Subtotal -->
                                 <div class="pl-cart-item-subtotal">
@@ -794,7 +804,7 @@ body {
         $(document).ready(function() {
             // Select all items toggle
             $('#select-all').on('change', function() {
-                $('.item-checkbox').prop('checked', this.checked);
+                $('.item-checkbox:not(:disabled)').prop('checked', this.checked);
                 updateSelectedSummary();
             });
 

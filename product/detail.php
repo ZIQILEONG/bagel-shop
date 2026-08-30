@@ -854,26 +854,34 @@ body {
 
             <!-- ADD TO CART / LOGIN ACTION -->
             <?php if (isset($_user) && $_user->role === 'Member'): ?>
-                <form method="post" id="addToCartForm">
-                    <input type="hidden" name="action" value="add_to_cart">
-                    <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>">
+                <?php if ((int)$p->stock > 0): ?>
+                    <form method="post" id="addToCartForm">
+                        <input type="hidden" name="action" value="add_to_cart">
+                        <input type="hidden" name="id" value="<?= htmlspecialchars($p->id) ?>">
 
-                    <div class="pdp-action-box">
-                        <div class="pdp-qty-stepper">
-                            <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
-                            <input type="number" name="unit" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="10" readonly>
-                            <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
+                        <div class="pdp-action-box">
+                            <div class="pdp-qty-stepper">
+                                <button type="button" class="pdp-qty-btn" onclick="stepQty(-1)">−</button>
+                                <input type="number" name="unit" id="qtyInput" class="pdp-qty-input" value="1" min="1" max="10" readonly>
+                                <button type="button" class="pdp-qty-btn" onclick="stepQty(1)">+</button>
+                            </div>
+
+                            <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
+                                    <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
+                                </svg>
+                                <span id="btnLabelText">Add to Cart &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
+                            </button>
                         </div>
-
-                        <button type="submit" class="pdp-btn-add-cart" id="addToCartBtn">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/>
-                                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>
-                            </svg>
-                            <span id="btnLabelText">Add to Cart &bull; RM <span id="btnTotalText"><?= number_format($p->price, 2) ?></span></span>
+                    </form>
+                <?php else: ?>
+                    <div class="pdp-action-box">
+                        <button type="button" class="pdp-btn-add-cart" style="background:#b0a39a; cursor:not-allowed; box-shadow:none;" disabled>
+                            Currently Out of Stock
                         </button>
                     </div>
-                </form>
+                <?php endif; ?>
             <?php else: ?>
                 <div class="pdp-action-box">
                     <a href="/login.php" class="pdp-btn-add-cart" style="text-decoration:none;">
@@ -882,9 +890,12 @@ body {
                 </div>
             <?php endif; ?>
 
-            <div class="pdp-stock-status">
-                <span class="pdp-stock-dot"></span>
-                In Stock &bull; <?= (int)$p->stock ?> available
+            <div class="stock-status" style="margin-bottom: 12px;">
+                <?php if ((int)$p->stock > 0): ?>
+                    <span style="color: #2e7d32; font-weight: 600;">● In Stock • <?= (int)$p->stock ?> available</span>
+                <?php else: ?>
+                    <span style="color: #d32f2f; font-weight: 600;">● Out of Stock</span>
+                <?php endif; ?>
             </div>
 
             <div class="pdp-features">

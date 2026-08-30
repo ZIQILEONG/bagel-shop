@@ -550,15 +550,19 @@ body {
 
                         <div class="card-action-wrap">
                             <?php if (isset($_user) && $_user->role == 'Member'): ?>
-                                <form method="post" class="cart-form-row">
-                                    <input type="hidden" name="id" value="<?= encode($p->id) ?>">
-                                    <select name="unit">
-                                        <?php for ($i = 1; $i <= $maxStockLimit; $i++): ?>
-                                            <option value="<?= $i ?>" <?= ($unit == $i || ($unit <= 0 && $i == 1)) ? 'selected' : '' ?>><?= $i ?></option>
-                                        <?php endfor; ?>
-                                    </select>
-                                    <button type="submit" class="btn-card-add">Add</button>
-                                </form>
+                                <?php if ((int)$p->stock > 0): ?>
+                                    <form method="post" class="cart-form-row">
+                                        <input type="hidden" name="id" value="<?= encode($p->id) ?>">
+                                        <select name="unit">
+                                            <?php for ($i = 1; $i <= min(10, (int)$p->stock); $i++): ?>
+                                                <option value="<?= $i ?>" <?= ($unit == $i || ($unit <= 0 && $i == 1)) ? 'selected' : '' ?>><?= $i ?></option>
+                                            <?php endfor; ?>
+                                        </select>
+                                        <button type="submit" class="btn-card-add">Add</button>
+                                    </form>
+                                <?php else: ?>
+                                    <button type="button" class="btn-card-add" style="background:#b0a39a; cursor:not-allowed;" disabled>Out of Stock</button>
+                                <?php endif; ?>
                             <?php else: ?>
                                 <a href="<?= app_url('login.php') ?>" class="login-hint-btn">Login to order</a>
                             <?php endif; ?>
