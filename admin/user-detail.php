@@ -196,7 +196,7 @@ include '../_head.php';
     <label for="password">Password <?= $u ? '(leave blank to keep unchanged)' : '' ?></label>
     <?= html_password('password', 'id="password" maxlength="100" autocomplete="new-password"') ?>
     <?= err('password') ?>
-
+    <!-- NEW: retype password to confirm -->
     <label for="confirm_password">Retype Password</label>
     <?= html_password('confirm_password', 'id="confirm_password" maxlength="100" autocomplete="new-password"') ?>
     <?= err('confirm_password') ?>
