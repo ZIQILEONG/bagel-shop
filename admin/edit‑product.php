@@ -25,15 +25,15 @@ if($_SERVER['REQUEST_METHOD']==='POST' && $_FILES['newphoto']['error']===UPLOAD_
     exit;
 }
 ?>
-<h3>编辑商品 <?= $pid ?></h3>
+<h3>Edit Product <?= $pid ?></h3>
 
 <form method="post" enctype="multipart/form-data">
     <?php if(!empty($item['photo'])){ ?>
-        <p>当前图片：<img src="../products/<?=$item['photo']?>" width="100"></p>
+        <p>Current image:<img src="../products/<?=$item['photo']?>" width="100"></p>
     <?php }else{ ?>
-        <p>⚠️这个商品目前没有图片</p>
+        <p>⚠️This product has no image</p>
     <?php } ?>
     <input type="file" name="newphoto" accept="image/*">
     <br>
-    <button type="submit">上传更新图片</button>
+    <button type="submit">Upload New Image</button>
 </form>

@@ -9,8 +9,7 @@ if (is_post()) {
     $price = req('price');
     $description = req('description');
 
-    // 处理摄像头拍照 base64
-    $base64Img = req('capture_photo');
+    // Handle camera photo (base64)    $base64Img = req('capture_photo');
     if (!empty($base64Img)) {
         $imgData = explode(',', $base64Img)[1];
         $binary = base64_decode($imgData);
@@ -20,7 +19,7 @@ if (is_post()) {
         $capturedImagePath = 'products/' . $filename;
     }
 
-    // 插入数据库
+    // Insert into database
     $stm = $_db->prepare("
         INSERT INTO product (name, price, description, capture_photo)
         VALUES (?, ?, ?, ?)
@@ -34,14 +33,11 @@ $_title = "Add New Product";
 include '../_head.php';
 ?>
 
-<!-- 你的页面内容 -->
 <form method="post">
 
-    <!-- ==========你原本所有输入框(name、price、description等保留在这里)========== -->
+<!-- ========== Keep all your original input fields (name, price, description, etc.) here ========== -->
 
-
-    <!-- ==========Webcam HTML模块，放在form内部，提交按钮之前========== -->
-    <div style="margin:20px 0; border:1px solid #ccc; padding:15px;">
+<!-- ==========Webcam HTML module; place inside the form, before the submit button========== -->    <div style="margin:20px 0; border:1px solid #ccc; padding:15px;">
         <h4>Webcam Capture Product Photo</h4>
         <video id="webcam" autoplay playsinline style="width:340px; border:1px solid #888;"></video>
         <canvas id="canvas" style="display:none;"></canvas>
@@ -61,8 +57,7 @@ include '../_head.php';
 
     <button type="submit">Save Product</button>
 </form>
-
-<!-- ==========JS脚本：form结束之后，_foot.php之前========== -->
+<!-- ========== JS Script: After the form, before _foot.php ========== -->
 <script>
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('canvas');

@@ -4,7 +4,7 @@ auth('Admin');
 
 $pid = $_GET['id'];
 
-//拿商品和图片记录
+//Retrieve product and image records
 $stm = $_db->prepare("SELECT p.*, pp.id AS photo_id, pp.photo 
 FROM product p 
 LEFT JOIN product_photo pp ON p.id=pp.product_id AND pp.sort_order=0 
@@ -19,11 +19,11 @@ if(is_post()){
         move_uploaded_file($_FILES['newphoto']['tmp_name'],"../products/".$photoName);
 
         if($item->photo_id){
-            //更新已有图片
+            //Update existing images
             $upd = $_db->prepare("UPDATE product_photo SET photo=? WHERE id=?");
             $upd->execute([$photoName,$item->photo_id]);
         }else{
-            //补缺失的记录，专门修复P010这种
+            // Fill in missing records; specifically designed to fix issues like P010.
             $ins = $_db->prepare("INSERT INTO product_photo(product_id,photo,sort_order,created_at) VALUES (?,?,0,NOW())");
             $ins->execute([$pid,$photoName]);
         }
