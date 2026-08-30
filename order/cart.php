@@ -65,8 +65,25 @@ if (is_post()) {
         }
 
         $checkout_cart = [];
+        $stm = $_db->prepare("SELECT stock, name FROM product WHERE id = ?");
+
         foreach ($checked_items as $id) {
             if (isset($cart[$id])) {
+                $rawUnit = $cart[$id];
+                $requested_qty = is_array($rawUnit) ? (int)($rawUnit['qty'] ?? 1) : (int)$rawUnit;
+
+                // Validate item stock in database
+                $stm->execute([$id]);
+                $p = $stm->fetch();
+
+                if (!$p || (int)$p->stock < 1) {
+                    temp('error', "Sorry, item '{$p->name}' is currently out of stock.");
+                    redirect('?');
+                } elseif ((int)$p->stock < $requested_qty) {
+                    temp('error', "Sorry, '{$p->name}' only has {$p->stock} item(s) available in stock.");
+                    redirect('?');
+                }
+
                 $checkout_cart[$id] = $cart[$id];
             }
         }
