@@ -70,7 +70,7 @@ function get_file($key) {
     return null;
 }
 
-// Crop, resize and save photo with high resolution (800x800) and 95% quality
+// Crop, resize and save photo with high resolution (800x800) and 100% quality
 function save_photo($f, $folder, $width = 800, $height = 800) {
     $photo = uniqid() . '.jpg';
     
@@ -78,7 +78,7 @@ function save_photo($f, $folder, $width = 800, $height = 800) {
     $img = new SimpleImage();
     $img->fromFile($f->tmp_name)
         ->thumbnail($width, $height)
-        ->toFile("$folder/$photo", 'image/jpeg', 95);
+        ->toFile("$folder/$photo", 'image/jpeg', 100);
 
     return $photo;
 }
