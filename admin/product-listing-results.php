@@ -14,7 +14,8 @@ $_low_stock_threshold = 11;
         <th></th>
     </tr>
     <?php foreach ($arr as $p): ?>
-    <?php $is_low_stock = $p->stock < $_low_stock_threshold; ?>
+    <?php $is_low_stock = $p->stock > 0 && $p->stock < $_low_stock_threshold; ?>
+    <?php $is_out_of_stock = $p->stock <= 0; ?>
     <tr<?= $is_low_stock ? " style='background:#ffe8e8'" : '' ?>>
         <td><input type="checkbox" name="ids[]" value="<?= $p->id ?>"></td>
         <td><img src="/products/<?= $p->photo ?>" width="50" height="50"></td>
@@ -25,7 +26,16 @@ $_low_stock_threshold = 11;
         <td class="right">
             <?= $p->stock ?>
             <?php if ($is_low_stock): ?>
-                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#b5192b;color:#fff;font-size:11px;font-weight:bold;">Low Stock</span>
+        <td class="right">
+            <?= $p->stock ?>
+            <?php if ($is_out_of_stock): ?>
+                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#6d1414;color:#fff;font-size:11px;font-weight:bold;">
+                    Out of Stock</span>
+            <?php elseif ($is_low_stock): ?>
+                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#b5192b;color:#fff;font-size:11px;font-weight:bold;">
+                    Low Stock</span>
+            <?php endif ?>
+        </td>
             <?php endif ?>
         </td>
         <td><button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button></td>
@@ -34,7 +44,7 @@ $_low_stock_threshold = 11;
 </table>
 <button name="btn" value="delete_selected" data-confirm="Delete selected products?">Delete Selected</button>
 <label>Increase price by (%)</label>
-<input type="number" name="percent" step="0.01" min="0" style="width:80px">
+<input type="number" name="percent" step="0.01" min="-100" style="width:80px">
 <button name="btn" value="increase_price">Increase Price</button>
 </form>
 <?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>
