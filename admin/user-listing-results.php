@@ -1,6 +1,4 @@
 <?php
-// Included by user-listing.php for both normal and AJAX renders.
-// Expects $pager, $arr, $search, $sort, $dir already set.
 ?>
 <p><?= $pager->item_count ?> record(s)</p>
 <form method="post">
@@ -14,7 +12,13 @@
     <?php foreach ($arr as $u): ?>
     <tr>
         <td><input type="checkbox" name="ids[]" value="<?= $u->id ?>" <?= $u->id == $_user->id ? 'disabled' : '' ?>></td>
-        <td><img src="<?= app_url('photos/' . rawurlencode($u->photo)) ?>" width="50" height="50"></td> 
+        <td>
+            <?php if (!empty($u->photo)): ?>
+                <img src="<?= app_url('photos/' . rawurlencode($u->photo)) ?>" width="50" height="50" style="object-fit: cover;">
+            <?php else: ?>
+                <img src="<?= app_url('photos/default.jpg') ?>" width="50" height="50" style="object-fit: cover;">
+            <?php endif ?>
+        </td>
         <td><?= $u->id ?></td>
         <td><?= $u->name ?></td>
         <td><?= $u->email ?></td>
