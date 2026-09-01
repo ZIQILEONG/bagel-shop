@@ -1,16 +1,16 @@
 <?php
-
 include '../_base.php';
+include '../config.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-$token        = trim($_GET['token'] ?? '');
-$success      = ($_GET['success'] ?? '') === '1';
+$token = trim($_GET['token'] ?? '');
+$success = ($_GET['success'] ?? '') === '1';
 $invalidToken = false;
-$error        = '';
-$resetUserId  = null;
+$error = '';
+$resetUserId = null;
 
 if (empty($_SESSION['reset_password_csrf'])) {
     $_SESSION['reset_password_csrf'] = bin2hex(random_bytes(32));
@@ -18,7 +18,6 @@ if (empty($_SESSION['reset_password_csrf'])) {
 
 $csrfToken = $_SESSION['reset_password_csrf'];
 
-// Check reset token
 if (!$success) {
     if ($token === '') {
         $invalidToken = true;
@@ -31,7 +30,6 @@ if (!$success) {
             AND expire > NOW()
             LIMIT 1
         ");
-
         $stm->execute([$token]);
         $reset = $stm->fetch();
 
@@ -46,22 +44,20 @@ if (!$success) {
     }
 }
 
-// Process password reset
 if (
     !$success &&
     !$invalidToken &&
     $_SERVER['REQUEST_METHOD'] === 'POST'
 ) {
-    $password        = $_POST['password'] ?? '';
+    $password = $_POST['password'] ?? '';
     $confirmPassword = $_POST['confirm_password'] ?? '';
-    $submittedCsrf   = $_POST['csrf_token'] ?? '';
+    $turnstileToken = $_POST['cf-turnstile-response'] ?? '';
+    $submittedCsrf = $_POST['csrf_token'] ?? '';
 
-    if (
-        !hash_equals(
-            (string) $_SESSION['reset_password_csrf'],
-            (string) $submittedCsrf
-        )
-    ) {
+    if (!hash_equals(
+        (string) $_SESSION['reset_password_csrf'],
+        (string) $submittedCsrf
+    )) {
         $error = 'Invalid form request. Please refresh and try again.';
     }
     else if ($password === '') {
@@ -85,28 +81,26 @@ if (
     else if ($password !== $confirmPassword) {
         $error = 'Passwords do not match.';
     }
+    else if (!verify_turnstile($turnstileToken, 'reset')) {
+        $error = 'Please complete the Turnstile verification.';
+    }
     else {
-        $hash = password_hash($password, PASSWORD_DEFAULT);
-
         try {
             $_db->beginTransaction();
+
+            $hash = password_hash($password, PASSWORD_DEFAULT);
 
             $stm = $_db->prepare("
                 UPDATE user
                 SET password = ?
                 WHERE id = ?
             ");
-
-            $stm->execute([
-                $hash,
-                $resetUserId
-            ]);
+            $stm->execute([$hash, $resetUserId]);
 
             $stm = $_db->prepare("
                 DELETE FROM token
                 WHERE token = ?
             ");
-
             $stm->execute([$token]);
 
             $_db->commit();
@@ -133,72 +127,37 @@ include '../_head.php';
 ?>
 
 <div class="register-container">
-
     <?php if ($success): ?>
-
-        <span class="section-eyebrow">
-            PASSWORD UPDATED
-        </span>
-
-        <h2>
-            Reset successful
-        </h2>
-
+        <span class="section-eyebrow">PASSWORD UPDATED</span>
+        <h2>Reset successful</h2>
         <p class="register-subtitle">
             Your password has been changed successfully.
             You can now log in using your new password.
         </p>
-
-        <a href="../login.php" class="button">
-            Continue to Log In
-        </a>
-
+        <a href="login.php" class="button">Continue to Log In</a>
     <?php elseif ($invalidToken): ?>
-
-        <span class="section-eyebrow">
-            LINK UNAVAILABLE
-        </span>
-
-        <h2>
-            Reset link expired
-        </h2>
-
+        <span class="section-eyebrow">LINK UNAVAILABLE</span>
+        <h2>Reset link expired</h2>
         <p class="register-subtitle">
             This password reset link is invalid, expired,
             or has already been used.
         </p>
-
         <a href="forgot_password.php" class="button">
             Request New Link
         </a>
-
         <p class="login-text">
-            <a href="../login.php">
-                Back to Log In
-            </a>
+            <a href="login.php">Back to Log In</a>
         </p>
-
     <?php else: ?>
-
-        <span class="section-eyebrow">
-            ACCOUNT RECOVERY
-        </span>
-
-        <h2>
-            Create new password
-        </h2>
-
+        <span class="section-eyebrow">ACCOUNT RECOVERY</span>
+        <h2>Create new password</h2>
         <p class="register-subtitle">
             Create a strong new password for your Pululu account.
         </p>
 
         <?php if ($error !== ''): ?>
             <div class="err">
-                <?= htmlspecialchars(
-                    $error,
-                    ENT_QUOTES,
-                    'UTF-8'
-                ) ?>
+                <?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8') ?>
             </div>
         <?php endif ?>
 
@@ -222,9 +181,7 @@ include '../_head.php';
             >
 
             <div class="input-group">
-
                 <div class="password-input">
-
                     <input
                         type="password"
                         id="password"
@@ -236,36 +193,27 @@ include '../_head.php';
                         placeholder="Password"
                     >
 
-                    <label for="password">
-                        Password
-                    </label>
+                    <label for="password">Password</label>
 
                     <button
                         type="button"
                         class="toggle-password"
-                        onclick="togglePassword(
-                            'password',
-                            this
-                        )"
+                        onclick="togglePassword('password', this)"
                     >
                         👁
                     </button>
-
                 </div>
 
                 <div
                     class="password-requirements"
                     id="passwordRequirements"
-                    aria-live="polite"
                 >
                     <div
                         id="rule-length"
                         class="password-requirement"
                     >
                         <span class="requirement-icon"></span>
-                        <span>
-                            At least 8 characters
-                        </span>
+                        <span>At least 8 characters</span>
                     </div>
 
                     <div
@@ -273,9 +221,7 @@ include '../_head.php';
                         class="password-requirement"
                     >
                         <span class="requirement-icon"></span>
-                        <span>
-                            One uppercase letter
-                        </span>
+                        <span>One uppercase letter</span>
                     </div>
 
                     <div
@@ -283,9 +229,7 @@ include '../_head.php';
                         class="password-requirement"
                     >
                         <span class="requirement-icon"></span>
-                        <span>
-                            One lowercase letter
-                        </span>
+                        <span>One lowercase letter</span>
                     </div>
 
                     <div
@@ -293,9 +237,7 @@ include '../_head.php';
                         class="password-requirement"
                     >
                         <span class="requirement-icon"></span>
-                        <span>
-                            One number
-                        </span>
+                        <span>One number</span>
                     </div>
 
                     <div
@@ -303,18 +245,13 @@ include '../_head.php';
                         class="password-requirement"
                     >
                         <span class="requirement-icon"></span>
-                        <span>
-                            One symbol
-                        </span>
+                        <span>One symbol</span>
                     </div>
                 </div>
-
             </div>
 
             <div class="input-group">
-
                 <div class="password-input">
-
                     <input
                         type="password"
                         id="confirm_password"
@@ -338,25 +275,24 @@ include '../_head.php';
                     >
                         👁
                     </button>
-
                 </div>
-
             </div>
+
+            <?php
+            $captcha_action = 'reset';
+            $captcha_web_path = '../captcha';
+            include '../captcha/widget.php';
+            ?>
 
             <button type="submit">
                 Reset Password
             </button>
-
         </form>
 
         <p class="login-text">
-            <a href="../login.php">
-                Back to Log In
-            </a>
+            <a href="login.php">Back to Log In</a>
         </p>
-
     <?php endif ?>
-
 </div>
 
 <script>
@@ -373,32 +309,35 @@ function togglePassword(inputId, button) {
     }
 }
 
-const passwordInput =
-    document.getElementById('password');
+(function () {
+    const passwordInput =
+        document.getElementById('password');
 
-const passwordRules = {
-    'rule-length': password =>
-        password.length >= 8,
+    if (!passwordInput) {
+        return;
+    }
 
-    'rule-uppercase': password =>
-        /[A-Z]/.test(password),
+    const passwordRules = {
+        'rule-length': password =>
+            password.length >= 8,
 
-    'rule-lowercase': password =>
-        /[a-z]/.test(password),
+        'rule-uppercase': password =>
+            /[A-Z]/.test(password),
 
-    'rule-number': password =>
-        /[0-9]/.test(password),
+        'rule-lowercase': password =>
+            /[a-z]/.test(password),
 
-    'rule-symbol': password =>
-        /[^A-Za-z0-9]/.test(password)
-};
+        'rule-number': password =>
+            /[0-9]/.test(password),
 
-if (passwordInput) {
+        'rule-symbol': password =>
+            /[^A-Za-z0-9]/.test(password)
+    };
+
     passwordInput.addEventListener(
         'input',
         function () {
-            const password =
-                passwordInput.value;
+            const password = passwordInput.value;
 
             for (
                 const [ruleId, checkRule]
@@ -417,7 +356,7 @@ if (passwordInput) {
             }
         }
     );
-}
+})();
 </script>
 
 <?php include '../_foot.php'; ?>
