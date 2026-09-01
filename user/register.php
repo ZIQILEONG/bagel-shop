@@ -205,8 +205,6 @@ alert(
             <?= err('name') ?>
 
         </div>
-
-
         <div class="input-group">
 
             <input
@@ -229,10 +227,7 @@ alert(
             </label>
 
             <?= err('email') ?>
-
         </div>
-
-
         <div class="input-group">
 
             <input
@@ -250,16 +245,10 @@ alert(
                 required
                 placeholder="Phone number"
             >
-
             <label for="phone_no">
                 Phone number
             </label>
-
         </div>
-
-
-        <!-- Password field -->
-
         <div class="input-group">
 
             <div class="password-input">
@@ -287,11 +276,8 @@ alert(
                 >
                     👁
                 </button>
-
             </div>
-
             <?= err('password') ?>
-
 
             <div
                 class="password-requirements"
@@ -341,20 +327,14 @@ alert(
 
                 <div
                     id="rule-symbol"
-                    class="password-requirement"
-                >
+                    class="password-requirement">
                     <span class="requirement-icon"></span>
                     <span>
                         One symbol
                     </span>
                 </div>
-
             </div>
-
         </div>
-
-
-        <!-- Confirm password field -->
 
         <div class="input-group">
 
@@ -389,40 +369,24 @@ alert(
             <?= err('reenter_password') ?>
 
         </div>
-
-
         <?php
-
         $captcha_action = 'register';
         $captcha_web_path = '../captcha';
-
         include '../captcha/widget.php';
-
         ?>
-
-
         <button type="submit">
             Create account
         </button>
 
     </form>
-
-
     <p class="login-text">
-
         Already have an account?
-
         <a href="../login.php">
             Log in
         </a>
-
     </p>
-
 </div>
-
-
 <script>
-
 function togglePassword(inputId, button) {
 
     const input =
@@ -494,6 +458,4 @@ if (passwordInput) {
 }
 
 </script>
-
-
 <?php include '../_foot.php'; ?>
