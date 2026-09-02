@@ -180,7 +180,7 @@ include '../_head.php';
                 <div class="input-wrap">
                     <input type="password" id="currentPwdInput" name="current_password" value="<?=encode($savedCurrentPwd)?>"
                         <?= $isCurrentPwdValid ? 'readonly' : '' ?> required>
-                    <button type="button" class="eye-btn" onclick="togglePwd('currentPwdInput',this)">🙈</button>
+                    <button type="button" class="eye-btn" onclick="togglePwd('currentPwdInput',this)">👁</button>
                 </div>
                 <?php if(isset($_err['current'])): ?>
                     <div class="err-text"><?=encode($_err['current'])?></div>
@@ -190,7 +190,7 @@ include '../_head.php';
                 <label>New Password</label>
                 <div class="input-wrap">
                     <input type="password" id="newPwdInput" name="new_password" <?= $isCurrentPwdValid ? '' : 'disabled' ?> required>
-                    <button type="button" class="eye-btn" onclick="togglePwd('newPwdInput',this)">🙈</button>
+                    <button type="button" class="eye-btn" onclick="togglePwd('newPwdInput',this)">👁</button>
                 </div>
                 <div class="tip-text">Must contain uppercase, lowercase, number, special symbol</div>
                 <?php if(isset($_err['new'])): ?>
@@ -223,7 +223,7 @@ function togglePwd(inputId, btn){
         btn.textContent = '🙈';
     }else{
         input.type = 'password';
-        btn.textContent = '👁';
+        btn.textContent = '🙈';
     }
 }
 </script>
