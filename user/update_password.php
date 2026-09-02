@@ -1,91 +1,61 @@
 <?php
 include '../_base.php';
 auth();
-include '../config.php';
-require_once '../PHPMailer-master/src/PHPMailer.php';
-require_once '../PHPMailer-master/src/SMTP.php';
-require_once '../PHPMailer-master/src/Exception.php';
-use PHPMailer\PHPMailer\PHPMailer;
 
-// Currently logged-in user object
 $currentUser = $_SESSION['user'];
-$email = $currentUser->email;
+$userDb = null;
+$isCurrentPwdValid = false;
+$_err = [];
+$successPopup = false;
+
+// 读取数据库真实用户数据
+$stmt = $_db->prepare("SELECT * FROM user WHERE id = ?");
+$stmt->execute([$currentUser->id]);
+$userDb = $stmt->fetch(PDO::FETCH_OBJ);
+if (!$userDb) {
+    temp('error','User not found, please login again');
+    redirect('../login.php');
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Enforcement: Only the email address of the currently 
-    // logged-in account may be used; the email address passed 
-    // in the POST request is ignored (security hardening).
-    $email = trim($currentUser->email);
+    $action = post('action');
+    $currentPwd = post('current_password');
+    $newPwd = post('new_password');
+    $confirmPwd = post('confirm_password');
 
-    if ($email === '') {
-        $_err['email'] = 'Your account email is empty';
-    }
-    else if (!is_email($email)) {
-        $_err['email'] = 'Invalid account email address';
-    }
-
-    if (!$_err) {
-        $stmt = $_db->prepare("SELECT * FROM user WHERE id = ?");
-        $stmt->execute([$currentUser->id]);
-        $user = $stmt->fetch(PDO::FETCH_OBJ);
-
-        if (!$user) {
-            temp('error','User not found, please login again');
-            redirect('../login.php');
+    // 第一步：校验当前密码
+    if ($action === "check_current") {
+        if (!password_verify($currentPwd, $userDb->password)) {
+            $_err['current'] = "Current password does not match our record.";
+            $isCurrentPwdValid = false;
+        } else {
+            $isCurrentPwdValid = true;
         }
-        else {
-            // Generate a token with a 5-minute expiration, reusing the token table.
-            $token = bin2hex(random_bytes(50));
-            $expire = date('Y-m-d H:i:s', strtotime('+5 minutes'));
+    }
 
-            $stmt = $_db->prepare("
-                INSERT INTO token (user_id, token, expire)
-                VALUES (?, ?, ?)
-            ");
-            $stmt->execute([
-                $user->id,
-                $token,
-                $expire
-            ]);
+    // 第二步：完整更新密码
+    if ($action === "update_pwd") {
+        // 再次后端校验当前密码（安全，防止前端绕过）
+        if (!password_verify($currentPwd, $userDb->password)) {
+            $_err['current'] = "Current password does not match our record.";
+            $isCurrentPwdValid = false;
+        } else {
+            $isCurrentPwdValid = true;
+            // 强密码正则：大写、小写、数字、特殊符号
+            $pattern = '/^(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[!@#$%^&*()_\-+=]).{8,}$/';
+            if (!preg_match($pattern, $newPwd)) {
+                $_err['new'] = "New password need: uppercase, lowercase, number, special symbol, min 8 characters";
+            } elseif ($newPwd !== $confirmPwd) {
+                $_err['confirm'] = "New password and confirm password do not match";
+            } else {
+                // 哈希新密码
+                $newHashPwd = password_hash($newPwd, PASSWORD_DEFAULT);
+                $updateStmt = $_db->prepare("UPDATE user SET password = ? WHERE id = ?");
+                $updateStmt->execute([$newHashPwd, $userDb->id]);
 
-            $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-            $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-            $link = $scheme . '://' . $host . app_url('user/reset.php?token=' . urlencode($token));
-
-            $safe_name = htmlspecialchars($user->name, ENT_QUOTES, 'UTF-8');
-            $safe_link = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
-
-            try {
-                $mail = new PHPMailer(true);
-                $mail->isSMTP();
-                $mail->Host = 'smtp.gmail.com';
-                $mail->SMTPAuth = true;
-                $mail->Username = SMTP_USERNAME;
-                $mail->Password = SMTP_PASSWORD;
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port = 587;
-
-                $mail->setFrom(SMTP_USERNAME, 'Pululu Bagel');
-                $mail->addAddress($email, $user->name);
-                $mail->isHTML(true);
-                $mail->Subject = 'Change Your Pululu Bagel Account Password';
-
-                $mail->Body = "
-                    <p>Dear {$safe_name},</p>
-                    <p>You have requested to change your account password.</p>
-                    <p><a href=\"{$safe_link}\">Click here to change your password</a></p>
-                    <p>This link expires in 5 minutes.</p>
-                    <p>If you did not make this request, please ignore this email, your password will remain unchanged.</p>
-                    <p>Pululu Bagel</p>
-                ";
-                $mail->AltBody = "Change your password here: {$link}";
-                $mail->send();
-
-                temp('info', 'Password change link has been sent to your account email.');
-                redirect('update_password.php');
-            }
-            catch (Throwable $error) {
-                $_err['email'] = 'Email could not be sent. Please try again.';
+                // 密码更新成功：销毁session，强制登出，下次必须用新密码登录
+                session_destroy();
+                $successPopup = true;
             }
         }
     }
@@ -129,10 +99,6 @@ include '../_head.php';
     text-transform:uppercase;
     letter-spacing:0.03em;
 }
-.form-group input[readonly]{
-    background:#f7f3f0;
-    color:#777;
-}
 .form-group input{
     width:100%;
     box-sizing:border-box;
@@ -140,6 +106,11 @@ include '../_head.php';
     border:1.5px solid #ebdcd5;
     border-radius:12px;
     font-size:14px;
+}
+.form-group input:disabled{
+    background:#f3f0ed;
+    cursor:not-allowed;
+    opacity:0.7;
 }
 .btn-submit{
     width:100%;
@@ -163,28 +134,59 @@ include '../_head.php';
     text-decoration:none;
     font-weight:600;
 }
-.note-text{
+.err-text{
+    color:#c82423;
     font-size:13px;
-    color:#968377;
-    margin-top:14px;
-    text-align:center;
+    margin-top:4px;
 }
 </style>
+
 <div class="pwd-change-page">
     <div class="pwd-change-card">
-        <h1>Request Password Change Link</h1>
-        <p class="pwd-desc">We will send a password change link to your registered account email.</p>
-
+        <h1>Update Password</h1>
+        <p class="pwd-desc">Enter your current password first to unlock new password fields.</p>
         <form method="post">
+            <input type="hidden" name="action" id="formAction" value="check_current">
+
             <div class="form-group">
-                <label>Your Account Email</label>
-<!-- readonly: Users cannot modify this; they must use their login email address -->                <input type="email" value="<?= encode($email) ?>" readonly>
+                <label>Current Password</label>
+                <input type="password" name="current_password" required>
+                <?php if(isset($_err['current'])): ?>
+                    <div class="err-text"><?=encode($_err['current'])?></div>
+                <?php endif; ?>
             </div>
-            <?= err('email') ?>
-            <button type="submit" class="btn-submit">Send Password Change Link</button>
+
+            <div class="form-group">
+                <label>New Password</label>
+                <input type="password" name="new_password" id="newPwd" <?= $isCurrentPwdValid ? '' : 'disabled' ?> required>
+                <?php if(isset($_err['new'])): ?>
+                    <div class="err-text"><?=encode($_err['new'])?></div>
+                <?php endif; ?>
+            </div>
+
+            <div class="form-group">
+                <label>Confirm Password</label>
+                <input type="password" name="confirm_password" id="confirmPwd" <?= $isCurrentPwdValid ? '' : 'disabled' ?> required>
+                <?php if(isset($_err['confirm'])): ?>
+                    <div class="err-text"><?=encode($_err['confirm'])?></div>
+                <?php endif; ?>
+            </div>
+
+            <?php if($isCurrentPwdValid): ?>
+                <button type="submit" class="btn-submit" onclick="document.getElementById('formAction').value='update_pwd'">Update Password</button>
+            <?php else: ?>
+                <button type="submit" class="btn-submit">Verify Current Password</button>
+            <?php endif; ?>
         </form>
         <a href="profile.php" class="back-link">&larr; Back to My Profile</a>
-        <p class="note-text">Link valid for 5 minutes only.</p>
     </div>
 </div>
+
+<?php if ($successPopup): ?>
+<script>
+alert("Password Update Successful");
+window.location.href="../login.php";
+</script>
+<?php endif; ?>
+
 <?php include '../_foot.php'; ?>
