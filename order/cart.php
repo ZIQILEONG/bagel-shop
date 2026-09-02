@@ -116,9 +116,6 @@ foreach ($cart as $id => $u) {
 ?>
 
 <style>
-/* =========================================================
-   PULULU PREMIUM SHOPPING CART UI/UX
-   ========================================================= */
 :root {
     --pl-primary: #cf7953;
     --pl-primary-hover: #b86440;

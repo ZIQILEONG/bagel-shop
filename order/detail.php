@@ -34,13 +34,13 @@ if (($o->delivery_method ?? '') === 'Delivery' && !empty($o->address_id)) {
     $addr = $stm->fetch();
 }
 
-// 1. Calculate raw items subtotal directly from line items
+// Calculate raw items subtotal
 $raw_items_subtotal = 0;
 foreach ($arr as $item) {
     $raw_items_subtotal += (float)$item->subtotal;
 }
 
-// 2. Fetch specific voucher discount percentage if a code was used
+// Fetch specific voucher discount percentage if a voucher code was used
 $voucher_percent = 0;
 $voucher_discount_amount = 0.00;
 
@@ -55,7 +55,7 @@ if (!empty($o->voucher_code)) {
     }
 }
 
-// 3. Separate points discount from voucher discount
+// Separate points discount from voucher discount
 $points_used_count = 0;
 $points_discount_amount = 0.00;
 
@@ -84,9 +84,7 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU ORDER DETAIL MODERN UI/UX
-   ========================================================= */
+/* ORDER DETAIL */
 :root {
     --pl-primary: #cf7953;
     --pl-primary-hover: #b86440;
@@ -126,7 +124,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Breadcrumb */
 .pl-breadcrumb {
     font-size: 13px;
     color: var(--pl-muted);
@@ -144,7 +141,6 @@ body {
     color: var(--pl-primary);
 }
 
-/* Header */
 .pl-detail-header {
     display: flex;
     justify-content: space-between;
@@ -167,7 +163,6 @@ body {
     gap: 10px;
 }
 
-/* Status Badges */
 .pl-status-badge {
     display: inline-flex;
     align-items: center;
@@ -214,7 +209,6 @@ body {
 }
 .pl-status-badge.cancelled::before { background: var(--pl-status-cancelled-color); }
 
-/* Main Grid Layout */
 .pl-detail-grid {
     display: grid;
     grid-template-columns: 1.55fr 1fr;
@@ -222,7 +216,6 @@ body {
     align-items: start;
 }
 
-/* Card Container */
 .pl-card-panel {
     background: var(--pl-card-bg);
     border: 1px solid var(--pl-border);
@@ -243,7 +236,6 @@ body {
     gap: 8px;
 }
 
-/* Item Rows */
 .pl-item-row {
     display: flex;
     align-items: center;
@@ -288,7 +280,6 @@ body {
     color: var(--pl-brown-dark);
 }
 
-/* Fulfillment Block */
 .pl-fulfill-box {
     background: var(--pl-accent);
     border: 1px solid var(--pl-border);
@@ -302,7 +293,6 @@ body {
     color: var(--pl-brown-dark);
 }
 
-/* Summary Pricing Box */
 .pl-summary-line {
     display: flex;
     justify-content: space-between;
@@ -334,7 +324,6 @@ body {
     color: var(--pl-primary);
 }
 
-/* Points Pill */
 .pl-points-badge {
     display: flex;
     align-items: center;
@@ -349,7 +338,6 @@ body {
     margin-top: 16px;
 }
 
-/* Action Buttons */
 .pl-action-bar {
     display: flex;
     align-items: center;
@@ -407,7 +395,6 @@ body {
 </style>
 
 <div class="pl-detail-wrap">
-    <!-- Breadcrumb -->
     <div class="pl-breadcrumb">
         <a href="/">Home</a>
         <span>&rsaquo;</span>
@@ -418,7 +405,6 @@ body {
         <span style="color: var(--pl-brown-dark); font-weight: 600;">Order #<?= htmlspecialchars($o->id) ?></span>
     </div>
 
-    <!-- Header Section -->
     <?php
     $statusKey = strtolower(str_replace(' ', '-', trim((string)$o->status)));
     ?>
@@ -437,9 +423,7 @@ body {
         </span>
     </div>
 
-    <!-- Main Grid -->
     <div class="pl-detail-grid">
-        <!-- Left: Ordered Bagels & Items -->
         <div class="pl-left-col">
             <div class="pl-card-panel">
                 <h2>🥯 Items in this Order (<?= count($arr) ?>)</h2>
@@ -467,7 +451,6 @@ body {
                 </div>
             </div>
 
-            <!-- Fulfillment Details -->
             <div class="pl-card-panel">
                 <h2>📦 Fulfillment Method</h2>
                 <div class="pl-fulfill-box">
@@ -490,7 +473,6 @@ body {
             </div>
         </div>
 
-        <!-- Right: Order Payment Summary & Actions -->
         <div class="pl-right-col">
             <div class="pl-card-panel">
                 <h2>Payment Summary</h2>
@@ -500,7 +482,7 @@ body {
                     <span>RM <?= number_format($raw_items_subtotal, 2) ?></span>
                 </div>
 
-                <!-- 1. Dedicated Voucher Row -->
+                <!-- Dedicated Voucher Row -->
                 <?php if (!empty($o->voucher_code) && $voucher_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
                         <span>Voucher (<?= htmlspecialchars($o->voucher_code) ?><?= $voucher_percent > 0 ? " &bull; {$voucher_percent}%" : '' ?>)</span>
@@ -508,7 +490,7 @@ body {
                     </div>
                 <?php endif; ?>
 
-                <!-- 2. Points Used & Refund Note -->
+                <!-- Points Used & Refund Note -->
                 <?php if ($points_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
                         <span>
@@ -544,7 +526,6 @@ body {
 
                 <?php endif; ?>
 
-                <!-- Action Button Group -->
                 <div class="pl-action-bar">
                     <a href="history.php" class="pl-btn-action pl-btn-back">
                         &larr; Back to History

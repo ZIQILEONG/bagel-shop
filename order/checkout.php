@@ -70,7 +70,7 @@ $total        += $delivery_fee;
 try {
     $_db->beginTransaction();
 
-    // Lock and check stock before creating order
+    // check stock before creating order
     $stock_check_stm = $_db->prepare("SELECT stock, name FROM product WHERE id = ? FOR UPDATE");
 
     foreach ($cart as $product_id => $rawUnit) {
@@ -78,7 +78,7 @@ try {
         $stock_check_stm->execute([$product_id]);
         $prod_stock = $stock_check_stm->fetch();
 
-        // Product no longer exists at all - stop here with a safe, generic message
+        // Product no longer exists at all
         if (!$prod_stock) {
             throw new Exception("Sorry, one of the items in your cart is no longer available.");
         }

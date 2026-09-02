@@ -35,9 +35,7 @@ include '../_head.php';
 
 <form method="post">
 
-<!-- ========== Keep all your original input fields (name, price, description, etc.) here ========== -->
-
-<!-- ==========Webcam HTML module; place inside the form, before the submit button========== -->    <div style="margin:20px 0; border:1px solid #ccc; padding:15px;">
+        <div style="margin:20px 0; border:1px solid #ccc; padding:15px;">
         <h4>Webcam Capture Product Photo</h4>
         <video id="webcam" autoplay playsinline style="width:340px; border:1px solid #888;"></video>
         <canvas id="canvas" style="display:none;"></canvas>

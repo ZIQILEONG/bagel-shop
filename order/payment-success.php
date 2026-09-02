@@ -50,7 +50,6 @@ else {
     $transaction_id = $session->payment_intent;
 }
 
-// Guard against double-processing
 if ($o->status !== 'Awaiting Payment') {
     redirect("detail.php?id=$order_id");
 }
@@ -88,11 +87,9 @@ $_db->commit();
 $_user->points += $points_earned;
 $_SESSION['user'] = $_user;
 
-// ----------------------------------------------------------------------------
-// Send HTML e-Receipt Email
-// ----------------------------------------------------------------------------
+// Send e-Receipt Email
 try {
-    // Fetch shipping address details if home delivery
+    // Fetch shipping address details if delivery
     $addr = null;
     if ($o->delivery_method === 'Delivery' && $o->address_id) {
         $stm = $_db->prepare("SELECT * FROM shipping_address WHERE id = ?");
@@ -100,7 +97,7 @@ try {
         $addr = $stm->fetch();
     }
 
-    // Build Items Rows HTML & calculate line items subtotal
+    // calculate items subtotal
     $items_html = '';
     $raw_items_subtotal = 0;
     foreach ($items as $item) {
@@ -122,7 +119,6 @@ try {
         </tr>";
     }
 
-    // Prepare Delivery HTML Block
     if ($o->delivery_method === 'Delivery' && $addr) {
         $delivery_html = "
         <div style='background: #fbf5ef; border: 1px solid #ebdcd5; border-radius: 12px; padding: 16px; margin-top: 20px;'>
@@ -149,9 +145,7 @@ try {
         </div>";
     }
 
-    // ------------------------------------------------------------------------
-    // Calculate Independent Voucher and Points Reductions
-    // ------------------------------------------------------------------------
+    // Calculate Voucher and Points Reductions
     $voucher_percent = 0;
     $voucher_discount_amount = 0.00;
 
@@ -186,10 +180,8 @@ try {
         $voucher_discount_amount = round((float)$o->discount - $points_discount_amount, 2);
     }
 
-    // Build Individual Discount HTML Rows (Kept Separate)
     $discount_rows_html = '';
 
-    // 1. Separate Voucher Row
     if (!empty($o->voucher_code) && $voucher_discount_amount > 0) {
         $discount_rows_html .= "
         <tr>
@@ -198,7 +190,6 @@ try {
         </tr>";
     }
 
-    // 2. Separate Points Redeemed Row
     if ($points_discount_amount > 0) {
         $discount_rows_html .= "
         <tr>
@@ -207,7 +198,6 @@ try {
         </tr>";
     }
 
-    // 3. Delivery Fee Row
     if (!empty($o->delivery_fee) && (float)$o->delivery_fee > 0) {
         $discount_rows_html .= "
         <tr>
@@ -218,7 +208,6 @@ try {
 
     $formatted_date = date('M d, Y', strtotime($o->datetime)) . ' &bull; ' . date('h:i A', strtotime($o->datetime));
 
-    // Full Email Body
     $html_body = "
     <!DOCTYPE html>
     <html>

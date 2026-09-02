@@ -36,7 +36,7 @@ if (is_post()) {
     }
 }
 
-// Calculate the full preview: subtotal -> voucher -> points -> (delivery added via JS)
+// Calculate full: subtotal, voucher, points, (delivery added at JS)
 $subtotal = 0;
 foreach ($cart as $product_id => $unit) {
     $stm = $_db->prepare("SELECT price FROM product WHERE id = ?");
@@ -72,9 +72,7 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU DELIVERY OPTIONS MODERN UI/UX
-   ========================================================= */
+/* DELIVERY OPTIONS */
 :root {
     --pl-primary: #cf7953;
     --pl-primary-hover: #b86440;
@@ -99,7 +97,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Breadcrumb */
 .pl-breadcrumb {
     font-size: 13px;
     color: var(--pl-muted);
@@ -117,7 +114,6 @@ body {
     color: var(--pl-primary);
 }
 
-/* Page Title Section */
 .pl-section-head {
     margin-bottom: 24px;
 }
@@ -133,7 +129,6 @@ body {
     margin: 0;
 }
 
-/* 2-Column Split Layout */
 .pl-delivery-grid {
     display: grid;
     grid-template-columns: 1.4fr 1fr;
@@ -141,7 +136,6 @@ body {
     align-items: start;
 }
 
-/* Card Container */
 .pl-panel-card {
     background: var(--pl-card-bg);
     border: 1px solid var(--pl-border);
@@ -302,7 +296,7 @@ body {
     text-decoration: underline;
 }
 
-/* Right Column: Order Summary Card */
+/* Order Summary Card */
 .pl-summary-card {
     background: #ffffff;
     border: 1px solid var(--pl-border);
@@ -378,7 +372,6 @@ body {
     box-shadow: 0 6px 18px rgba(207, 121, 83, 0.35);
 }
 
-/* Centered Top Floating Toast Notification */
 .pl-toast {
     position: fixed;
     top: 24px;
@@ -418,7 +411,6 @@ body {
 </style>
 
 <div class="pl-checkout-wrap">
-    <!-- Breadcrumb -->
     <div class="pl-breadcrumb">
         <a href="/">Home</a>
         <span>&rsaquo;</span>
@@ -427,7 +419,6 @@ body {
         <span style="color: var(--pl-brown-dark); font-weight: 600;">Delivery Options</span>
     </div>
 
-    <!-- Section Head -->
     <div class="pl-section-head">
         <h1>Fulfillment Options</h1>
         <p>Choose how you would like to receive your freshly baked bagels.</p>
@@ -435,7 +426,6 @@ body {
 
     <form method="post" id="deliveryForm">
         <div class="pl-delivery-grid">
-            <!-- Left: Method & Address -->
             <div class="pl-left-col">
                 <div class="pl-panel-card">
                     <h2>🥯 Receiving Method</h2>
@@ -460,7 +450,7 @@ body {
                         </label>
                     </div>
 
-                    <!-- Address Section (Toggled dynamically) -->
+                    <!-- Address Section -->
                     <div id="address-section" style="display:none;">
                         <h2>📍 Delivery Address</h2>
                         
@@ -539,7 +529,6 @@ body {
     </form>
 </div>
 
-<!-- Floating Toast Notification Element -->
 <div id="plToast" class="pl-toast">
     <span>⚠️</span>
     <span id="plToastMsg">Please select a shipping address before proceeding.</span>
