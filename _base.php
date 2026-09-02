@@ -520,7 +520,7 @@ function update_cart($id, $unit) {
 
         if ($existing_total + $unit > 100) {
             temp('info', 'Cart limit reached: maximum 100 items allowed.');
-            return false;
+            return;
         }
         $cart[$id] = $unit;
         ksort($cart);
@@ -529,11 +529,11 @@ function update_cart($id, $unit) {
         unset($cart[$id]);
     }
     set_cart($cart);
-    
+
+    // If a user is logged in, sync it to the database immediately
     if ($_user && $_db) {
         save_cart_to_db($_user->id, $_db);
     }
-    return true;
 }
 
 // Clear user's rows first, then re-insert current cart

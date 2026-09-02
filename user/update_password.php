@@ -94,7 +94,82 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $_title = 'Update Password | Pululu Bagel';
 include '../_head.php';
 ?>
-<link rel="stylesheet" href="<?= app_url('css/user-update_password.css') ?>">
+<style>
+.pwd-change-page{
+    max-width:540px;
+    margin:60px auto;
+    padding:0 20px;
+}
+.pwd-change-card{
+    background:#ffffff;
+    border:1px solid #ebdcd5;
+    border-radius:20px;
+    padding:34px;
+    box-shadow:0 4px 20px rgba(62,38,25,0.04);
+}
+.pwd-change-card h1{
+    font-size:23px;
+    color:#3e2619;
+    margin:0 0 10px;
+}
+.pwd-desc{
+    color:#968377;
+    font-size:14px;
+    margin-bottom:24px;
+}
+.form-group{
+    margin-bottom:18px;
+}
+.form-group label{
+    display:block;
+    font-size:12.5px;
+    font-weight:700;
+    color:#3e2619;
+    margin-bottom:6px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+}
+.form-group input[readonly]{
+    background:#f7f3f0;
+    color:#777;
+}
+.form-group input{
+    width:100%;
+    box-sizing:border-box;
+    padding:11px 14px;
+    border:1.5px solid #ebdcd5;
+    border-radius:12px;
+    font-size:14px;
+}
+.btn-submit{
+    width:100%;
+    background:#cf7953;
+    color:white;
+    border:none;
+    border-radius:12px;
+    padding:13px;
+    font-weight:bold;
+    cursor:pointer;
+    font-size:15px;
+}
+.btn-submit:hover{
+    background:#b86440;
+}
+.back-link{
+    display:block;
+    text-align:center;
+    margin-top:20px;
+    color:#cf7953;
+    text-decoration:none;
+    font-weight:600;
+}
+.note-text{
+    font-size:13px;
+    color:#968377;
+    margin-top:14px;
+    text-align:center;
+}
+</style>
 <div class="pwd-change-page">
     <div class="pwd-change-card">
         <h1>Request Password Change Link</h1>

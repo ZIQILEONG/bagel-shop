@@ -37,19 +37,19 @@ include '../_head.php';
 
 <!-- ========== Keep all your original input fields (name, price, description, etc.) here ========== -->
 
-<!-- ==========Webcam HTML module; place inside the form, before the submit button========== -->    <div class="il-43-1aed70">
+<!-- ==========Webcam HTML module; place inside the form, before the submit button========== -->    <div style="margin:20px 0; border:1px solid #ccc; padding:15px;">
         <h4>Webcam Capture Product Photo</h4>
-        <video class="il-44-38f18f" id="webcam" autoplay playsinline></video>
-        <canvas class="il-35-cb4589" id="canvas"></canvas>
+        <video id="webcam" autoplay playsinline style="width:340px; border:1px solid #888;"></video>
+        <canvas id="canvas" style="display:none;"></canvas>
 
-        <div class="il-45-cca180">
+        <div style="margin:10px 0;">
             <button type="button" id="btnOpen">Open Webcam</button>
             <button type="button" id="btnSnap">Take Photo</button>
         </div>
 
         <div>
             <p>Preview:</p>
-            <img class="il-46-2f11e1" id="previewImg">
+            <img id="previewImg" style="max‑width:260px; display:none;">
         </div>
         <input type="hidden" name="capture_photo" id="inputCapture">
     </div>

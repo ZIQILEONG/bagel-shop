@@ -19,32 +19,32 @@ $_title = 'Admin | Top 5 Best Selling Bagels';
 include '../_head.php';
 ?>
 
-<div class="il-50-cf3844">
+<div style="max-width: 800px; margin: 30px auto 80px; padding: 0 20px;">
     <!-- Breadcrumb & Title -->
-    <div class="il-51-e46be5">
-        <a class="il-52-bd169b" href="/">Home</a> &rsaquo;
-        <span class="il-53-4611fb">Top Selling</span>
+    <div style="font-size: 13px; color: #968377; margin-bottom: 12px;">
+        <a href="/" style="color: #968377; text-decoration: none;">Home</a> &rsaquo;
+        <span style="color: #3e2619; font-weight: 600;">Top Selling</span>
     </div>
     
-    <div class="il-54-0d4573">
-        <h1 class="il-55-bef8f2">Top 5 Selling Bagels</h1>
-        <p class="il-56-f078dc">Our most popular items ranked by completed customer orders.</p>
+    <div style="margin-bottom: 24px;">
+        <h1 style="font-size: 26px; font-weight: 800; color: #3e2619; margin: 0 0 6px;">Top 5 Selling Bagels</h1>
+        <p style="font-size: 14px; color: #968377; margin: 0;">Our most popular items ranked by completed customer orders.</p>
     </div>
 
     <!-- Table Card -->
-    <div class="il-57-634cb7">
-        <table class="il-58-358f9e">
+    <div style="background: #ffffff; border: 1px solid #ebdcd5; border-radius: 18px; padding: 20px; box-shadow: 0 4px 18px rgba(62,38,25,0.04);">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
-                <tr class="il-59-cd77b5">
-                    <th class="il-60-2a7419">Rank</th>
-                    <th class="il-61-ebf196">Bagel Name</th>
-                    <th class="il-62-66c361">Total Sold</th>
+                <tr style="background: #faf5f0; color: #968377; font-size: 12px; text-transform: uppercase; font-weight: 800;">
+                    <th style="width: 80px; text-align: center; padding: 12px 10px; border-radius: 8px 0 0 8px;">Rank</th>
+                    <th style="padding: 12px 16px;">Bagel Name</th>
+                    <th style="width: 160px; text-align: right; padding: 12px 16px; border-radius: 0 8px 8px 0;">Total Sold</th>
                 </tr>
             </thead>
             <tbody>
                 <?php if (empty($arr)): ?>
                     <tr>
-                        <td class="il-63-dba9b1" colspan="3">
+                        <td colspan="3" style="text-align: center; padding: 36px 16px; color: #968377; font-size: 14px;">
                             No sales data recorded yet.
                         </td>
                     </tr>
@@ -54,21 +54,21 @@ include '../_head.php';
                     $medals = [1 => '🥇', 2 => '🥈', 3 => '🥉'];
                     foreach ($arr as $row): 
                     ?>
-                        <tr class="il-64-bf4e98" onmouseover="this.style.background='#fdfaf7'" onmouseout="this.style.background='transparent'">
+                        <tr style="border-bottom: 1px solid #f7eeea; transition: background 0.15s ease;" onmouseover="this.style.background='#fdfaf7'" onmouseout="this.style.background='transparent'">
                             <!-- Rank Medal / Number -->
                             <td style="text-align: center; padding: 14px 10px; font-size: <?= $rank <= 3 ? '18px' : '14px' ?>; font-weight: 800; color: #3e2619;">
                                 <?= $medals[$rank] ?? "#$rank" ?>
                             </td>
 
                             <!-- Product Name -->
-                            <td class="il-65-f1bbf5">
+                            <td style="padding: 14px 16px; font-weight: 700; color: #3e2619; font-size: 14.5px;">
                                 <?= htmlspecialchars($row->name) ?>
                             </td>
 
                             <!-- Total Units -->
-                            <td class="il-66-7cd25e">
-                                <b class="il-67-3267f5"><?= number_format((int)$row->total_sold) ?></b>
-                                <span class="il-68-dfdf37">units</span>
+                            <td style="text-align: right; padding: 14px 16px;">
+                                <b style="font-size: 15px; color: #cf7953;"><?= number_format((int)$row->total_sold) ?></b>
+                                <span style="font-size: 12px; color: #968377; margin-left: 2px;">units</span>
                             </td>
                         </tr>
                     <?php $rank++; endforeach; ?>

@@ -292,7 +292,326 @@ $_title = "Admin | Order #{$o->id} Details";
 include '../_head.php';
 ?>
 
-<link rel="stylesheet" href="<?= app_url('css/admin-order-detail.css') ?>">
+<style>
+/* =========================================================
+   PULULU ADMIN ORDER MANAGEMENT UI
+   ========================================================= */
+:root {
+    --pl-primary: #cf7953;
+    --pl-primary-hover: #b86440;
+    --pl-brown-dark: #3e2619;
+    --pl-text: #4a3b32;
+    --pl-muted: #968377;
+    --pl-border: #ebdcd5;
+    --pl-card-bg: #ffffff;
+    --pl-accent: #fbf5ef;
+
+    --pl-status-pending-bg: #fff7e6;
+    --pl-status-pending-color: #c07a16;
+    --pl-status-pending-border: #fae0b8;
+
+    --pl-status-preparing-bg: #fdf3e7;
+    --pl-status-preparing-color: #d97706;
+    --pl-status-preparing-border: #fcd34d;
+
+    --pl-status-ready-bg: #eaf3ff;
+    --pl-status-ready-color: #1d68cd;
+    --pl-status-ready-border: #c8e0ff;
+
+    --pl-status-completed-bg: #eaf6ed;
+    --pl-status-completed-color: #217d47;
+    --pl-status-completed-border: #c6e9d0;
+
+    --pl-status-cancelled-bg: #fdf2f2;
+    --pl-status-cancelled-color: #c0392b;
+    --pl-status-cancelled-border: #f8cfcf;
+}
+
+body {
+    background-color: #faf5f0;
+    color: var(--pl-text);
+}
+
+.pl-admin-wrap {
+    max-width: 1140px;
+    margin: 28px auto 80px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Breadcrumbs */
+.pl-admin-breadcrumb {
+    font-size: 13px;
+    color: var(--pl-muted);
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.pl-admin-breadcrumb a {
+    color: var(--pl-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.pl-admin-breadcrumb a:hover {
+    color: var(--pl-primary);
+}
+
+/* Admin Title Header */
+.pl-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+.pl-admin-header h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin: 0 0 6px;
+}
+.pl-admin-meta {
+    font-size: 13.5px;
+    color: var(--pl-muted);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Status Badges */
+.pl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 800;
+    padding: 6px 16px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+}
+.pl-badge::before {
+    content: '';
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+.pl-badge.pending { background: var(--pl-status-pending-bg); color: var(--pl-status-pending-color); border-color: var(--pl-status-pending-border); }
+.pl-badge.pending::before { background: var(--pl-status-pending-color); }
+
+.pl-badge.preparing { background: var(--pl-status-preparing-bg); color: var(--pl-status-preparing-color); border-color: var(--pl-status-preparing-border); }
+.pl-badge.preparing::before { background: var(--pl-status-preparing-color); }
+
+.pl-badge.ready { background: var(--pl-status-ready-bg); color: var(--pl-status-ready-color); border-color: var(--pl-status-ready-border); }
+.pl-badge.ready::before { background: var(--pl-status-ready-color); }
+
+.pl-badge.completed { background: var(--pl-status-completed-bg); color: var(--pl-status-completed-color); border-color: var(--pl-status-completed-border); }
+.pl-badge.completed::before { background: var(--pl-status-completed-color); }
+
+.pl-badge.cancelled { background: var(--pl-status-cancelled-bg); color: var(--pl-status-cancelled-color); border-color: var(--pl-status-cancelled-border); }
+.pl-badge.cancelled::before { background: var(--pl-status-cancelled-color); }
+
+/* Layout Grid */
+.pl-admin-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 28px;
+    align-items: start;
+}
+
+/* Panel Cards */
+.pl-admin-card {
+    background: var(--pl-card-bg);
+    border: 1px solid var(--pl-border);
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 4px 18px rgba(62, 38, 25, 0.03);
+    margin-bottom: 24px;
+}
+.pl-admin-card h2 {
+    font-size: 16.5px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin: 0 0 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f5ebe4;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Status Update Widget */
+.pl-status-form {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.pl-status-select {
+    flex: 1;
+    padding: 10px 14px;
+    border: 1.5px solid var(--pl-border);
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--pl-brown-dark);
+    background: #fff;
+    outline: none;
+    cursor: pointer;
+}
+.pl-status-select:focus {
+    border-color: var(--pl-primary);
+}
+.pl-btn-update {
+    background: var(--pl-brown-dark);
+    color: #ffffff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+.pl-btn-update:hover {
+    background: #23130a;
+}
+
+/* Items Table */
+.pl-table-items {
+    width: 100%;
+    border-collapse: collapse;
+}
+.pl-table-items th {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--pl-muted);
+    text-align: left;
+    padding-bottom: 10px;
+    border-bottom: 1.5px solid #f2e7e1;
+}
+.pl-table-items td {
+    padding: 14px 0;
+    border-bottom: 1px solid #f7eeea;
+    font-size: 13.5px;
+    vertical-align: middle;
+}
+.pl-table-items tr:last-child td {
+    border-bottom: none;
+}
+.pl-prod-flex {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+.pl-table-thumb {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    object-fit: cover;
+    border: 1px solid var(--pl-border);
+    background: #faf6f0;
+}
+.pl-prod-name {
+    font-weight: 700;
+    color: var(--pl-brown-dark);
+}
+.pl-prod-id {
+    font-size: 11.5px;
+    color: var(--pl-muted);
+}
+
+/* Details List in Sidebar */
+.pl-info-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.pl-info-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13.5px;
+    line-height: 1.45;
+}
+.pl-info-label {
+    color: var(--pl-muted);
+}
+.pl-info-val {
+    color: var(--pl-brown-dark);
+    font-weight: 600;
+    text-align: right;
+}
+
+/* Summary Pricing Box */
+.pl-summary-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13.5px;
+    color: var(--pl-text);
+    margin-bottom: 10px;
+}
+.pl-summary-line.discount {
+    color: #2b7a4b;
+    font-weight: 700;
+}
+.pl-summary-divider {
+    height: 1px;
+    background: #f5ebe4;
+    margin: 12px 0;
+}
+.pl-summary-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin-top: 12px;
+}
+.pl-total-amount {
+    font-size: 22px;
+    color: var(--pl-primary);
+}
+
+/* Delivery Callout */
+.pl-delivery-box {
+    background: var(--pl-accent);
+    border: 1px solid var(--pl-border);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+    margin-top: 8px;
+}
+
+/* Back Button */
+.pl-btn-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ffffff;
+    color: var(--pl-brown-dark);
+    border: 1.5px solid var(--pl-border);
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-size: 13.5px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.pl-btn-back-link:hover {
+    background: var(--pl-accent);
+    border-color: #d8c2b5;
+}
+
+@media (max-width: 860px) {
+    .pl-admin-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
 
 <div class="pl-admin-wrap">
     <!-- Breadcrumb -->
@@ -301,7 +620,7 @@ include '../_head.php';
         <span>&rsaquo;</span>
         <a href="order-list.php">Order Management</a>
         <span>&rsaquo;</span>
-        <span class="il-4-8a27e5">Order #<?= htmlspecialchars($o->id) ?></span>
+        <span style="color: var(--pl-brown-dark); font-weight: 600;">Order #<?= htmlspecialchars($o->id) ?></span>
     </div>
 
     <!-- Admin Header -->
@@ -340,7 +659,7 @@ include '../_head.php';
                     </form>
                     <?= err('status') ?>
                 <?php else: ?>
-                    <div class="il-5-c9a909">
+                    <div style="background: var(--pl-status-cancelled-bg); color: var(--pl-status-cancelled-color); border: 1px solid var(--pl-status-cancelled-border); padding: 12px 16px; border-radius: 10px; font-size: 13.5px; font-weight: 700;">
                         ⚠️ This order has been cancelled and its status is locked.
                     </div>
                 <?php endif; ?>
@@ -353,9 +672,9 @@ include '../_head.php';
                     <thead>
                         <tr>
                             <th>Product</th>
-                            <th class="il-6-28bbfa">Price</th>
-                            <th class="il-7-7023da">Qty</th>
-                            <th class="il-6-28bbfa">Subtotal</th>
+                            <th style="text-align: right;">Price</th>
+                            <th style="text-align: center;">Qty</th>
+                            <th style="text-align: right;">Subtotal</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -373,13 +692,13 @@ include '../_head.php';
                                         </div>
                                     </div>
                                 </td>
-                                <td class="il-8-a14a0d">
+                                <td style="text-align: right; color: var(--pl-muted);">
                                     RM <?= number_format((float)$i->price, 2) ?>
                                 </td>
-                                <td class="il-9-cfb7f9">
+                                <td style="text-align: center; font-weight: 700;">
                                     &times; <?= (int)$i->unit ?>
                                 </td>
-                                <td class="il-10-57cbe7">
+                                <td style="text-align: right; font-weight: 800; color: var(--pl-brown-dark);">
                                     RM <?= number_format((float)$i->subtotal, 2) ?>
                                 </td>
                             </tr>
@@ -388,7 +707,7 @@ include '../_head.php';
                 </table>
             </div>
 
-            <p class="il-11-8ced3a">
+            <p style="margin-top: 10px;">
                 <a href="order-list.php" class="pl-btn-back-link">&larr; Back to Order Listing</a>
             </p>
         </div>
@@ -404,13 +723,13 @@ include '../_head.php';
                         <span class="pl-info-val">
                             <?= htmlspecialchars($o->name) ?>
                             <?php if (!empty($o->is_deleted)): ?>
-                                <span class="il-12-c65939" title="Account Disabled">⚠️ (Disabled)</span>
+                                <span style="color:#b5192b; font-weight:bold;" title="Account Disabled">⚠️ (Disabled)</span>
                             <?php endif; ?>
                         </span>
                     </div>
                     <div class="pl-info-row">
                         <span class="pl-info-label">Email</span>
-                        <span class="pl-info-val"><a class="il-13-73dedf" href="mailto:<?= htmlspecialchars($o->email) ?>"><?= htmlspecialchars($o->email) ?></a></span>
+                        <span class="pl-info-val"><a href="mailto:<?= htmlspecialchars($o->email) ?>" style="color: var(--pl-primary); text-decoration: none;"><?= htmlspecialchars($o->email) ?></a></span>
                     </div>
                     <div class="pl-info-row">
                         <span class="pl-info-label">Fulfillment</span>
@@ -421,17 +740,17 @@ include '../_head.php';
                 <!-- Delivery Address / Pickup info -->
                 <?php if (($o->delivery_method ?? 'Pickup') === 'Delivery' && $addr): ?>
                     <div class="pl-delivery-box">
-                        <div class="il-14-e98025">🚚 Deliver to:</div>
+                        <div style="font-weight: 800; color: var(--pl-primary); margin-bottom: 4px;">🚚 Deliver to:</div>
                         <div><b><?= htmlspecialchars($addr->recipient_name) ?></b> (<?= htmlspecialchars($addr->phone) ?>)</div>
-                        <div class="il-15-152363">
+                        <div style="color: var(--pl-muted); margin-top: 2px;">
                             <?= htmlspecialchars($addr->address_line1) ?><?= !empty($addr->address_line2) ? ', ' . htmlspecialchars($addr->address_line2) : '' ?><br>
                             <?= htmlspecialchars($addr->city) ?>, <?= htmlspecialchars($addr->state) ?> <?= htmlspecialchars($addr->postcode) ?>
                         </div>
                     </div>
                 <?php else: ?>
                     <div class="pl-delivery-box">
-                        <div class="il-16-979b00">🏪 Self Pickup</div>
-                        <div class="il-17-7fef8c">Customer will collect at TAR UMT Block D.</div>
+                        <div style="font-weight: 800; color: var(--pl-brown-dark);">🏪 Self Pickup</div>
+                        <div style="color: var(--pl-muted);">Customer will collect at TAR UMT Block D.</div>
                     </div>
                 <?php endif; ?>
             </div>
@@ -477,7 +796,7 @@ include '../_head.php';
                 </div>
 
                 <?php if (!empty($o->points_earned) && (int)$o->points_earned > 0): ?>
-                    <div class="il-18-348d31">
+                    <div style="margin-top: 14px; font-size: 12.5px; color: #b7791f; font-weight: 700; background: #fff8eb; border: 1px solid #fae1b3; padding: 8px 12px; border-radius: 8px; text-align: center;">
                         ⭐ Points Awarded: +<?= (int)$o->points_earned ?> pts
                     </div>
                 <?php endif; ?>
