@@ -23,18 +23,23 @@ $_low_stock_threshold = 11;
         <td><?= $p->category_name ?></td>
         <td><?= $p->name ?></td>
         <td class="right"><?= $p->price ?></td>
+        <td class="right">
             <?= $p->stock ?>
             <?php if ($is_out_of_stock): ?>
-                <span class="il-37-65db45">Out of Stock</span>
+                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#6d1414;color:#fff;font-size:11px;font-weight:bold;">
+                    Out of Stock</span>
             <?php elseif ($is_low_stock): ?>
-                <span class="il-37-65db45">Low Stock</span>
+                <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#b5192b;color:#fff;font-size:11px;font-weight:bold;">
+                    Low Stock</span>
             <?php endif ?>
         </td>
+        <td><button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button></td>
     </tr>
+    <?php endforeach ?>
 </table>
 <button name="btn" value="delete_selected" data-confirm="Delete selected products?">Delete Selected</button>
 <label>Increase price by (%)</label>
-<input class="il-38-8db8d8" type="number" name="percent" step="0.01" min="0">
+<input type="number" name="percent" step="0.01" min="-100" style="width:80px">
 <button name="btn" value="increase_price">Increase Price</button>
 </form>
 <?= $pager->html('search=' . encode($search) . '&sort=' . $sort . '&dir=' . $dir) ?>
