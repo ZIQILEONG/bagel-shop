@@ -134,9 +134,6 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU 5-BAGELS FLAVOUR SELECTION & PDP UI
-   ========================================================= */
 :root {
     --bg-cream: #faf5f0;
     --card-bg: #ffffff;
@@ -192,7 +189,6 @@ body {
     margin-bottom: 36px;
 }
 
-/* Gallery / Carousel */
 .pdp-gallery-wrap {
     display: flex;
     flex-direction: column;
@@ -272,7 +268,6 @@ body {
     object-fit: cover;
 }
 
-/* Info */
 .pdp-info-wrap {
     display: flex;
     flex-direction: column;
@@ -320,7 +315,6 @@ body {
     margin-bottom: 20px;
 }
 
-/* Choice of Bagel Card */
 .flavour-selector-card {
     background: #fffdfc;
     border: 1.5px solid var(--border-color);
@@ -371,7 +365,6 @@ body {
     color: var(--primary-brown);
 }
 
-/* Flavour Stepper Controls */
 .flavour-stepper {
     display: inline-flex;
     align-items: center;
@@ -415,7 +408,6 @@ body {
     outline: none;
 }
 
-/* Purchase Actions */
 .pdp-action-box {
     display: flex;
     align-items: center;
@@ -516,9 +508,6 @@ body {
     color: var(--primary-brown);
 }
 
-/* =========================================================
-   YOUTUBE VIDEO SHOWCASE CARD
-   ========================================================= */
 .pdp-video-card {
     background: var(--card-bg);
     border-radius: 20px;
@@ -559,7 +548,7 @@ body {
     border: 0;
 }
 
-/* Reviews Container */
+/* Reviews */
 .pdp-reviews-container {
     background: var(--card-bg);
     border-radius: 20px;

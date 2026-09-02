@@ -82,7 +82,7 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
     else if ((!$u || $email != $u->email) && is_exists($email, 'user', 'email')) {
         $_err['email'] = 'Already exists';
     }
-    // Phone (NEW: format check, matches register.php's Malaysian format;
+    // Phone (format check, matches register.php's Malaysian format;
     // optional field so only validated when filled in)
     $phone_normalized = preg_replace('/[\s().-]/', '', $phone_no);
     if ($phone_no !== '' && !preg_match('/^(01\d{8,9}|\+601\d{8,9})$/', $phone_normalized)) {
@@ -94,7 +94,7 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
         $_err['password'] = 'Required';
     }
     if ($password != '') {
-        // NEW: strength rules whenever a password is being set/changed
+
         if (strlen($password) < 8) {
             $_err['password'] = 'Password must be at least 8 characters';
         }
@@ -110,7 +110,7 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
         else if (!preg_match('/[^A-Za-z0-9]/', $password)) {
             $_err['password'] = 'Password needs one symbol';
         }
-        // NEW: retype-to-confirm check
+
         if ($confirm_password == '') {
             $_err['confirm_password'] = 'Please retype the password';
         }
@@ -122,7 +122,7 @@ if (is_post() && req('btn') != 'delete' && req('btn') != 'batch') {
     if ($role == '' || !array_key_exists($role, $roles)) {
         $_err['role'] = 'Required';
     }
-    // NEW: prevent an admin from demoting/locking themselves out
+
     else if ($u && $u->id == $_user->id && $u->role == 'Admin' && $role != 'Admin') {
         $_err['role'] = 'You cannot remove Admin from your own account';
     }
@@ -196,7 +196,7 @@ include '../_head.php';
     <label for="password">Password <?= $u ? '(leave blank to keep unchanged)' : '' ?></label>
     <?= html_password('password', 'id="password" maxlength="100" autocomplete="new-password"') ?>
     <?= err('password') ?>
-    <!-- NEW: retype password to confirm -->
+
     <label for="confirm_password">Retype Password</label>
     <?= html_password('confirm_password', 'id="confirm_password" maxlength="100" autocomplete="new-password"') ?>
     <?= err('confirm_password') ?>
@@ -238,7 +238,7 @@ include '../_head.php';
 <?php if ($u): ?>
 <p>
     <?php if ($u->id == $_user->id): ?>
-        <!-- NEW: hide/disable the delete action entirely for your own account -->
+        
         <button type="button" disabled title="You cannot delete your own account">Delete Member</button>
     <?php else: ?>
         <button data-post="user-detail.php?id=<?= $u->id ?>&btn=delete" data-confirm="Delete member '<?= encode($u->name) ?>'? This cannot be undone.">Delete Member</button>
@@ -249,7 +249,7 @@ include '../_head.php';
     <button data-get="user-listing.php">Back to Listing</button>
 </p>
 <script>
-// NEW: live password-strength + match feedback, mirrors user/register.php
+
 (function () {
     const passwordInput = document.getElementById('password');
     const confirmInput  = document.getElementById('confirm_password');

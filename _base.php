@@ -9,7 +9,7 @@ session_start();
 
 // ============================================================================
 // General Page Functions
-//Test Change to push --Chai
+// Test Change to push --Chai
 // ============================================================================
 
 // Is GET request?

@@ -320,9 +320,7 @@ include '../_head.php';
     margin-top: 20px;
 }
 
-/* =========================================================
-   Pill-Style Pagination
-   ========================================================= */
+/* Pill-Style Pagination */
 .pager, .pagination {
     display: flex;
     align-items: center;

@@ -3,7 +3,7 @@ include '../_base.php';
 
 // ----------------------------------------------------------------------------
 
-// (1) Authorization (admin)
+// Authorization (admin)
 auth('Admin');
 
 $statuses = [
@@ -14,7 +14,7 @@ $statuses = [
     'Cancelled'  => 'Cancelled',
 ];
 
-// (2) Return order (based on id)
+// Return order (based on id)
 $id = req('id');
 
 $stm = $_db->prepare("SELECT o.*, u.name, u.email, u.is_deleted FROM orders o JOIN user u ON o.user_id = u.id WHERE o.id = ?");
@@ -26,12 +26,12 @@ if (!$o) {
     redirect('order-list.php');
 }
 
-// (3) Return items (and products) belong to the order
+// Return items (and products) belong to the order
 $stm = $_db->prepare("SELECT i.*, p.name, p.photo FROM order_item i JOIN product p ON i.product_id = p.id WHERE i.order_id = ?");
 $stm->execute([$o->id]);
 $arr = $stm->fetchAll();
 
-// (4) Handle status update
+// Handle status update
 if (is_post()) {
     if ($o->status == 'Cancelled') {
         temp('info', 'This order has been cancelled and cannot be updated.');
@@ -293,9 +293,6 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU ADMIN ORDER MANAGEMENT UI
-   ========================================================= */
 :root {
     --pl-primary: #cf7953;
     --pl-primary-hover: #b86440;
@@ -339,7 +336,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Breadcrumbs */
 .pl-admin-breadcrumb {
     font-size: 13px;
     color: var(--pl-muted);
@@ -357,7 +353,6 @@ body {
     color: var(--pl-primary);
 }
 
-/* Admin Title Header */
 .pl-admin-header {
     display: flex;
     justify-content: space-between;
@@ -380,7 +375,6 @@ body {
     gap: 10px;
 }
 
-/* Status Badges */
 .pl-badge {
     display: inline-flex;
     align-items: center;
@@ -412,7 +406,6 @@ body {
 .pl-badge.cancelled { background: var(--pl-status-cancelled-bg); color: var(--pl-status-cancelled-color); border-color: var(--pl-status-cancelled-border); }
 .pl-badge.cancelled::before { background: var(--pl-status-cancelled-color); }
 
-/* Layout Grid */
 .pl-admin-grid {
     display: grid;
     grid-template-columns: 1.6fr 1fr;
@@ -420,7 +413,6 @@ body {
     align-items: start;
 }
 
-/* Panel Cards */
 .pl-admin-card {
     background: var(--pl-card-bg);
     border: 1px solid var(--pl-border);
@@ -441,7 +433,6 @@ body {
     gap: 8px;
 }
 
-/* Status Update Widget */
 .pl-status-form {
     display: flex;
     gap: 12px;
@@ -477,7 +468,6 @@ body {
     background: #23130a;
 }
 
-/* Items Table */
 .pl-table-items {
     width: 100%;
     border-collapse: collapse;
@@ -522,7 +512,6 @@ body {
     color: var(--pl-muted);
 }
 
-/* Details List in Sidebar */
 .pl-info-grid {
     display: flex;
     flex-direction: column;
@@ -543,7 +532,6 @@ body {
     text-align: right;
 }
 
-/* Summary Pricing Box */
 .pl-summary-line {
     display: flex;
     justify-content: space-between;
@@ -575,7 +563,6 @@ body {
     color: var(--pl-primary);
 }
 
-/* Delivery Callout */
 .pl-delivery-box {
     background: var(--pl-accent);
     border: 1px solid var(--pl-border);
@@ -586,7 +573,6 @@ body {
     margin-top: 8px;
 }
 
-/* Back Button */
 .pl-btn-back-link {
     display: inline-flex;
     align-items: center;
@@ -614,7 +600,6 @@ body {
 </style>
 
 <div class="pl-admin-wrap">
-    <!-- Breadcrumb -->
     <div class="pl-admin-breadcrumb">
         <a href="/">Home</a>
         <span>&rsaquo;</span>
@@ -623,7 +608,6 @@ body {
         <span style="color: var(--pl-brown-dark); font-weight: 600;">Order #<?= htmlspecialchars($o->id) ?></span>
     </div>
 
-    <!-- Admin Header -->
     <?php $statusKey = strtolower(str_replace(' ', '-', trim((string)$o->status))); ?>
     <div class="pl-admin-header">
         <div>
@@ -641,9 +625,7 @@ body {
     </div>
 
     <div class="pl-admin-grid">
-        <!-- Left: Ordered Bagels & Status Management -->
         <div class="pl-left-col">
-            <!-- Status Update Card -->
             <div class="pl-admin-card">
                 <h2>⚙️ Update Order Status</h2>
                 <?php if ($o->status !== 'Cancelled'): ?>
@@ -665,7 +647,6 @@ body {
                 <?php endif; ?>
             </div>
 
-            <!-- Itemized Table Card -->
             <div class="pl-admin-card">
                 <h2>Line Items (<?= count($arr) ?>)</h2>
                 <table class="pl-table-items">
@@ -712,9 +693,7 @@ body {
             </p>
         </div>
 
-        <!-- Right: Customer & Financial Summary -->
         <div class="pl-right-col">
-            <!-- Customer Information Card -->
             <div class="pl-admin-card">
                 <h2>👤 Customer Details</h2>
                 <div class="pl-info-grid">
@@ -737,7 +716,6 @@ body {
                     </div>
                 </div>
 
-                <!-- Delivery Address / Pickup info -->
                 <?php if (($o->delivery_method ?? 'Pickup') === 'Delivery' && $addr): ?>
                     <div class="pl-delivery-box">
                         <div style="font-weight: 800; color: var(--pl-primary); margin-bottom: 4px;">🚚 Deliver to:</div>
@@ -755,7 +733,6 @@ body {
                 <?php endif; ?>
             </div>
 
-            <!-- Financial Summary Card -->
             <div class="pl-admin-card">
                 <h2>💳 Payment Summary</h2>
 
@@ -764,7 +741,6 @@ body {
                     <span>RM <?= number_format($raw_items_subtotal, 2) ?></span>
                 </div>
 
-                <!-- 1. Voucher Discount -->
                 <?php if (!empty($o->voucher_code) && $voucher_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
                         <span>Voucher (<?= htmlspecialchars($o->voucher_code) ?><?= $voucher_percent > 0 ? " &bull; {$voucher_percent}%" : '' ?>)</span>
@@ -772,7 +748,6 @@ body {
                     </div>
                 <?php endif; ?>
 
-                <!-- 2. Points Redeemed -->
                 <?php if ($points_discount_amount > 0): ?>
                     <div class="pl-summary-line discount">
                         <span>Points Redeemed (<?= number_format($points_used_count) ?> pts)</span>
@@ -780,7 +755,6 @@ body {
                     </div>
                 <?php endif; ?>
 
-                <!-- 3. Delivery Fee -->
                 <?php if (!empty($o->delivery_fee) && (float)$o->delivery_fee > 0): ?>
                     <div class="pl-summary-line">
                         <span>Delivery Fee</span>

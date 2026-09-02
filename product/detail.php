@@ -77,9 +77,7 @@ foreach ($cart as $prodId => $entry) {
 }
 $currentThisItemQty = is_array($cart[$p->id] ?? null) ? (int)($cart[$p->id]['qty'] ?? 0) : (int)($cart[$p->id] ?? 0);
 
-// ==========================================
-// 🛒 HANDLE ADD TO CART (MAX 10 PER ITEM & MAX 100 TOTAL CART)
-// ==========================================
+// HANDLE ADD TO CART (MAX 10 PER ITEM & MAX 100 TOTAL CART)
 if (is_post() && req('action') === 'add_to_cart') {
     if (!isset($_user) || $_user->role !== 'Member') {
         temp('info', 'Please log in to add items to your cart.');
@@ -93,7 +91,7 @@ if (is_post() && req('action') === 'add_to_cart') {
         redirect("detail.php?id={$p->id}");
     }
 
-    // 🔒 1. Check if total cart is full (Max 100 total items)
+    // Check if total cart is full (Max 100 total items)
     if ($totalCartItems >= 100) {
         temp('error', 'Cannot add to cart. Your shopping cart is full (maximum 100 items limit reached).');
         redirect("detail.php?id={$p->id}");
@@ -105,14 +103,14 @@ if (is_post() && req('action') === 'add_to_cart') {
         redirect("detail.php?id={$p->id}");
     }
 
-    // 🔒 2. Check individual item limit (Max 10 per bagel)
+    // Check individual item limit (Max 10 per bagel)
     $newThisItemTotal = $currentThisItemQty + $unit;
     if ($newThisItemTotal > 10) {
         temp('error', "Maximum order limit is 10 per bagel. You already have {$currentThisItemQty} in your cart.");
         redirect("detail.php?id={$p->id}");
     }
 
-    // 🔒 3. Check stock availability
+    // Check stock availability
     if ($newThisItemTotal > (int)$p->stock) {
         temp('error', 'Sorry, not enough stock available.');
         redirect("detail.php?id={$p->id}");
@@ -123,9 +121,7 @@ if (is_post() && req('action') === 'add_to_cart') {
     redirect("detail.php?id={$p->id}");
 }
 
-// ==========================================
-// ⭐ HANDLE REVIEW SUBMISSION (ALLOW ALL REVIEWS)
-// ==========================================
+// HANDLE REVIEW SUBMISSION 
 if (is_post() && req('action') === 'submit_review') {
     auth('Member');
     $rating = (int)req('rating');
@@ -1063,7 +1059,7 @@ function stepQty(amount) {
     const totalText = document.getElementById('btnTotalText');
     if (!input) return;
 
-    // 1. Check if total cart is already full
+    // Check if total cart is already full
     if (totalCartItems >= 100) {
         showToast('Cannot add to cart. Your shopping cart is full (maximum 100 items limit reached).');
         return;
@@ -1072,13 +1068,13 @@ function stepQty(amount) {
     let currentVal = parseInt(input.value) || 1;
     let nextVal = currentVal + amount;
 
-    // 2. Check total cart overflow
+    // Check total cart overflow
     if (amount > 0 && (totalCartItems + currentVal) >= 100) {
         showToast('Cannot add more items. Your shopping cart will exceed the 100-item maximum limit.');
         return;
     }
 
-    // 3. Check individual item limit
+    // Check individual item limit
     if (amount > 0 && (currentThisItemQty + currentVal) >= 10) {
         showToast('Maximum order limit is 10 items per bagel.');
         return;

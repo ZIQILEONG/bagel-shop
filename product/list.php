@@ -76,9 +76,6 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU COMPLETE SHOPPING PAGE UI/UX
-   ========================================================= */
 :root {
     --pl-primary: #cf7953;
     --pl-primary-hover: #b86440;
@@ -102,7 +99,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Header */
 .pl-header-banner {
     text-align: center;
     margin-bottom: 28px;
@@ -119,7 +115,6 @@ body {
     margin: 0;
 }
 
-/* Filter & Sort Bar Card */
 .filter-card {
     background: var(--pl-card-bg);
     border: 1px solid var(--pl-border);
@@ -184,7 +179,6 @@ body {
     box-shadow: 0 3px 10px rgba(207, 121, 83, 0.25);
 }
 
-/* Result Meta info */
 .pl-results-meta {
     display: flex;
     justify-content: space-between;
@@ -195,7 +189,6 @@ body {
     padding: 0 4px;
 }
 
-/* Products Grid (4 columns) */
 .products-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -203,7 +196,6 @@ body {
     margin-bottom: 36px;
 }
 
-/* Product Card */
 .product-card {
     border: 1px solid var(--pl-border);
     border-radius: 16px;
@@ -284,7 +276,6 @@ body {
     margin-bottom: 12px;
 }
 
-/* Card Action Bottom */
 .card-action-wrap {
     margin-top: auto;
     padding-top: 10px;
@@ -339,7 +330,6 @@ body {
     text-decoration: underline;
 }
 
-/* Empty State */
 .pl-empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -358,7 +348,6 @@ body {
     margin: 0;
 }
 
-/* Pagination Bar Styling */
 .pl-pagination-wrap,
 .pager {
     display: flex !important;
@@ -446,13 +435,11 @@ body {
 </style>
 
 <div class="pl-page-wrapper">
-    <!-- Header -->
     <div class="pl-header-banner">
         <h1>Freshly Baked Bagels</h1>
         <p>Hand-rolled, boiled, and baked fresh every morning in small batches.</p>
     </div>
 
-    <!-- Filter & Sorting Bar -->
     <div class="filter-card">
         <form method="get" class="filter-grid" id="filterForm">
             <div class="filter-field">
@@ -501,7 +488,6 @@ body {
         </form>
     </div>
 
-    <!-- Meta Info -->
     <div class="pl-results-meta">
         <span>Showing <?= count($products) ?> of <?= $pager->count ?> bagels</span>
         <?php if ($search || $category_id || $min_price || $max_price): ?>
@@ -509,7 +495,6 @@ body {
         <?php endif; ?>
     </div>
 
-    <!-- Products Grid (4 Columns) -->
     <?php if (!empty($products)): ?>
         <div class="products-grid">
             <?php foreach ($products as $p): ?>
@@ -572,7 +557,6 @@ body {
             <?php endforeach; ?>
         </div>
 
-        <!-- Pagination Bar -->
         <div class="pl-pagination-wrap">
             <?php $pager->html(); ?>
         </div>

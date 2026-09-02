@@ -63,7 +63,6 @@ include '../_head.php';
     font-family: 'Nunito Sans', sans-serif;
 }
 
-/* Breadcrumb */
 .pl-crumb {
     font-size: 13px;
     color: var(--pl-muted);
@@ -81,7 +80,6 @@ include '../_head.php';
     color: var(--pl-primary);
 }
 
-/* Header */
 .pl-header {
     display: flex;
     justify-content: space-between;
@@ -103,7 +101,6 @@ include '../_head.php';
     margin: 0;
 }
 
-/* Controls Bar (Search + Filter Tabs) */
 .pl-controls-card {
     background: #ffffff;
     border: 1px solid var(--pl-border);
@@ -231,7 +228,6 @@ include '../_head.php';
     white-space: nowrap;
 }
 
-/* Status Badges with Colored Dots */
 .pl-status-tag {
     display: inline-flex;
     align-items: center;

@@ -42,21 +42,21 @@ if (is_post() && req('btn') == 'create') {
             mkdir($dir, 0755, true);
         }
 
-        // 1. Save Main Photo
+        // Save Main Photo
         if ($f) {
             $photo = save_photo($f, $dir);
         }
 
-        // 2. Generate Product ID
+        // Generate Product ID
         $max   = $_db->query("SELECT MAX(id) FROM product")->fetchColumn();
         $num   = $max ? ((int) substr($max, 1) + 1) : 1;
         $newId = 'P' . str_pad($num, 3, '0', STR_PAD_LEFT);
 
-        // 3. Insert Product
+        // Insert Product
         $stm = $_db->prepare("INSERT INTO product (id, name, category_id, price, photo, stock, description, video_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stm->execute([$newId, $name, $category_id, $price, $photo, $stock, $description, $video_url]);
 
-        // 4. Batch Upload Multiple Detail Photos (1 Product = Multiple Photos)
+        // Batch Upload Multiple Detail Photos (1 Product = Multiple Photos)
         $detailFiles = $_FILES['detail_photos'] ?? null;
         if ($detailFiles && is_array($detailFiles['tmp_name'])) {
             $sort = 1;
@@ -92,9 +92,6 @@ include '../_head.php';
 ?>
 
 <style>
-/* =========================================================
-   PULULU ADD NEW PRODUCT UI/UX & MULTI-PHOTO GALLERY
-   ========================================================= */
 :root {
     --pd-primary: #d9825a;
     --pd-primary-hover: #c66f47;
@@ -120,7 +117,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Breadcrumb */
 .pd-breadcrumb {
     font-size: 13px;
     color: var(--pd-muted);
@@ -138,7 +134,6 @@ body {
     color: var(--pd-primary);
 }
 
-/* Main Container Card */
 .pd-card {
     background: #ffffff;
     border: 1px solid #f0e3dc;
@@ -147,7 +142,6 @@ body {
     box-shadow: 0 4px 20px rgba(62, 38, 25, 0.04);
 }
 
-/* Header */
 .pd-header {
     display: flex;
     align-items: center;
@@ -168,7 +162,6 @@ body {
     color: var(--pd-brown-dark);
 }
 
-/* Split Form Layout */
 .pd-main-grid {
     display: grid;
     grid-template-columns: 260px 1fr;
@@ -176,7 +169,6 @@ body {
     margin-bottom: 24px;
 }
 
-/* Left: Main Product Photo */
 .pd-image-column {
     display: flex;
     flex-direction: column;
@@ -223,7 +215,6 @@ body {
     color: var(--pd-primary);
 }
 
-/* Form Fields */
 .pd-form-column {
     display: flex;
     flex-direction: column;
@@ -277,7 +268,6 @@ body {
     line-height: 1.5;
 }
 
-/* Input Wrappers */
 .pd-input-group {
     display: flex;
     align-items: stretch;
@@ -320,9 +310,6 @@ body {
     font-weight: 600;
 }
 
-/* =========================================================
-   MULTIPLE DETAIL PHOTOS BOX
-   ========================================================= */
 .pdp-box {
     border: 1.5px solid #f3e8e2;
     border-radius: 16px;
@@ -418,7 +405,6 @@ body {
     color: var(--pd-red-hover);
 }
 
-/* Dashed Add Photo Drop Area */
 .pdp-add-box {
     border: 1.5px dashed #d8c2b5;
     border-radius: 14px;
@@ -519,16 +505,13 @@ body {
 </style>
 
 <div class="pd-wrap">
-    <!-- Breadcrumb -->
     <div class="pd-breadcrumb">
         <a href="product-listing.php">Manage Products</a>
         <span>&rsaquo;</span>
         <span>New Product</span>
     </div>
 
-    <!-- Main Card -->
     <div class="pd-card">
-        <!-- Header -->
         <div class="pd-header">
             <div class="pd-title-group">
                 <span class="pd-title-icon">🥯</span>
@@ -538,10 +521,8 @@ body {
             </div>
         </div>
 
-        <!-- Create Form -->
         <form method="post" enctype="multipart/form-data" id="createProductForm">
             <div class="pd-main-grid">
-                <!-- Left: Main Product Photo -->
                 <div class="pd-image-column">
                     <div class="pd-main-photo-card" id="mainPhotoCard">
                         <img id="mainProductImage" src="/products/default.jpg" alt="Product Thumbnail">
@@ -553,7 +534,6 @@ body {
                     <?= err('photo') ?>
                 </div>
 
-                <!-- Right: Information Fields -->
                 <div class="pd-form-column">
                     <div class="form-two-col">
                         <div class="form-field">
@@ -612,7 +592,6 @@ body {
                 </div>
             </div>
 
-            <!-- Detail Photos Tile (Multiple Photo Upload) -->
             <div class="pdp-box">
                 <div class="pdp-header">
                     <div class="pdp-header-icon">
@@ -626,7 +605,7 @@ body {
                 </div>
 
                 <div class="pdp-grid" id="detailPhotosGrid">
-                    <!-- Dynamic preview cards will be injected here -->
+
                     <label for="pdpDetailInput" class="pdp-add-box" id="addBoxLabel">
                         <div class="pdp-add-icon">＋</div>
                         <div class="pdp-add-title">Add Photos</div>
@@ -636,7 +615,6 @@ body {
                 <input type="file" id="pdpDetailInput" name="detail_photos[]" multiple accept="image/*" style="display:none;">
             </div>
 
-            <!-- Action Buttons -->
             <div class="pd-actions">
                 <button type="submit" name="btn" value="create" class="btn-save-main">
                     Save Product
@@ -651,9 +629,6 @@ body {
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // -------------------------------------------------------------
-    // 1. MAIN PHOTO: FILE SELECT & DRAG-AND-DROP
-    // -------------------------------------------------------------
     const photoInput    = document.getElementById('productPhotoInput');
     const mainImage     = document.getElementById('mainProductImage');
     const mainPhotoCard = document.getElementById('mainPhotoCard');
@@ -702,9 +677,6 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // -------------------------------------------------------------
-    // 2. MULTI-PHOTO DETAIL GALLERY: FILE SELECT, DRAG-AND-DROP & REMOVAL
-    // -------------------------------------------------------------
     const detailInput = document.getElementById('pdpDetailInput');
     const detailGrid  = document.getElementById('detailPhotosGrid');
     const addBoxLabel = document.getElementById('addBoxLabel');

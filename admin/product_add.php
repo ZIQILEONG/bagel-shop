@@ -55,7 +55,7 @@ include '../_head.php';
 
     <button type="submit">Save Product</button>
 </form>
-<!-- ========== JS Script: After the form, before _foot.php ========== -->
+
 <script>
 const video = document.getElementById('webcam');
 const canvas = document.getElementById('canvas');

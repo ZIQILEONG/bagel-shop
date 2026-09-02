@@ -217,7 +217,6 @@ body {
     box-sizing: border-box;
 }
 
-/* Breadcrumb */
 .pd-breadcrumb {
     font-size: 13px;
     color: var(--pd-muted);
@@ -235,7 +234,6 @@ body {
     color: var(--pd-primary);
 }
 
-/* Main Container Card */
 .pd-card {
     background: #ffffff;
     border: 1px solid #f0e3dc;
@@ -244,7 +242,6 @@ body {
     box-shadow: 0 4px 20px rgba(62, 38, 25, 0.04);
 }
 
-/* Header */
 .pd-header {
     display: flex;
     align-items: center;
@@ -275,7 +272,6 @@ body {
     border: 1px solid #f7dfd3;
 }
 
-/* Top Section Split Grid (Left Photo, Right Form) */
 .pd-main-grid {
     display: grid;
     grid-template-columns: 260px 1fr;
@@ -283,7 +279,6 @@ body {
     margin-bottom: 24px;
 }
 
-/* Left: Main Product Photo Box */
 .pd-image-column {
     display: flex;
     flex-direction: column;
@@ -431,9 +426,6 @@ body {
     font-weight: 600;
 }
 
-/* =========================================================
-   DETAIL PHOTOS GALLERY
-   ========================================================= */
 .pdp-box {
     border: 1.5px solid #f3e8e2;
     border-radius: 16px;
@@ -572,9 +564,6 @@ body {
     line-height: 1.35;
 }
 
-/* =========================================================
-   BOTTOM ACTION BUTTONS
-   ========================================================= */
 .pd-actions {
     display: flex;
     align-items: center;
@@ -630,7 +619,6 @@ body {
     background: #fbf6f3;
 }
 
-/* Lightbox Modal */
 .pd-lightbox-backdrop {
     display: none;
     position: fixed;
@@ -660,7 +648,6 @@ body {
     cursor: zoom-out;
 }
 
-/* Batch Mode Card */
 .pd-batch-card {
     background: #ffffff;
     border: 1px solid #ebdcd5;
@@ -693,16 +680,14 @@ body {
 </style>
 
 <div class="pd-wrap">
-    <!-- Breadcrumb -->
     <div class="pd-breadcrumb">
         <a href="product-listing.php">Manage Products</a>
         <span>&rsaquo;</span>
         <span><?= $p ? 'Edit Product' : 'New Product' ?></span>
     </div>
 
-    <!-- Main Card -->
     <div class="pd-card">
-        <!-- Header -->
+
         <div class="pd-header">
             <div class="pd-title-group">
                 <span class="pd-title-icon">🥯</span>
@@ -715,10 +700,9 @@ body {
             </div>
         </div>
 
-        <!-- Main Product Form -->
         <form method="post" enctype="multipart/form-data" id="productForm">
             <div class="pd-main-grid">
-                <!-- Left: Main Photo -->
+
                 <div class="pd-image-column">
                     <div class="pd-main-photo-card">
                         <img id="mainProductImage" src="/products/<?= htmlspecialchars($p->photo ?? 'default.jpg') ?>" alt="<?= htmlspecialchars($p->name ?? 'Product') ?>">
@@ -730,7 +714,6 @@ body {
                     <?= err('photo') ?>
                 </div>
 
-                <!-- Right: Product Information Inputs -->
                 <div class="pd-form-column">
                     <?php if ($p): ?>
                         <div class="form-field">
@@ -884,7 +867,6 @@ body {
     <?php endif; ?>
 </div>
 
-<!-- Modal Lightbox Backdrop -->
 <div id="photoBackdrop" class="pd-lightbox-backdrop" onclick="closePhoto()"></div>
 
 <script>

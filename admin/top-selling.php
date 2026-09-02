@@ -31,7 +31,6 @@ include '../_head.php';
         <p style="font-size: 14px; color: #968377; margin: 0;">Our most popular items ranked by completed customer orders.</p>
     </div>
 
-    <!-- Table Card -->
     <div style="background: #ffffff; border: 1px solid #ebdcd5; border-radius: 18px; padding: 20px; box-shadow: 0 4px 18px rgba(62,38,25,0.04);">
         <table style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
