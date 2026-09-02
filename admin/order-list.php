@@ -255,8 +255,11 @@ include '../_head.php';
 .pl-status-pending { background: #fef6e7; color: #b45309; }
 .pl-status-pending::before { background: #f59e0b; }
 
-.pl-status-processing { background: #eef4ff; color: #1d4ed8; }
-.pl-status-processing::before { background: #3b82f6; }
+.pl-status-preparing { background: #eef4ff; color: #1d4ed8; }
+.pl-status-preparing::before { background: #3b82f6; }
+
+.pl-status-ready { background: #eef4ff; color: #1d4ed8; }
+.pl-status-ready::before { background: #3b82f6; }
 
 .pl-status-cancelled { background: #fdf2f2; color: #c0392b; }
 .pl-status-cancelled::before { background: #ef4444; }
@@ -367,7 +370,7 @@ include '../_head.php';
     <div class="pl-controls-card">
         <div class="pl-filter-tabs">
             <?php 
-            $tab_options = ['All' => 'All Orders', 'Pending' => 'Pending', 'Processing' => 'Processing', 'Completed' => 'Completed', 'Cancelled' => 'Cancelled'];
+            $tab_options = ['All' => 'All Orders', 'Pending' => 'Pending', 'Preparing' => 'Preparing', 'Ready' => 'Ready', 'Completed' => 'Completed', 'Cancelled' => 'Cancelled'];
             foreach ($tab_options as $tab_val => $tab_label): 
                 $is_active = ($status === $tab_val);
             ?>
@@ -416,7 +419,8 @@ include '../_head.php';
                         $status_class = match(strtolower(trim($o->status))) {
                             'completed'  => 'pl-status-completed',
                             'pending'    => 'pl-status-pending',
-                            'processing' => 'pl-status-processing',
+                            'preparing' => 'p1-status-preparing',
+                            'ready' => 'p1-status-ready',
                             'cancelled'  => 'pl-status-cancelled',
                             default      => 'pl-status-pending'
                         };
