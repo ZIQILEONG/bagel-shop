@@ -25,17 +25,12 @@ $_low_stock_threshold = 11;
         <td class="right"><?= $p->price ?></td>
         <td class="right">
             <?= $p->stock ?>
-            <?php if ($is_low_stock): ?>
-        <td class="right">
-            <?= $p->stock ?>
             <?php if ($is_out_of_stock): ?>
                 <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#6d1414;color:#fff;font-size:11px;font-weight:bold;">
                     Out of Stock</span>
             <?php elseif ($is_low_stock): ?>
                 <span style="display:inline-block;margin-left:6px;padding:2px 8px;border-radius:999px;background:#b5192b;color:#fff;font-size:11px;font-weight:bold;">
                     Low Stock</span>
-            <?php endif ?>
-        </td>
             <?php endif ?>
         </td>
         <td><button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button></td>
