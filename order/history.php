@@ -42,10 +42,7 @@ if (is_post() && req('btn') == 'reorder') {
             $skipped[] = "{$item->name} (already at max quantity in cart)";
             continue;
         }
-        if (!update_cart($item->product_id, $new_unit)) {
-            $skipped[] = "{$item->name} (could not add — cart limit reached)";
-            continue;
-        }
+        update_cart($item->product_id, $new_unit);
         $added++;
     }
     if ($added > 0) {

@@ -1,0 +1,271 @@
+/* =========================================================
+   PULULU ADDRESS CREATE MODERN UI/UX
+   ========================================================= */
+:root {
+    --pl-primary: #cf7953;
+    --pl-primary-hover: #b86440;
+    --pl-brown-dark: #3e2619;
+    --pl-text: #4a3b32;
+    --pl-muted: #968377;
+    --pl-border: #ebdcd5;
+    --pl-card-bg: #ffffff;
+    --pl-accent: #fbf5ef;
+    --pl-green: #2b7a4b;
+    --pl-red: #c0392b;
+}
+
+body {
+    background-color: #faf5f0;
+    color: var(--pl-text);
+}
+
+.pl-addr-create-wrap {
+    max-width: 1040px;
+    margin: 32px auto 80px;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+/* Breadcrumb */
+.pl-breadcrumb {
+    font-size: 13px;
+    color: var(--pl-muted);
+    margin-bottom: 22px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.pl-breadcrumb a {
+    color: var(--pl-muted);
+    text-decoration: none;
+    transition: color 0.15s ease;
+}
+.pl-breadcrumb a:hover {
+    color: var(--pl-primary);
+}
+
+/* Header */
+.pl-form-header {
+    margin-bottom: 24px;
+}
+.pl-form-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin: 0 0 6px;
+}
+.pl-form-header p {
+    font-size: 14px;
+    color: var(--pl-muted);
+    margin: 0;
+}
+
+/* Error Callout Box */
+.pl-error-box {
+    background: #fdf2f2;
+    border: 1px solid #f8cfcf;
+    border-left: 4px solid var(--pl-red);
+    color: var(--pl-red);
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* 2-Column Split Grid */
+.pl-addr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.25fr;
+    gap: 28px;
+    align-items: start;
+}
+
+/* Map Card Column */
+.pl-map-card {
+    background: var(--pl-card-bg);
+    border: 1px solid var(--pl-border);
+    border-radius: 20px;
+    padding: 20px;
+    box-shadow: 0 4px 18px rgba(62, 38, 25, 0.03);
+    position: sticky;
+    top: 24px;
+}
+.pl-map-card-head {
+    font-size: 15px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    margin: 0 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#map {
+    height: 380px;
+    width: 100%;
+    border-radius: 14px;
+    border: 1.5px solid var(--pl-border);
+    overflow: hidden;
+    background: #faf6f0;
+}
+.pl-map-hint {
+    font-size: 12px;
+    color: var(--pl-muted);
+    margin-top: 10px;
+    line-height: 1.45;
+}
+
+/* Leaflet Custom Geolocation Control Button */
+.leaflet-control-mybutton {
+    background: var(--pl-primary) !important;
+    color: #ffffff !important;
+    border: none !important;
+    padding: 8px 14px !important;
+    border-radius: 8px !important;
+    font-size: 12.5px !important;
+    font-weight: 700 !important;
+    cursor: pointer !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: background 0.15s ease !important;
+}
+.leaflet-control-mybutton:hover {
+    background: var(--pl-primary-hover) !important;
+}
+
+/* Right Form Card */
+.pl-form-card {
+    background: var(--pl-card-bg);
+    border: 1px solid var(--pl-border);
+    border-radius: 20px;
+    padding: 30px 32px;
+    box-shadow: 0 4px 18px rgba(62, 38, 25, 0.03);
+}
+
+.pl-field-group {
+    margin-bottom: 18px;
+}
+.pl-field-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 800;
+    color: var(--pl-brown-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 6px;
+}
+.pl-field-group label small {
+    font-size: 11px;
+    text-transform: none;
+    color: var(--pl-muted);
+    font-weight: normal;
+    letter-spacing: normal;
+}
+
+.pl-field-group input,
+.pl-field-group select {
+    width: 100%;
+    padding: 11px 14px;
+    box-sizing: border-box;
+    border: 1.5px solid var(--pl-border);
+    border-radius: 12px;
+    background: #fffdfc;
+    font-size: 14px;
+    color: var(--pl-brown-dark);
+    outline: none;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+.pl-field-group input:focus,
+.pl-field-group select:focus {
+    border-color: var(--pl-primary);
+    background: #ffffff;
+    box-shadow: 0 0 0 3px rgba(207, 121, 83, 0.12);
+}
+
+/* Phone Layout */
+.pl-phone-flex {
+    display: flex;
+    gap: 10px;
+}
+.pl-phone-code-select {
+    width: 160px !important;
+    flex-shrink: 0;
+}
+.pl-phone-hint {
+    font-size: 11.5px;
+    color: var(--pl-muted);
+    margin-top: 5px;
+    display: block;
+}
+
+/* 2-Column Inputs Grid (City/State, Postcode/Country) */
+.pl-form-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+/* Actions */
+.pl-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 26px;
+    padding-top: 20px;
+    border-top: 1px solid #f5ebe4;
+}
+
+.pl-btn-save-addr {
+    background: var(--pl-primary);
+    color: #ffffff;
+    border: none;
+    padding: 13px 26px;
+    border-radius: 12px;
+    font-size: 14.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(207, 121, 83, 0.25);
+}
+.pl-btn-save-addr:hover {
+    background: var(--pl-primary-hover);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(207, 121, 83, 0.35);
+}
+
+.pl-btn-cancel-addr {
+    display: inline-flex;
+    align-items: center;
+    background: transparent;
+    color: var(--pl-muted);
+    padding: 12px 20px;
+    border-radius: 12px;
+    border: 1.5px solid var(--pl-border);
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+.pl-btn-cancel-addr:hover {
+    background: var(--pl-accent);
+    color: var(--pl-brown-dark);
+    border-color: #d8c2b5;
+}
+
+@media (max-width: 860px) {
+    .pl-addr-grid {
+        grid-template-columns: 1fr;
+    }
+    .pl-map-card {
+        position: static;
+    }
+    #map {
+        height: 280px;
+    }
+}

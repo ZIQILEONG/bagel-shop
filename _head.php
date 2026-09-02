@@ -20,6 +20,7 @@ $header_active = static function (string $section) use ($header_path): string {
     <link href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= app_url('css/app.css') ?>">
     <link rel="stylesheet" href="<?= app_url('css/navbar.css') ?>">
+    <link rel="stylesheet" href="<?= app_url('css/inline-styles.css') ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">

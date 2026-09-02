@@ -19,7 +19,7 @@ function puzzle_response(
     echo json_encode([
         'success' => $success,
         'message' => $message,
-        'redirect' => $redirect_url
+        'redirect' => $redirect_url,
     ]);
 
     exit;
@@ -30,10 +30,9 @@ function send_verification_email(
     string $email,
     string $token
 ): void {
-    $scheme = (
-        !empty($_SERVER['HTTPS']) &&
-        $_SERVER['HTTPS'] !== 'off'
-    ) ? 'https' : 'http';
+    $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        ? 'https'
+        : 'http';
 
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
 
@@ -41,17 +40,8 @@ function send_verification_email(
         'user/verify_email.php?token=' . urlencode($token)
     );
 
-    $safeName = htmlspecialchars(
-        $name,
-        ENT_QUOTES,
-        'UTF-8'
-    );
-
-    $safeLink = htmlspecialchars(
-        $link,
-        ENT_QUOTES,
-        'UTF-8'
-    );
+    $safe_name = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+    $safe_link = htmlspecialchars($link, ENT_QUOTES, 'UTF-8');
 
     $mail = new \PHPMailer\PHPMailer\PHPMailer(true);
 
@@ -64,46 +54,29 @@ function send_verification_email(
         \PHPMailer\PHPMailer\PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port = 587;
 
-    $mail->setFrom(
-        SMTP_USERNAME,
-        'Pululu Bagel'
-    );
-
+    $mail->setFrom(SMTP_USERNAME, 'Pululu Bagel');
     $mail->addAddress($email, $name);
+
     $mail->isHTML(true);
-    $mail->CharSet = 'UTF-8';
     $mail->Subject = 'Verify Your Email';
 
     $mail->Body = "
-        <p>Dear {$safeName},</p>
+        <p>Dear {$safe_name},</p>
+        <p>Click the link below to verify your Pululu Bagel account:</p>
         <p>
-            Click the link below to verify your Pululu Bagel account:
+            <a href=\"{$safe_link}\">Verify Email</a>
         </p>
-        <p>
-            <a href=\"{$safeLink}\">
-                Verify Email
-            </a>
-        </p>
-        <p>
-            This link expires in 5 minutes.
-        </p>
+        <p>This link expires in 24 hours.</p>
     ";
 
     $mail->AltBody =
-        "Dear {$name},\n\n" .
-        "Click the link below to verify your Pululu Bagel account:\n" .
-        "{$link}\n\n" .
-        "This link expires in 5 minutes.\n\n" .
-        "Pululu Bagel Team";
+        "Verify your Pululu Bagel account: {$link}";
 
     $mail->send();
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    puzzle_response(
-        false,
-        'POST request required.'
-    );
+    puzzle_response(false, 'POST request required.');
 }
 
 $input = json_decode(
@@ -112,10 +85,7 @@ $input = json_decode(
 );
 
 if (!is_array($input)) {
-    puzzle_response(
-        false,
-        'Invalid puzzle request.'
-    );
+    puzzle_response(false, 'Invalid puzzle request.');
 }
 
 $action = (string)($input['action'] ?? '');
@@ -123,15 +93,12 @@ $nonce = (string)($input['nonce'] ?? '');
 $trail = $input['trail'] ?? [];
 $position = $input['position'] ?? null;
 $target = $input['target'] ?? null;
+
 $pending = get_pending_auth($action);
 
 if (
     !$pending ||
-    !in_array(
-        $action,
-        ['login', 'register', 'remember'],
-        true
-    )
+    !in_array($action, ['login', 'register', 'remember'], true)
 ) {
     puzzle_response(
         false,
@@ -156,13 +123,15 @@ unset(
 
 $data = $pending['data'] ?? [];
 
+
 if ($action === 'login') {
-    $stmt = $_db->prepare("
-        SELECT *
-        FROM user
-        WHERE id = ?
-        AND is_deleted = 0
-    ");
+
+    $stmt = $_db->prepare(
+        'SELECT *
+         FROM user
+         WHERE id = ?
+         AND is_deleted = 0'
+    );
 
     $stmt->execute([
         (int)($data['user_id'] ?? 0)
@@ -170,10 +139,8 @@ if ($action === 'login') {
 
     $user = $stmt->fetch();
 
-    if (
-        !$user ||
-        (int)$user->email_verified !== 1
-    ) {
+    if (!$user || (int)$user->email_verified !== 1) {
+
         clear_pending_auth();
 
         puzzle_response(
@@ -184,22 +151,14 @@ if ($action === 'login') {
     }
 
     if (!empty($data['remember'])) {
-        $rememberToken = bin2hex(
-            random_bytes(32)
-        );
 
-        $rememberHash = hash(
-            'sha256',
-            $rememberToken
-        );
+        $token = bin2hex(random_bytes(32));
+        $token_hash = hash('sha256', $token);
 
-        $expiresAt = time() + (
-            30 * 24 * 60 * 60
-        );
-
+        $expires_at = time() + (30 * 24 * 60 * 60);
         $expires = date(
             'Y-m-d H:i:s',
-            $expiresAt
+            $expires_at
         );
 
         $stmt = $_db->prepare("
@@ -210,27 +169,23 @@ if ($action === 'login') {
         ");
 
         $stmt->execute([
-            $rememberHash,
+            $token_hash,
             $expires,
             $user->id
         ]);
 
-        setcookie(
-            'remember_token',
-            $rememberToken,
-            [
-                'expires' => $expiresAt,
-                'path' => '/',
-                'httponly' => true,
-                'secure' => (
-                    !empty($_SERVER['HTTPS']) &&
-                    $_SERVER['HTTPS'] !== 'off'
-                ),
-                'samesite' => 'Lax'
-            ]
-        );
+        setcookie('remember_token', $token, [
+            'expires' => $expires_at,
+            'path' => '/',
+            'httponly' => true,
+            'secure' =>
+                !empty($_SERVER['HTTPS']) &&
+                $_SERVER['HTTPS'] !== 'off',
+            'samesite' => 'Lax',
+        ]);
     }
     else {
+
         clear_remember_cookie();
 
         $stmt = $_db->prepare("
@@ -246,6 +201,7 @@ if ($action === 'login') {
     }
 
     set_logged_in_user($user);
+
     temp('info', 'Login successfully');
 
     puzzle_response(
@@ -255,24 +211,25 @@ if ($action === 'login') {
     );
 }
 
+
 if ($action === 'register') {
+
     $name = (string)($data['name'] ?? '');
     $email = (string)($data['email'] ?? '');
-    $phoneNo = (string)($data['phone_no'] ?? '');
-    $passwordHash =
-        (string)($data['password_hash'] ?? '');
+    $phone_no = (string)($data['phone_no'] ?? '');
+    $password_hash = (string)($data['password_hash'] ?? '');
 
-    $phoneNo = preg_replace(
+    $phone_no = preg_replace(
         '/[\s().-]/',
         '',
-        $phoneNo
+        $phone_no
     ) ?? '';
 
     if (
         $name === '' ||
         $email === '' ||
-        $phoneNo === '' ||
-        $passwordHash === ''
+        $phone_no === '' ||
+        $password_hash === ''
     ) {
         clear_pending_auth();
 
@@ -286,7 +243,7 @@ if ($action === 'register') {
     if (
         !preg_match(
             '/^(01\d{8,9}|\+601\d{8,9})$/',
-            $phoneNo
+            $phone_no
         )
     ) {
         clear_pending_auth();
@@ -299,6 +256,7 @@ if ($action === 'register') {
     }
 
     if (is_exists($email, 'user', 'email')) {
+
         clear_pending_auth();
 
         puzzle_response(
@@ -308,14 +266,8 @@ if ($action === 'register') {
         );
     }
 
-    $token = bin2hex(
-        random_bytes(32)
-    );
-
-    $tokenHash = hash(
-        'sha256',
-        $token
-    );
+    $token = bin2hex(random_bytes(32));
+    $token_hash = hash('sha256', $token);
 
     $expires = date(
         'Y-m-d H:i:s',
@@ -323,6 +275,7 @@ if ($action === 'register') {
     );
 
     try {
+
         $_db->beginTransaction();
 
         $stmt = $_db->prepare("
@@ -342,10 +295,10 @@ if ($action === 'register') {
         $stmt->execute([
             $name,
             $email,
-            $phoneNo,
-            $passwordHash,
-            $tokenHash,
-            $expires
+            $phone_no,
+            $password_hash,
+            $token_hash,
+            $expires,
         ]);
 
         send_verification_email(
@@ -357,6 +310,7 @@ if ($action === 'register') {
         $_db->commit();
     }
     catch (Throwable $error) {
+
         if ($_db->inTransaction()) {
             $_db->rollBack();
         }
@@ -389,7 +343,9 @@ if ($action === 'register') {
     );
 }
 
+
 if (!isset($_COOKIE['remember_token'])) {
+
     clear_pending_auth();
 
     puzzle_response(
@@ -399,7 +355,7 @@ if (!isset($_COOKIE['remember_token'])) {
     );
 }
 
-$rememberHash = hash(
+$token_hash = hash(
     'sha256',
     $_COOKIE['remember_token']
 );
@@ -408,20 +364,21 @@ $stmt = $_db->prepare("
     SELECT *
     FROM user
     WHERE id = ?
-    AND remember_token = ?
-    AND remember_expires > NOW()
-    AND email_verified = 1
-    AND is_deleted = 0
+      AND remember_token = ?
+      AND remember_expires > NOW()
+      AND email_verified = 1
+      AND is_deleted = 0
 ");
 
 $stmt->execute([
     (int)($data['user_id'] ?? 0),
-    $rememberHash
+    $token_hash,
 ]);
 
 $user = $stmt->fetch();
 
 if (!$user) {
+
     clear_pending_auth();
     clear_remember_cookie();
 
@@ -433,6 +390,7 @@ if (!$user) {
 }
 
 set_logged_in_user($user);
+
 temp('info', 'Login successfully');
 
 puzzle_response(

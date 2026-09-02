@@ -1,39 +1,55 @@
 <?php
-session_start();
-require "db.php";
+include '../_base.php';
+auth('Admin');
+
 $pid = $_GET['id'];
 
-$stmt = $pdo->prepare("SELECT p.*,pp.photo,pp.id as photo_id FROM product p
-LEFT JOIN product_photo pp ON p.id=pp.product_id AND pp.sort_order=0
+//Retrieve product and image records
+$stm = $_db->prepare("SELECT p.*, pp.id AS photo_id, pp.photo 
+FROM product p 
+LEFT JOIN product_photo pp ON p.id=pp.product_id AND pp.sort_order=0 
 WHERE p.id=?");
-$stmt->execute([$pid]);
-$item = $stmt->fetch();
+$stm->execute([$pid]);
+$item = $stm->fetch();
 
-if($_SERVER['REQUEST_METHOD']==='POST' && $_FILES['newphoto']['error']===UPLOAD_ERR_OK){
-    $ext = pathinfo($_FILES['newphoto']['name'],PATHINFO_EXTENSION);
-    $filename = time().".".$ext;
-    move_uploaded_file($_FILES['newphoto']['tmp_name'],"../products/".$filename);
+if(is_post()){
+    if(!empty($_FILES['newphoto']['name'])){
+        $ext = pathinfo($_FILES['newphoto']['name'],PATHINFO_EXTENSION);
+        $photoName = time().".".strtolower($ext);
+        move_uploaded_file($_FILES['newphoto']['tmp_name'],"../products/".$photoName);
 
-    if($item['photo_id']){
-        $upd = $pdo->prepare("UPDATE product_photo SET photo=? WHERE id=?");
-        $upd->execute([$filename,$item['photo_id']]);
-    }else{
-        $ins = $pdo->prepare("INSERT INTO product_photo(product_id,photo,sort_order,created_at) VALUES (?,?,0,NOW())");
-        $ins->execute([$pid,$filename]);
+        if($item->photo_id){
+            //Update existing images
+            $upd = $_db->prepare("UPDATE product_photo SET photo=? WHERE id=?");
+            $upd->execute([$photoName,$item->photo_id]);
+        }else{
+            // Fill in missing records; specifically designed to fix issues like P010.
+            $ins = $_db->prepare("INSERT INTO product_photo(product_id,photo,sort_order,created_at) VALUES (?,?,0,NOW())");
+            $ins->execute([$pid,$photoName]);
+        }
+        temp('info','Photo updated');
+        redirect('product-listing.php');
     }
-    header("Location:product-listing.php");
-    exit;
 }
+
+$_title = "Edit Product ".$pid;
+include '../_head.php';
 ?>
-<h3>Edit Product <?= $pid ?></h3>
+<h2>Edit Product <?= $pid ?></h2>
 
 <form method="post" enctype="multipart/form-data">
-    <?php if(!empty($item['photo'])){ ?>
-        <p>Current image:<img src="../products/<?=$item['photo']?>" width="100"></p>
-    <?php }else{ ?>
-        <p>⚠️This product has no image</p>
-    <?php } ?>
+    <?php if(!empty($item->photo)): ?>
+        <p>Current Photo:<br>
+        <img class="il-2-742864" src="../products/<?= $item->photo ?>">
+        </p>
+    <?php else: ?>
+        <p class="il-3-b64e6d">⚠️This product has NO photo record</p>
+    <?php endif ?>
+
     <input type="file" name="newphoto" accept="image/*">
-    <br>
-    <button type="submit">Upload New Image</button>
+    <br><br>
+    <button type="submit">Upload New Photo</button>
+    <a href="product-listing.php">Back</a>
 </form>
+
+<?php include '../_foot.php'; ?>

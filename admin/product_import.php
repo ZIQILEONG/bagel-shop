@@ -64,8 +64,8 @@ $_title = "Admin | Batch Import Product CSV";
 include '../../_head.php';
 ?>
 <h2>Batch Import Products from CSV</h2>
-<div style="max-width:600px;">
-    <div style="background:#f7f7f7;padding:14px;border-radius:8px;margin-bottom:16px;">
+<div class="il-47-3e9d9c">
+    <div class="il-48-e7890e">
         <h4>CSV File Format Requirement</h4>
         <p>First row(header): <code>id,name,price,photo,description,stock,category_id</code></p>
         <p>Example row: <code>P001,Plain Bagel,7.90,bagel01.jpg,Original plain bagel,120,1</code></p>
@@ -77,7 +77,7 @@ include '../../_head.php';
             <label>Select CSV File:</label>
             <input type="file" name="csv_file" accept=".csv" required>
         </div>
-        <div style="margin-top:16px;">
+        <div class="il-49-b0043e">
             <button type="submit">Upload & Import</button>
             <a href="product_list.php"><button type="button">Back Product List</button></a>
         </div>

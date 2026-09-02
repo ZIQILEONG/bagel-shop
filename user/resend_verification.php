@@ -11,6 +11,12 @@ $email = '';
 $success = '';
 $_err = [];
 
+
+/*
+|--------------------------------------------------------------------------
+| Send Verification Email
+|--------------------------------------------------------------------------
+*/
 function resend_verification_email(
     string $name,
     string $email,
@@ -147,6 +153,12 @@ function resend_verification_email(
     $mail->send();
 }
 
+
+/*
+|--------------------------------------------------------------------------
+| Process Resend Request
+|--------------------------------------------------------------------------
+*/
 if (is_post()) {
 
     $email = trim($_POST['email'] ?? '');
@@ -187,6 +199,8 @@ if (is_post()) {
                 'Email already verified. Please login.';
         }
     }
+
+
     // Check Turnstile
     if (
         !$_err &&
@@ -198,6 +212,8 @@ if (is_post()) {
         $_err['captcha'] =
             'Please complete the Turnstile verification.';
     }
+
+
     // Generate and send new verification email
     if (!$_err) {
 

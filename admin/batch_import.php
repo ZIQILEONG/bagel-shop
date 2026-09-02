@@ -28,7 +28,7 @@ include '../_head.php';
 ?>
 
 <h2>Batch Insert from CSV / Text File</h2>
-<?php if($msg): ?><p style="color:green;"><?= $msg ?></p><?php endif; ?>
+<?php if($msg): ?><p class="il-1-494687"><?= $msg ?></p><?php endif; ?>
 
 <p>CSV format: name,price,description (one product per line)</p>
 <form method="post" enctype="multipart/form-data">

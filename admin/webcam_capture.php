@@ -19,10 +19,10 @@ include '../_head.php';
 ?>
 
 <h2>Capture Photo from Webcam</h2>
-<video id="video" autoplay playsinline style="width:600px;border:1px solid black;"></video>
+<video class="il-69-11cf8d" id="video" autoplay playsinline></video>
 <br>
 <button id="captureBtn">Capture Photo</button>
-<canvas id="canvas" style="display:none;"></canvas>
+<canvas class="il-35-cb4589" id="canvas"></canvas>
 <div id="preview"></div>
 
 <script>
@@ -43,7 +43,7 @@ document.getElementById('captureBtn').addEventListener('click',()=>{
         method:'POST',
         body: new URLSearchParams({photo:photoData})
     }).then(res=>res.text()).then(txt=>{
-        document.getElementById('preview').innerHTML = `<img src="${photoData}" style="max-width:400px;"><p>${txt}</p>`;
+        document.getElementById('preview').innerHTML = `<img class="il-70-88efe2" src="${photoData}"><p>${txt}</p>`;
     })
 })
 </script>

@@ -41,16 +41,16 @@ include '../_head.php';
 
 <h3>Saved Addresses</h3>
 <?php foreach($addresses as $a): ?>
-<div style="border:1px solid #aaa;padding:10px;margin:6px 0;">
+<div class="il-100-9efa45">
     <p><?= htmlspecialchars($a->receiver_name) ?> | <?= htmlspecialchars($a->phone) ?></p>
     <p><?= htmlspecialchars($a->address_line) ?>, <?= htmlspecialchars($a->city) ?> <?= htmlspecialchars($a->postcode) ?>, <?= htmlspecialchars($a->state) ?></p>
     <?php if($a->is_default): ?><strong>[Default Address]</strong><?php endif; ?>
-    <form method="post" style="display:inline">
+    <form class="il-101-5677b9" method="post">
         <input type="hidden" name="action" value="set_default">
         <input type="hidden" name="addr_id" value="<?= $a->addr_id ?>">
         <button type="submit">Set as Default</button>
     </form>
-    <form method="post" style="display:inline" onsubmit="return confirm('Delete this address?')">
+    <form class="il-101-5677b9" method="post" onsubmit="return confirm('Delete this address?')">
         <input type="hidden" name="action" value="delete">
         <input type="hidden" name="addr_id" value="<?= $a->addr_id ?>">
         <button type="submit">Delete</button>

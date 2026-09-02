@@ -83,328 +83,7 @@ $_title = "Order #{$o->id} | Details";
 include '../_head.php';
 ?>
 
-<style>
-/* =========================================================
-   PULULU ORDER DETAIL MODERN UI/UX
-   ========================================================= */
-:root {
-    --pl-primary: #cf7953;
-    --pl-primary-hover: #b86440;
-    --pl-brown-dark: #3e2619;
-    --pl-text: #4a3b32;
-    --pl-muted: #968377;
-    --pl-border: #ebdcd5;
-    --pl-card-bg: #ffffff;
-    --pl-accent: #fbf5ef;
-    
-    --pl-status-pending-bg: #fff7e6;
-    --pl-status-pending-color: #c07a16;
-    --pl-status-pending-border: #fae0b8;
-
-    --pl-status-processing-bg: #eaf3ff;
-    --pl-status-processing-color: #1d68cd;
-    --pl-status-processing-border: #c8e0ff;
-
-    --pl-status-completed-bg: #eaf6ed;
-    --pl-status-completed-color: #217d47;
-    --pl-status-completed-border: #c6e9d0;
-
-    --pl-status-cancelled-bg: #fdf2f2;
-    --pl-status-cancelled-color: #c0392b;
-    --pl-status-cancelled-border: #f8cfcf;
-}
-
-body {
-    background-color: #faf5f0;
-    color: var(--pl-text);
-}
-
-.pl-detail-wrap {
-    max-width: 1040px;
-    margin: 32px auto 80px;
-    padding: 0 20px;
-    box-sizing: border-box;
-}
-
-/* Breadcrumb */
-.pl-breadcrumb {
-    font-size: 13px;
-    color: var(--pl-muted);
-    margin-bottom: 22px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-.pl-breadcrumb a {
-    color: var(--pl-muted);
-    text-decoration: none;
-    transition: color 0.15s ease;
-}
-.pl-breadcrumb a:hover {
-    color: var(--pl-primary);
-}
-
-/* Header */
-.pl-detail-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 26px;
-    flex-wrap: wrap;
-    gap: 16px;
-}
-.pl-order-title-group h1 {
-    font-size: 28px;
-    font-weight: 800;
-    color: var(--pl-brown-dark);
-    margin: 0 0 6px;
-}
-.pl-order-meta-text {
-    font-size: 13.5px;
-    color: var(--pl-muted);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-/* Status Badges */
-.pl-status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 13px;
-    font-weight: 800;
-    padding: 6px 16px;
-    border-radius: 999px;
-    border: 1px solid transparent;
-}
-.pl-status-badge::before {
-    content: '';
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-}
-.pl-status-badge.completed {
-    background: var(--pl-status-completed-bg);
-    color: var(--pl-status-completed-color);
-    border-color: var(--pl-status-completed-border);
-}
-.pl-status-badge.completed::before { background: var(--pl-status-completed-color); }
-
-.pl-status-badge.pending,
-.pl-status-badge.awaiting-payment {
-    background: var(--pl-status-pending-bg);
-    color: var(--pl-status-pending-color);
-    border-color: var(--pl-status-pending-border);
-}
-.pl-status-badge.pending::before,
-.pl-status-badge.awaiting-payment::before { background: var(--pl-status-pending-color); }
-
-.pl-status-badge.processing {
-    background: var(--pl-status-processing-bg);
-    color: var(--pl-status-processing-color);
-    border-color: var(--pl-status-processing-border);
-}
-.pl-status-badge.processing::before { background: var(--pl-status-processing-color); }
-
-.pl-status-badge.cancelled {
-    background: var(--pl-status-cancelled-bg);
-    color: var(--pl-status-cancelled-color);
-    border-color: var(--pl-status-cancelled-border);
-}
-.pl-status-badge.cancelled::before { background: var(--pl-status-cancelled-color); }
-
-/* Main Grid Layout */
-.pl-detail-grid {
-    display: grid;
-    grid-template-columns: 1.55fr 1fr;
-    gap: 28px;
-    align-items: start;
-}
-
-/* Card Container */
-.pl-card-panel {
-    background: var(--pl-card-bg);
-    border: 1px solid var(--pl-border);
-    border-radius: 20px;
-    padding: 26px;
-    box-shadow: 0 4px 18px rgba(62, 38, 25, 0.03);
-    margin-bottom: 24px;
-}
-.pl-card-panel h2 {
-    font-size: 17px;
-    font-weight: 800;
-    color: var(--pl-brown-dark);
-    margin: 0 0 18px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #f5ebe4;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-/* Item Rows */
-.pl-item-row {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    padding: 14px 0;
-    border-bottom: 1px solid #f5ebe4;
-}
-.pl-item-row:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-}
-.pl-item-row:first-child {
-    padding-top: 0;
-}
-
-.pl-item-thumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 12px;
-    object-fit: cover;
-    border: 1px solid var(--pl-border);
-    background: #faf6f0;
-    flex-shrink: 0;
-}
-.pl-item-info {
-    flex: 1;
-}
-.pl-item-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--pl-brown-dark);
-    margin-bottom: 4px;
-}
-.pl-item-meta {
-    font-size: 13px;
-    color: var(--pl-muted);
-}
-.pl-item-total {
-    text-align: right;
-    font-size: 15px;
-    font-weight: 800;
-    color: var(--pl-brown-dark);
-}
-
-/* Fulfillment Block */
-.pl-fulfill-box {
-    background: var(--pl-accent);
-    border: 1px solid var(--pl-border);
-    border-radius: 14px;
-    padding: 16px;
-    margin-top: 8px;
-    font-size: 13.5px;
-    line-height: 1.55;
-}
-.pl-fulfill-box b {
-    color: var(--pl-brown-dark);
-}
-
-/* Summary Pricing Box */
-.pl-summary-line {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 13.5px;
-    color: var(--pl-text);
-    margin-bottom: 11px;
-}
-.pl-summary-line.discount {
-    color: #2b7a4b;
-    font-weight: 700;
-}
-.pl-summary-divider {
-    height: 1px;
-    background: #f5ebe4;
-    margin: 14px 0;
-}
-.pl-summary-total {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    font-size: 18px;
-    font-weight: 800;
-    color: var(--pl-brown-dark);
-    margin-top: 14px;
-}
-.pl-total-amount {
-    font-size: 24px;
-    color: var(--pl-primary);
-}
-
-/* Points Pill */
-.pl-points-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: #fff8eb;
-    border: 1px solid #fae1b3;
-    color: #b7791f;
-    padding: 10px 14px;
-    border-radius: 12px;
-    font-size: 13px;
-    font-weight: 700;
-    margin-top: 16px;
-}
-
-/* Action Buttons */
-.pl-action-bar {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
-    margin-top: 24px;
-}
-.pl-btn-action {
-    padding: 12px 22px;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border: none;
-}
-.pl-btn-back {
-    background: #ffffff;
-    color: var(--pl-brown-dark);
-    border: 1.5px solid var(--pl-border);
-}
-.pl-btn-back:hover {
-    background: var(--pl-accent);
-    border-color: #d8c2b5;
-}
-.pl-btn-pay {
-    background: var(--pl-primary);
-    color: #ffffff;
-    box-shadow: 0 4px 14px rgba(207, 121, 83, 0.25);
-}
-.pl-btn-pay:hover {
-    background: var(--pl-primary-hover);
-    transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(207, 121, 83, 0.35);
-}
-.pl-btn-cancel-order {
-    background: #ffffff;
-    color: var(--pl-status-cancelled-color);
-    border: 1.5px solid #f5d6d6;
-}
-.pl-btn-cancel-order:hover {
-    background: #fdf2f2;
-    border-color: var(--pl-status-cancelled-color);
-}
-
-@media (max-width: 800px) {
-    .pl-detail-grid {
-        grid-template-columns: 1fr;
-    }
-}
-</style>
+<link rel="stylesheet" href="<?= app_url('css/order-detail.css') ?>">
 
 <div class="pl-detail-wrap">
     <!-- Breadcrumb -->
@@ -415,7 +94,7 @@ body {
         <span>&rsaquo;</span>
         <a href="history.php">Order History</a>
         <span>&rsaquo;</span>
-        <span style="color: var(--pl-brown-dark); font-weight: 600;">Order #<?= htmlspecialchars($o->id) ?></span>
+        <span class="il-4-8a27e5">Order #<?= htmlspecialchars($o->id) ?></span>
     </div>
 
     <!-- Header Section -->
@@ -472,16 +151,16 @@ body {
                 <h2>📦 Fulfillment Method</h2>
                 <div class="pl-fulfill-box">
                     <?php if (($o->delivery_method ?? 'Pickup') === 'Delivery' && $addr): ?>
-                        <div style="font-weight: 800; color: var(--pl-primary); margin-bottom: 6px;">
+                        <div class="il-78-f4aa0a">
                             🚚 Doorstep Delivery
                         </div>
                         <div><b>Recipient:</b> <?= htmlspecialchars($addr->recipient_name) ?> (<?= htmlspecialchars($addr->phone) ?>)</div>
-                        <div style="margin-top: 4px;">
+                        <div class="il-79-07c6a7">
                             <b>Address:</b> <?= htmlspecialchars($addr->address_line1) ?><?= !empty($addr->address_line2) ? ', ' . htmlspecialchars($addr->address_line2) : '' ?>,
                             <?= htmlspecialchars($addr->city) ?>, <?= htmlspecialchars($addr->state) ?> <?= htmlspecialchars($addr->postcode) ?>
                         </div>
                     <?php else: ?>
-                        <div style="font-weight: 800; color: var(--pl-brown-dark); margin-bottom: 4px;">
+                        <div class="il-80-4ec524">
                             🏪 Store Self-Pickup
                         </div>
                         <div>Collect fresh from <b>Pululu Bagel Bakery</b> (TAR UMT Block D, Kuala Lumpur).</div>
@@ -514,7 +193,7 @@ body {
                         <span>
                             Points Redeemed (<?= number_format($points_used_count) ?> pts)
                             <?php if ($o->status === 'Cancelled'): ?>
-                                <i style="font-size:11px;">(refunded)</i>
+                                <i class="il-81-8b6852">(refunded)</i>
                             <?php endif ?>
                         </span>
                         <span>- RM <?= number_format($points_discount_amount, 2) ?></span>
