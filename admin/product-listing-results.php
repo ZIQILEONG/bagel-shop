@@ -14,7 +14,8 @@ $_low_stock_threshold = 11;
         <th></th>
     </tr>
     <?php foreach ($arr as $p): ?>
-    <?php $is_low_stock = $p->stock < $_low_stock_threshold; ?>
+    <?php $is_low_stock = $p->stock > 0 && $p->stock < $_low_stock_threshold; ?>
+    <?php $is_out_of_stock = $p->stock <= 0; ?>
     <tr<?= $is_low_stock ? " style='background:#ffe8e8'" : '' ?>>
         <td><input type="checkbox" name="ids[]" value="<?= $p->id ?>"></td>
         <td><img src="/products/<?= $p->photo ?>" width="50" height="50"></td>
@@ -22,15 +23,14 @@ $_low_stock_threshold = 11;
         <td><?= $p->category_name ?></td>
         <td><?= $p->name ?></td>
         <td class="right"><?= $p->price ?></td>
-        <td class="right">
             <?= $p->stock ?>
-            <?php if ($is_low_stock): ?>
+            <?php if ($is_out_of_stock): ?>
+                <span class="il-37-65db45">Out of Stock</span>
+            <?php elseif ($is_low_stock): ?>
                 <span class="il-37-65db45">Low Stock</span>
             <?php endif ?>
         </td>
-        <td><button data-get="product-detail.php?id=<?= $p->id ?>">Detail</button></td>
     </tr>
-    <?php endforeach ?>
 </table>
 <button name="btn" value="delete_selected" data-confirm="Delete selected products?">Delete Selected</button>
 <label>Increase price by (%)</label>
