@@ -134,7 +134,7 @@ include '../_head.php';
             Your password has been changed successfully.
             You can now log in using your new password.
         </p>
-        <a href="login.php" class="button">Continue to Log In</a>
+        <a href="../login.php" class="button">Continue to Log In</a>
     <?php elseif ($invalidToken): ?>
         <span class="section-eyebrow">LINK UNAVAILABLE</span>
         <h2>Reset link expired</h2>
@@ -142,11 +142,11 @@ include '../_head.php';
             This password reset link is invalid, expired,
             or has already been used.
         </p>
-        <a href="forgot_password.php" class="button">
+        <a href="../user/forgot_password.php" class="button">
             Request New Link
         </a>
         <p class="login-text">
-            <a href="login.php">Back to Log In</a>
+            <a href="../login.php">Back to Log In</a>
         </p>
     <?php else: ?>
         <span class="section-eyebrow">ACCOUNT RECOVERY</span>
@@ -163,7 +163,7 @@ include '../_head.php';
 
         <form
             method="post"
-            action="reset.php?token=<?= htmlspecialchars(
+            action="../user/reset.php?token=<?= htmlspecialchars(
                 rawurlencode($token),
                 ENT_QUOTES,
                 'UTF-8'

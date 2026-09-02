@@ -27,9 +27,7 @@
 
             <div class="footer-links">
                 <h2>Customer care</h2>
-                <span>Freshly baked daily</span>
-                <span>Pickup and delivery</span>
-                <span>Secure online checkout</span>
+                <span><a href="<?= app_url('product/list.php') ?>">Freshly baked daily</a></span>
             </div>
         </div>
 
