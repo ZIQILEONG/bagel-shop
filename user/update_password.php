@@ -51,11 +51,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $updateStmt = $_db->prepare("UPDATE user SET password = ? WHERE id = ?");
                 $updateStmt->execute([$newHashPwd, $userDb->id]);
 
-                // ===== 关键：彻底清空所有登录状态 =====
+    
                 $_SESSION = [];
                 session_destroy();
 
-                // 删除session cookie
+                // Deletesession cookie
                 if (ini_get("session.use_cookies")) {
                     $params = session_get_cookie_params();
                     setcookie(session_name(), '', time() - 42000,
@@ -63,11 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $params["secure"], $params["httponly"]
                     );
                 }
-                // 删除记住我cookie（所有可能的名字）
+                // Delete "Remember Me" cookies 
                 setcookie('remember', '', time() - 3600, '/');
                 setcookie('remember_me', '', time() - 3600, '/');
 
-                // 原生header强制跳转login.php，不经过项目redirect函数
+                // Force redirect to login.php
                 header("Location: ../login.php");
                 exit;
             }
