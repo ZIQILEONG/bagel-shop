@@ -229,7 +229,7 @@ $avatarSrc  = "/user/image/" . encode($avatarFile);
             <!-- Added redirect link for password -->
             <div class="pl-address-box">
                 <span style="font-size:13.5px;font-weight:600;color:var(--pl-brown-dark);">🔐 Password</span>
-                <a href="update_password.php">Request Password Change Link &rarr;</a>
+                <a href="../user/update_password.php">Request Password Change Link &rarr;</a>
             </div>
 
             <button type="submit" class="pl-btn-primary">Save Changes</button>

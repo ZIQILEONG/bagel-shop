@@ -290,7 +290,7 @@ include '../_head.php';
         </form>
 
         <p class="login-text">
-            <a href="login.php">Back to Log In</a>
+            <a href="../login.php">Back to Log In</a>
         </p>
     <?php endif ?>
 </div>
