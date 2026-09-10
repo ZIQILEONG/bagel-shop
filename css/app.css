@@ -1312,42 +1312,6 @@ footer b {
     font: inherit;
 }
 
-/* DataTables theme integration ------------------------------------------------ */
-table.dataTable {
-    border-collapse: collapse !important;
-}
-
-.dataTables_wrapper {
-    margin-top: 10px;
-}
-
-.dataTables_wrapper .dataTables_filter input,
-.dataTables_wrapper .dataTables_length select {
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    padding: 6px 8px;
-    background: var(--cream);
-    font: inherit;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-    border-radius: 999px !important;
-    margin: 0 2px !important;
-    border: 1px solid var(--border) !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current,
-.dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    background: var(--red) !important;
-    color: var(--white) !important;
-    border-color: var(--red) !important;
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: var(--pink) !important;
-    color: var(--red) !important;
-}
-
 /* Pululu storefront refresh ------------------------------------------------ */
 
 html {

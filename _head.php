@@ -22,8 +22,6 @@ $header_active = static function (string $section) use ($header_path): string {
     <link rel="stylesheet" href="<?= app_url('css/navbar.css') ?>">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.11/css/jquery.dataTables.min.css">
-    <script src="https://cdn.datatables.net/1.13.11/js/jquery.dataTables.min.js"></script>
     <script src="<?= app_url('js/app.js') ?>"></script>
 </head>
 <body id="top" class="<?= htmlspecialchars($_body_class ?? '', ENT_QUOTES, 'UTF-8') ?>">
