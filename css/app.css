@@ -1265,7 +1265,7 @@ footer b {
     cursor: default;
 }
 
-/* Live-search / AJAX listing containers -------------------------------------- */
+/* Live-search / AJAX listing containers ---------------------- */
 [data-ajax-container] {
     transition: opacity 0.15s;
 }
